@@ -8,9 +8,7 @@ setup(
     author_email="",
     packages=find_packages(),
     install_requires=[
-        line.strip()
-        for line in open("requirements.txt").readlines()
-        if not line.startswith("#") and line.strip()
+        line.strip() for line in open("requirements.txt").readlines() if not line.startswith("#") and line.strip()
     ],
     python_requires=">=3.11",
     classifiers=[
