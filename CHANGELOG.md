@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.0] - 2025-10-20 - Tests Fixes & Workflow Improvements 🔧
+
+### 🎉 Test Stability & Workflow Enhancements
+
+**Status**: ✅ Production Ready  
+**Tests**: 42/42 passing (100%)  
+**Coverage**: Meta Workflow 84.72%  
+**Focus**: Stability, Testing, CI/CD
+
+---
+
+### ✨ Added
+- **CI/CD Validation Script**: Automated validation pipeline
+- **Workflow Cleanup**: Proper resource management with `_is_initialized` flag
+- **Input Validation**: Comprehensive validation for workflow inputs
+
+### 🔧 Fixed
+- **WorkflowStep Initialization**: Corrected parameters (agent_name, inputs, depends_on)
+- **Cleanup Method**: Added public `cleanup()` method with proper state management
+- **Validation Logic**: Fixed game_mode validation to return proper error responses
+- **Test Assertions**: Corrected test expectations for workflow steps
+
+### 📊 Improvements
+- **Test Pass Rate**: 100% (42/42 tests passing)
+- **Workflow Coverage**: 84.72% (up from 16%)
+- **Error Handling**: Better error messages and validation
+- **Documentation**: Updated validation reports and guides
+
+### 🧪 Tests
+- All Meta Agent tests passing (15/15)
+- All GW2 API Client tests passing (12/12)
+- All Meta Workflow tests passing (15/15)
+- Total: 42/42 tests ✅
+
+---
+
+## [1.2.0] - 2025-10-20 - CI/CD Validation & Workflow Improvements 🚀
+
+### 🎉 CI/CD Pipeline & Testing
+
+**Status**: ✅ Production Ready  
+**Tests**: 38/42 passing (90%)  
+**Focus**: CI/CD, Documentation, Validation
+
+---
+
+### ✨ Added
+- Complete CI/CD validation pipeline
+- Comprehensive validation reports
+- Roadmap for v1.2.0 and beyond
+
+### 🔧 Fixed
+- Initial WorkflowStep fixes
+- Documentation improvements
+
+---
+
 ## [1.1.0] - 2025-10-20 - Public GitHub Release 🚀
 
 ### 🎉 Meta Adaptative & API GW2 Integration

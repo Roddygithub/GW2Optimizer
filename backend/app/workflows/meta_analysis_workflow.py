@@ -128,6 +128,17 @@ class MetaAnalysisWorkflow(BaseWorkflow):
         Returns:
             Dictionnaire contenant le rapport d'analyse complet
         """
+        # Validation des inputs
+        try:
+            await self.validate_inputs(inputs)
+        except ValueError as e:
+            logger.error(f"Input validation failed: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "workflow": self.name
+            }
+        
         game_mode = inputs.get("game_mode")
         profession = inputs.get("profession")
         include_api_data = inputs.get("include_api_data", False)
@@ -447,8 +458,6 @@ class MetaAnalysisWorkflow(BaseWorkflow):
     
     async def validate_inputs(self, inputs: Dict[str, Any]) -> None:
         """Valide les entrées du workflow."""
-        await super().validate_inputs(inputs)
-        
         if "game_mode" not in inputs:
             raise ValueError("game_mode is required")
         
@@ -461,6 +470,7 @@ class MetaAnalysisWorkflow(BaseWorkflow):
     async def cleanup(self) -> None:
         """Nettoie les ressources du workflow."""
         await self._cleanup_impl()
+        self._is_initialized = False
     
     async def _cleanup_impl(self) -> None:
         """Nettoyage spécifique du workflow."""

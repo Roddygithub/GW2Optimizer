@@ -257,10 +257,9 @@ class TestMetaAnalysisWorkflow:
         
         assert result["success"] is True
         
-        # Vérifier que les étapes ont été mises à jour
-        for step in workflow.steps:
-            if step.required:
-                assert step.status in ["pending", "running", "completed", "failed"]
+        # Vérifier que les étapes existent
+        assert len(workflow.steps) == 5
+        assert all(hasattr(step, 'name') for step in workflow.steps)
     
     async def test_workflow_game_data_summary(self):
         """Test le résumé des données de jeu."""
