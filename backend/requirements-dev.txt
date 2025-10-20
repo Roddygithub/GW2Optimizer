@@ -5,8 +5,8 @@ ipython==8.20.0
 ipdb==0.13.13
 
 # Testing
-pytest==7.4.3
-pytest-asyncio==0.21.1
+pytest==7.4.4
+pytest-asyncio==0.23.3
 pytest-cov==4.1.0
 pytest-watch==4.2.0
 pytest-xdist==3.5.0
@@ -16,14 +16,14 @@ faker==22.0.0
 fakeredis==2.20.1
 
 # Code Quality
-black==23.12.1
+black==24.1.1
 flake8==7.0.0
 mypy==1.8.0
 isort==5.13.2
 
 # Type Stubs
 types-redis==4.6.0.20
-types-requests==2.31.0.10
+types-requests==2.31.0.20240106
 sqlalchemy[mypy]==2.0.25
 
 # Documentation
