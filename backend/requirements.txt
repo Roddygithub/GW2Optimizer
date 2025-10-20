@@ -30,6 +30,7 @@ python-json-logger==2.0.7
 # Validation & Parsing
 validators==0.22.0
 python-dateutil==2.8.2
+email-validator==2.1.0
 
 # Caching
 redis==5.0.1
