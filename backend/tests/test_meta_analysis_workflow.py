@@ -5,7 +5,7 @@ Tests unitaires pour le workflow d'analyse de méta.
 """
 
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import patch
 
 from app.workflows.meta_analysis_workflow import MetaAnalysisWorkflow
 

@@ -5,7 +5,6 @@ Tests unitaires pour le Meta Agent (analyse et adaptation de méta).
 """
 
 import pytest
-from datetime import datetime
 
 from app.agents.meta_agent import MetaAgent
 

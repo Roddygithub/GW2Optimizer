@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 
-from app.models.build import BuildCreate, BuildUpdate, GameMode, Profession, Role
+from app.models.build import BuildCreate, BuildUpdate, GameMode, Profession
 from app.models.user import UserDB
 from app.services.build_service_db import BuildService
 
@@ -32,7 +32,7 @@ class TestBuildService:
         self, db_session: AsyncSession, test_user: UserDB, sample_build_data: dict
     ):
         """Test build creation with invalid profession."""
-        service = BuildService(db_session)
+        _ = BuildService(db_session)  # noqa: F841
         sample_build_data["profession"] = "InvalidProfession"
 
         with pytest.raises(ValueError):

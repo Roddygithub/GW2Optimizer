@@ -3,7 +3,7 @@
 import pytest
 from app.models.build import Build, GameMode, Profession, Role
 from app.models.team import TeamComposition, TeamSlot
-from app.services.synergy_analyzer import SynergyAnalyzer, BoonType
+from app.services.synergy_analyzer import SynergyAnalyzer
 
 
 @pytest.fixture

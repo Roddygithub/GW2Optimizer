@@ -128,7 +128,7 @@ class TestCacheFlow:
         assert response1.status_code == status.HTTP_200_OK
 
         # Simulate Redis being unavailable by clearing the cache manager
-        cache_manager = CacheManager()
+        _ = CacheManager()  # noqa: F841
 
         # Get the build again - should use disk cache
         response2 = await client.get(f"/api/v1/builds/{build_id}", headers=auth_headers)
@@ -151,9 +151,9 @@ class TestCacheFlow:
         # Verify cache key exists
         cache_manager = CacheManager()
         cache_key = f"build:{build_id}"
-        cached_value = await cache_manager.get(cache_key)
+        _ = await cache_manager.get(cache_key)  # noqa: F841
 
-        # If Redis is available, cached_value should not be None
+        # If Redis is available, cached value should not be None
         # If using disk fallback, it might be None but that's okay
         # The important thing is that the endpoint works
 

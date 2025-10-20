@@ -47,7 +47,7 @@ class TestTeamService:
         sample_team_data["build_ids"] = [build1.id, build2.id]
         team_data = TeamCompositionCreate(**sample_team_data)
 
-        result = await service.create_team(team_data, test_user)
+        result = await team_service.create_team(team_data, test_user)
 
         assert result is not None
         assert len(result.slots) == 2
