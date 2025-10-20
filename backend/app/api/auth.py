@@ -17,6 +17,7 @@ from slowapi.util import get_remote_address
 
 from app.core.config import settings
 from app.core.logging import logger
+from jose import JWTError
 from app.core.security import (
     create_access_token,
     create_refresh_token,
