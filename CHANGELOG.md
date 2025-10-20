@@ -7,6 +7,144 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2025-10-20 - Public GitHub Release 🚀
+
+### 🎉 Meta Adaptative & API GW2 Integration
+
+**Status**: ✅ Production Ready - Public Release  
+**New Features**: Meta Analysis Agent, GW2 API Client, Meta Analysis Workflow  
+**New Tests**: 45+ tests (Meta Agent, API Client, Workflow)  
+**GitHub**: First public release on GitHub
+
+---
+
+### ✨ Added
+
+#### Meta Adaptative System
+- **MetaAgent**: Agent IA d'analyse et d'adaptation de méta
+  - Analyse des tendances de builds populaires
+  - Détection automatique des changements de méta
+  - Scoring de viabilité des builds (0.0 - 1.0)
+  - Recommandations d'adaptation par priorité
+  - Prédictions d'évolution du méta
+  - Support des 3 modes de jeu (zerg, raid_guild, roaming)
+
+#### GW2 API Integration
+- **GW2APIClient**: Client pour l'API officielle Guild Wars 2
+  - Importation automatique des professions
+  - Récupération des spécialisations
+  - Import des traits et compétences
+  - Système de cache avec TTL (24h)
+  - Retry automatique en cas d'échec (3 tentatives)
+  - Support des requêtes paginées (200 items/page)
+
+#### Meta Analysis Workflow
+- **MetaAnalysisWorkflow**: Workflow d'analyse complète
+  - Collecte optionnelle des données API GW2
+  - Analyse du méta actuel
+  - Détection des tendances (seuil 15%)
+  - Génération de recommandations
+  - Création de rapports détaillés
+  - Résumé exécutif avec insights clés
+
+#### API Endpoints
+- **POST /api/v1/meta/analyze**: Analyse complète du méta
+- **GET /api/v1/meta/snapshot/{game_mode}**: Snapshot rapide du méta
+- **POST /api/v1/meta/import-gw2-data**: Import des données GW2
+- **GET /api/v1/meta/gw2-api/professions**: Liste des professions
+- **GET /api/v1/meta/gw2-api/profession/{id}**: Détails d'une profession
+- **GET /api/v1/meta/cache/stats**: Statistiques du cache
+- **POST /api/v1/meta/cache/clear**: Vidage du cache
+
+#### Tests
+- **test_meta_agent.py**: 15 tests pour le Meta Agent
+- **test_gw2_api_client.py**: 12 tests pour le client API
+- **test_meta_analysis_workflow.py**: 18 tests pour le workflow
+- Coverage: Tests unitaires complets avec mocks
+
+---
+
+### 🔧 Changed
+
+- **app/agents/__init__.py**: Ajout de MetaAgent dans les exports
+- **app/workflows/__init__.py**: Ajout de MetaAnalysisWorkflow
+- **app/main.py**: Intégration du router meta dans l'API
+- **Architecture**: Extension du système d'agents avec analyse de méta
+
+---
+
+### 📊 Technical Details
+
+**Meta Agent Capabilities**:
+- `meta_analysis`: Analyse complète du méta
+- `trend_detection`: Détection des tendances
+- `build_viability_scoring`: Scoring de viabilité
+- `adaptation_recommendations`: Recommandations d'adaptation
+- `meta_prediction`: Prédiction d'évolution
+
+**GW2 API Endpoints Supported**:
+- `/v2/professions`: Professions et mécaniques
+- `/v2/skills`: Compétences
+- `/v2/traits`: Traits
+- `/v2/specializations`: Spécialisations
+- `/v2/items`: Items et équipement
+- `/v2/itemstats`: Statistiques d'items
+
+**Workflow Steps**:
+1. Collecte des données de jeu (optionnel)
+2. Analyse du méta actuel
+3. Détection des tendances
+4. Génération de recommandations
+5. Création du rapport
+
+---
+
+### 🎯 Meta Stability Levels
+
+- **Stable**: Peu ou pas de tendances fortes
+- **Shifting**: 1-2 tendances significatives (>20% changement)
+- **Volatile**: 3+ tendances significatives
+
+---
+
+### 📈 Statistics
+
+```
+New Files:        4 Python files
+New Tests:        45 tests
+New Endpoints:    7 API endpoints
+New Agent:        1 (MetaAgent)
+New Workflow:     1 (MetaAnalysisWorkflow)
+New Service:      1 (GW2APIClient)
+Lines Added:      ~1,500 lines
+```
+
+---
+
+### 🚀 Usage Examples
+
+**Analyse de méta**:
+```python
+POST /api/v1/meta/analyze
+{
+  "game_mode": "zerg",
+  "profession": "Guardian",
+  "include_api_data": true,
+  "time_range": 30
+}
+```
+
+**Import de données GW2**:
+```python
+POST /api/v1/meta/import-gw2-data
+{
+  "data_types": ["professions", "specializations", "traits"],
+  "profession": "Guardian"
+}
+```
+
+---
+
 ## [1.0.0] - 2025-10-20
 
 ### 🎉 Initial Production Release

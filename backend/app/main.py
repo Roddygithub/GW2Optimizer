@@ -29,6 +29,7 @@ from app.api import (
     export,
     health,
     learning,
+    meta,
     scraper,
     teams,
     builds_db,
@@ -159,6 +160,7 @@ def include_routers(app: FastAPI) -> None:
     api_router.include_router(chat.router, tags=["Chat"])
     api_router.include_router(export.router, tags=["Export"])
     api_router.include_router(learning.router, tags=["Learning"])
+    api_router.include_router(meta.router, tags=["Meta"])
     api_router.include_router(scraper.router, tags=["Scraper"])
     api_router.include_router(teams.router, tags=["Teams"])
     api_router.include_router(builds_db.router, tags=["Builds DB"])

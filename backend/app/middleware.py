@@ -45,9 +45,23 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
         response = await call_next(request)
         
-        # TODO: Define a strict Content Security Policy (CSP)
+        # Relaxed CSP for development (allows Swagger/ReDoc CDN resources)
+        if self.is_production:
+            csp = "default-src 'self'; script-src 'self'; object-src 'none';"
+        else:
+            # Development: Allow CDN resources for Swagger UI and ReDoc
+            csp = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+                "img-src 'self' data: https://fastapi.tiangolo.com https://render.guildwars2.com; "
+                "font-src 'self' https://fonts.gstatic.com; "
+                "connect-src 'self' https://api.guildwars2.com; "
+                "object-src 'none';"
+            )
+        
         security_headers = {
-            "Content-Security-Policy": "default-src 'self'; script-src 'self'; object-src 'none';",
+            "Content-Security-Policy": csp,
             "X-Frame-Options": "DENY",
             "X-Content-Type-Options": "nosniff",
             "X-XSS-Protection": "1; mode=block",
