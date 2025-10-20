@@ -22,7 +22,7 @@ mypy==1.8.0
 isort==5.13.2
 
 # Type Stubs
-types-redis==4.6.0.20
+types-redis==4.6.0.20240106
 types-requests==2.31.0.20240106
 sqlalchemy[mypy]==2.0.25
 
