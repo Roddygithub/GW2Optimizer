@@ -1,0 +1,48 @@
+name: Learning Pipeline
+
+on:
+  schedule:
+    # Run weekly on Monday at 3:00 AM UTC
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+jobs:
+  run-pipeline:
+    name: Execute Learning Pipeline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+      
+      - name: Run Learning Pipeline
+        run: |
+          cd backend
+          python -c "
+          import asyncio
+          from app.models.learning import FineTuningConfig, StorageConfig
+          from app.services.learning.pipeline import LearningPipeline
+          
+          async def main():
+              pipeline = LearningPipeline(
+                  finetuning_config=FineTuningConfig(),
+                  storage_config=StorageConfig(),
+              )
+              stats = await pipeline.run_full_pipeline()
+              print(f'Pipeline completed: {stats}')
+          
+          asyncio.run(main())
+          "
+      
+      - name: Report Stats
+        run: |
+          echo "📊 Learning pipeline execution completed"
+          echo "Check logs for detailed statistics"
