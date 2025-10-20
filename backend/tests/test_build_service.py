@@ -167,7 +167,7 @@ async def test_list_user_builds(db_session: AsyncSession, test_user: UserDB, bui
 @pytest.mark.asyncio
 async def test_list_builds_with_filters(db_session: AsyncSession, test_user: UserDB, build_data: BuildCreate):
     """Test listing builds with filters."""
-    service = BuildService(db_service)
+    service = BuildService(db_session)
 
     # Create builds with different professions
     await service.create_build(build_data, test_user)
