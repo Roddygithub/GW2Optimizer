@@ -80,7 +80,16 @@ class MetaAnalysisWorkflow(BaseWorkflow):
                 "required": True
             }
         ]
-        self.steps = []
+        # Initialiser les steps avec des WorkflowStep
+        self.steps = [
+            WorkflowStep(
+                name=step["name"],
+                agent_name="MetaAgent",
+                inputs={},
+                depends_on=[]
+            )
+            for step in self.workflow_steps
+        ]
     
     async def initialize(self) -> None:
         """Initialise le workflow."""
@@ -448,6 +457,10 @@ class MetaAnalysisWorkflow(BaseWorkflow):
             raise ValueError(
                 f"Invalid game_mode. Must be one of: {', '.join(valid_modes)}"
             )
+    
+    async def cleanup(self) -> None:
+        """Nettoie les ressources du workflow."""
+        await self._cleanup_impl()
     
     async def _cleanup_impl(self) -> None:
         """Nettoyage spécifique du workflow."""

@@ -1,9 +1,9 @@
 # GW2Optimizer 🛡️⚔️
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/roddy/GW2Optimizer/releases)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/roddy/GW2Optimizer/actions)
-[![Tests](https://img.shields.io/badge/tests-145%2F145%20passing-brightgreen.svg)](https://github.com/roddy/GW2Optimizer/actions)
-[![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](https://github.com/roddy/GW2Optimizer/coverage)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/Roddygithub/GW2Optimizer/releases)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/Roddygithub/GW2Optimizer/actions)
+[![Tests](https://img.shields.io/badge/tests-145%2F145%20passing-brightgreen.svg)](https://github.com/Roddygithub/GW2Optimizer/actions)
+[![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](https://github.com/Roddygithub/GW2Optimizer/coverage)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688.svg)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-18.2.0-61DAFB.svg)](https://reactjs.org/)
