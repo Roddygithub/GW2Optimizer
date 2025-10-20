@@ -42,7 +42,7 @@ class PipelineScheduler:
             name="Learning Pipeline Execution",
             replace_existing=True,
         )
-        
+
         self.scheduler.start()
         logger.info("Pipeline scheduler started (daily at 3:00 AM)")
 

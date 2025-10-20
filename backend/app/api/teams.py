@@ -17,7 +17,7 @@ team_service = TeamService()
 async def optimize_team(request: TeamOptimizeRequest) -> TeamResponse:
     """
     Optimize a team composition based on requirements.
-    
+
     The AI will:
     - Analyze role requirements
     - Select optimal builds
@@ -26,8 +26,7 @@ async def optimize_team(request: TeamOptimizeRequest) -> TeamResponse:
     """
     try:
         logger.info(
-            f"Optimizing team: {request.game_mode} - "
-            f"Size: {request.team_size} - Roles: {request.required_roles}"
+            f"Optimizing team: {request.game_mode} - " f"Size: {request.team_size} - Roles: {request.required_roles}"
         )
         response = await team_service.optimize_team(request)
         return response
@@ -69,7 +68,7 @@ async def list_teams(
 async def analyze_team(team_id: str) -> TeamResponse:
     """
     Analyze an existing team composition.
-    
+
     Provides:
     - Synergy analysis
     - Weakness identification
@@ -79,7 +78,7 @@ async def analyze_team(team_id: str) -> TeamResponse:
         team = await team_service.get_team(team_id)
         if not team:
             raise HTTPException(status_code=404, detail="Team not found")
-        
+
         response = await team_service.analyze_team(team)
         return response
     except HTTPException:

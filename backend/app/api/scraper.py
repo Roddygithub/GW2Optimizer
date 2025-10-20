@@ -14,22 +14,23 @@ router = APIRouter()
 async def run_scraper(background_tasks: BackgroundTasks) -> dict:
     """
     Trigger community scraping manually.
-    
+
     Scrapes:
     - Snowcrows (raid builds)
     - MetaBattle (WvW builds)
     - Hardstuck (WvW builds)
-    
+
     All scraped builds are automatically collected for learning.
     """
     try:
+
         async def scrape_task() -> None:
             scraper = CommunityScraper()
             collector = DataCollector()
-            
+
             logger.info("🚀 Starting community scraping...")
             builds = await scraper.scrape_all_sources()
-            
+
             # Collect all scraped builds for learning
             collected = 0
             for build in builds:
@@ -38,11 +39,11 @@ async def run_scraper(background_tasks: BackgroundTasks) -> dict:
                     collected += 1
                 except Exception as e:
                     logger.error(f"Failed to collect scraped build: {e}")
-            
+
             logger.info(f"✅ Scraping completed: {len(builds)} builds found, {collected} collected")
-        
+
         background_tasks.add_task(scrape_task)
-        
+
         return {
             "status": "started",
             "message": "Community scraping triggered in background",

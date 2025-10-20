@@ -18,10 +18,10 @@ class Evaluator:
     async def evaluate_datapoint(self, datapoint: TrainingDatapoint) -> QualityScore:
         """
         Evaluate a datapoint and assign quality scores.
-        
+
         Args:
             datapoint: Datapoint to evaluate
-            
+
         Returns:
             Quality scores
         """
@@ -32,7 +32,7 @@ class Evaluator:
                 return await self._evaluate_build(datapoint)
             else:
                 raise ValueError("Datapoint must have either build_id or team_id")
-                
+
         except Exception as e:
             logger.error(f"Error evaluating datapoint {datapoint.id}: {e}")
             # Return default low scores on error
@@ -48,7 +48,7 @@ class Evaluator:
     async def _evaluate_build(self, datapoint: TrainingDatapoint) -> QualityScore:
         """Evaluate a single build."""
         build_data = datapoint.data
-        
+
         # Prepare evaluation prompt
         prompt = f"""Evaluate this Guild Wars 2 {datapoint.game_mode} build:
 
@@ -76,7 +76,7 @@ Respond with JSON format:
                 prompt=prompt,
                 system_prompt="You are a GW2 WvW expert evaluator. Be strict and accurate.",
             )
-            
+
             # Map response to QualityScore
             return QualityScore(
                 synergy_score=response.get("synergy_potential", 5.0),
@@ -84,14 +84,17 @@ Respond with JSON format:
                 boon_coverage=5.0,  # Not applicable for single build
                 meta_compliance=response.get("meta_compliance", 5.0),
                 build_validity=response.get("build_validity", 5.0),
-                overall_score=sum([
-                    response.get("meta_compliance", 5.0),
-                    response.get("build_validity", 5.0),
-                    response.get("role_effectiveness", 5.0),
-                    response.get("synergy_potential", 5.0),
-                ]) / 4.0,
+                overall_score=sum(
+                    [
+                        response.get("meta_compliance", 5.0),
+                        response.get("build_validity", 5.0),
+                        response.get("role_effectiveness", 5.0),
+                        response.get("synergy_potential", 5.0),
+                    ]
+                )
+                / 4.0,
             )
-            
+
         except Exception as e:
             logger.error(f"Error in AI evaluation: {e}")
             return await self._fallback_evaluation(datapoint)
@@ -99,7 +102,7 @@ Respond with JSON format:
     async def _evaluate_team(self, datapoint: TrainingDatapoint) -> QualityScore:
         """Evaluate a team composition."""
         team_data = datapoint.data
-        
+
         prompt = f"""Evaluate this {datapoint.game_mode} WvW team composition:
 
 Team Size: {team_data.get('team_size', 'unknown')}
@@ -127,7 +130,7 @@ Respond with JSON:
                 prompt=prompt,
                 system_prompt="You are a GW2 WvW team composition expert. Evaluate critically.",
             )
-            
+
             return QualityScore(
                 synergy_score=response.get("synergy_score", 5.0),
                 role_coverage=response.get("role_coverage", 5.0),
@@ -136,7 +139,7 @@ Respond with JSON:
                 build_validity=8.0,  # Teams are always valid if they exist
                 overall_score=response.get("overall_effectiveness", 5.0),
             )
-            
+
         except Exception as e:
             logger.error(f"Error in AI evaluation: {e}")
             return await self._fallback_evaluation(datapoint)
@@ -145,13 +148,13 @@ Respond with JSON:
         """Fallback evaluation when AI fails."""
         # Simple heuristic-based evaluation
         base_score = 5.0
-        
+
         # Bonus for certain sources
         if datapoint.source == "community_scrape":
             base_score += 1.0
         elif datapoint.source == "ai_generated":
             base_score += 0.5
-        
+
         return QualityScore(
             synergy_score=base_score,
             role_coverage=base_score,

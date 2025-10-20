@@ -42,7 +42,7 @@ from app.api.auth import limiter as auth_limiter
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Application lifespan context manager.
-    
+
     Handles startup and shutdown events.
     """
     # Startup
@@ -51,10 +51,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info(f"🌍 API Version: {settings.API_VERSION}")
     logger.info(f"🔗 API Base URL: {settings.API_V1_STR}")
     logger.info(f"🔌 Ollama Host: {settings.OLLAMA_HOST}")
-    
+
     # Initialize database
     try:
         from app.db.init_db import init_db
+
         await init_db()
         logger.info("✅ Database initialized")
     except Exception as e:
@@ -67,21 +68,23 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception as e:
         logger.error(f"❌ Redis connection failed: {str(e)}")
         # Depending on requirements, you might want to raise here
-    
+
     # Start background tasks
     try:
         from app.services.scheduler import scheduler
+
         scheduler.start()
         logger.info("⏰ Learning pipeline scheduler activated")
     except Exception as e:
         logger.warning(f"⚠️ Failed to start scheduler: {str(e)}")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("🛑 Shutting down GW2Optimizer Backend")
     try:
         from app.services.scheduler import scheduler
+
         scheduler.shutdown()
     except Exception as e:
         logger.error(f"❌ Error shutting down scheduler: {str(e)}")
@@ -90,6 +93,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     if settings.REDIS_ENABLED and redis_client:
         await redis_client.close()
         logger.info("🔌 Redis connection closed.")
+
 
 def create_application() -> FastAPI:
     """Create and configure the FastAPI application."""
@@ -102,37 +106,38 @@ def create_application() -> FastAPI:
         openapi_url=f"{settings.API_V1_STR}/openapi.json" if settings.DEBUG else None,
         lifespan=lifespan,
     )
-    
+
     # Add rate limiting
     app.state.limiter = auth_limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
     # Configure CORS
     configure_cors(app)
-    
+
     # Add security middleware
     add_security_middleware(app, settings)
-    
+
     # Add exception handlers
     add_exception_handlers(app)
-    
+
     # Include API routers
     include_routers(app)
-    
+
     # Add health check endpoint
     add_health_check(app)
-    
+
     return app
+
 
 def configure_cors(app: FastAPI) -> None:
     """Configure CORS middleware."""
-    if hasattr(settings, 'BACKEND_CORS_ORIGINS') and settings.BACKEND_CORS_ORIGINS:
+    if hasattr(settings, "BACKEND_CORS_ORIGINS") and settings.BACKEND_CORS_ORIGINS:
         origins = [str(origin).strip("/") for origin in settings.BACKEND_CORS_ORIGINS]
     elif settings.CORS_ORIGINS:
         origins = [str(origin).strip("/") for origin in settings.CORS_ORIGINS]
     else:
         origins = ["*"]
-    
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
@@ -143,15 +148,16 @@ def configure_cors(app: FastAPI) -> None:
     )
     logger.info(f"🌐 CORS configured for origins: {', '.join(origins) if origins else 'all'}")
 
+
 def include_routers(app: FastAPI) -> None:
     """Include all API routers."""
     # Authentication routes
     app.include_router(
         auth.router,
         prefix=f"{settings.API_V1_STR}/auth",
-        tags=["Authentication"], # This tag is now defined in auth.py
+        tags=["Authentication"],  # This tag is now defined in auth.py
     )
-    
+
     # API v1 routes
     api_router = APIRouter(prefix=settings.API_V1_STR)
     api_router.include_router(ai.router, prefix="/ai", tags=["AI"])
@@ -165,23 +171,26 @@ def include_routers(app: FastAPI) -> None:
     api_router.include_router(teams.router, tags=["Teams"])
     api_router.include_router(builds_db.router, tags=["Builds DB"])
     api_router.include_router(teams_db.router, tags=["Teams DB"])
-    
+
     app.include_router(api_router)
     logger.info("🔄 API routers included")
 
+
 def add_health_check(app: FastAPI) -> None:
     """Add health check endpoint."""
+
     @app.get("/health", tags=["Health"], include_in_schema=False)
     async def health_check() -> dict[str, str]:
         """Health check endpoint."""
         return {"status": "ok", "environment": settings.ENVIRONMENT}
+
 
 # Create the FastAPI application
 app = create_application()
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host=settings.BACKEND_HOST,

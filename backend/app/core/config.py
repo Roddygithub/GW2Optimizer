@@ -56,7 +56,7 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
     LOG_FILE: str = "logs/gw2optimizer.log"
-    
+
     # Learning Configuration
     LEARNING_DATA_DIR: str = "./data/learning"
     MAX_LEARNING_ITEMS: int = 10000

@@ -1,6 +1,7 @@
 """
 AI Agent for recommending Guild Wars 2 builds.
 """
+
 import httpx
 import json
 from typing import Any, Dict

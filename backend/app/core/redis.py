@@ -1,6 +1,7 @@
 """
 Redis connection and utilities.
 """
+
 import redis.asyncio as redis
 from redis.asyncio import Redis
 from typing import AsyncGenerator, Optional
@@ -31,7 +32,8 @@ async def connect_to_redis():
             decode_responses=True,
             socket_connect_timeout=5,
             socket_keepalive=True,
-            retry_on_timeout=True)
+            retry_on_timeout=True,
+        )
         await redis_client.ping()
         logger.info("✅ Connected to Redis successfully.")
     else:

@@ -18,13 +18,13 @@ async def export_build_json(build_id: str) -> JSONResponse:
     try:
         build_service = BuildService()
         build = await build_service.get_build(build_id)
-        
+
         if not build:
             raise HTTPException(status_code=404, detail="Build not found")
-        
+
         exported = exporter.export_build_json(build)
         return JSONResponse(content=exported)
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -38,13 +38,13 @@ async def export_build_html(build_id: str) -> HTMLResponse:
     try:
         build_service = BuildService()
         build = await build_service.get_build(build_id)
-        
+
         if not build:
             raise HTTPException(status_code=404, detail="Build not found")
-        
+
         html = exporter.export_build_html(build)
         return HTMLResponse(content=html)
-    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -58,13 +58,13 @@ async def export_team_json(team_id: str) -> JSONResponse:
     try:
         team_service = TeamService()
         team = await team_service.get_team(team_id)
-        
+
         if not team:
             raise HTTPException(status_code=404, detail="Team not found")
-        
+
         exported = exporter.export_team_json(team)
         return JSONResponse(content=exported)
-    
+
     except HTTPException:
         raise
     except Exception as e:

@@ -20,9 +20,11 @@ from app.db.models import User, LoginHistory
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against a hash."""
     return pwd_context.verify(plain_password, hashed_password)
+
 
 def get_password_hash(password: str) -> str:
     """Hash a password."""
@@ -79,7 +81,7 @@ class UserService:
             if user.failed_login_attempts >= settings.MAX_LOGIN_ATTEMPTS:
                 user.is_active = False
                 user.locked_at = datetime.utcnow()
-            await self.db.commit() # Commit immediately to lock the user
+            await self.db.commit()  # Commit immediately to lock the user
 
     async def reset_failed_login_attempts(self, email: str) -> None:
         """Reset failed login attempts for a user."""

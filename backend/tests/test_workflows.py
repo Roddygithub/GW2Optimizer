@@ -21,21 +21,14 @@ class TestBuildOptimizationWorkflow:
     async def test_workflow_input_validation_success(self):
         """Test workflow input validation with valid data."""
         workflow = BuildOptimizationWorkflow()
-        inputs = {
-            "profession": "Guardian",
-            "role": "Support",
-            "game_mode": "WvW"
-        }
+        inputs = {"profession": "Guardian", "role": "Support", "game_mode": "WvW"}
         await workflow.validate_inputs(inputs)
 
     async def test_workflow_input_validation_missing_profession(self):
         """Test workflow input validation fails with missing profession."""
         workflow = BuildOptimizationWorkflow()
-        inputs = {
-            "role": "Support",
-            "game_mode": "WvW"
-        }
-        
+        inputs = {"role": "Support", "game_mode": "WvW"}
+
         with pytest.raises(ValueError, match="Missing required field"):
             await workflow.validate_inputs(inputs)
 
@@ -46,7 +39,7 @@ class TestBuildOptimizationWorkflow:
             "profession": "Guardian",
             "role": "Support",
             "game_mode": "WvW",
-            "team_composition": ["Guardian", "Warrior", "Mesmer"]
+            "team_composition": ["Guardian", "Warrior", "Mesmer"],
         }
         await workflow.validate_inputs(inputs)
 
@@ -70,19 +63,14 @@ class TestTeamAnalysisWorkflow:
     async def test_workflow_input_validation_success(self):
         """Test workflow input validation with valid data."""
         workflow = TeamAnalysisWorkflow()
-        inputs = {
-            "professions": ["Guardian", "Warrior", "Mesmer"],
-            "game_mode": "WvW"
-        }
+        inputs = {"professions": ["Guardian", "Warrior", "Mesmer"], "game_mode": "WvW"}
         await workflow.validate_inputs(inputs)
 
     async def test_workflow_input_validation_missing_professions(self):
         """Test workflow input validation fails with missing professions."""
         workflow = TeamAnalysisWorkflow()
-        inputs = {
-            "game_mode": "WvW"
-        }
-        
+        inputs = {"game_mode": "WvW"}
+
         with pytest.raises(ValueError, match="Missing required field"):
             await workflow.validate_inputs(inputs)
 
@@ -93,7 +81,7 @@ class TestTeamAnalysisWorkflow:
             "professions": ["Guardian", "Warrior", "Mesmer"],
             "game_mode": "WvW",
             "optimize": True,
-            "max_changes": 2
+            "max_changes": 2,
         }
         await workflow.validate_inputs(inputs)
 
@@ -117,5 +105,5 @@ class TestLearningWorkflow:
         """Test workflow is marked as placeholder."""
         workflow = LearningWorkflow()
         # LearningWorkflow is a placeholder for future integration
-        assert hasattr(workflow, 'name')
-        assert hasattr(workflow, 'status')
+        assert hasattr(workflow, "name")
+        assert hasattr(workflow, "status")

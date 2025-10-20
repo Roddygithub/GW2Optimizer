@@ -18,7 +18,7 @@ from app.learning.data.storage import LearningStorage
 
 class InteractionType:
     """Types of user interactions to collect."""
-    
+
     BUILD_CREATED = "build_created"
     BUILD_UPDATED = "build_updated"
     BUILD_DELETED = "build_deleted"
@@ -34,16 +34,16 @@ class InteractionType:
 class InteractionCollector:
     """
     Collector for user interaction data.
-    
+
     Collects anonymous interaction data for future machine learning applications.
     All data is stored locally and automatically managed based on configured limits.
     """
-    
+
     def __init__(self):
         """Initialize the interaction collector."""
         self.storage = LearningStorage()
         self.enabled = settings.LEARNING_ENABLED
-        
+
         if not self.enabled:
             logger.info("⚠️  Learning data collection is disabled")
 
@@ -52,20 +52,20 @@ class InteractionCollector:
         interaction_type: str,
         data: Dict[str, Any],
         user_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """
         Collect a user interaction.
-        
+
         Args:
             interaction_type: Type of interaction (from InteractionType)
             data: Interaction data (anonymized)
             user_id: Optional anonymized user ID
             metadata: Optional additional metadata
-            
+
         Returns:
             True if collected successfully, False otherwise
-            
+
         Example:
             await collector.collect_interaction(
                 InteractionType.BUILD_CREATED,
@@ -79,7 +79,7 @@ class InteractionCollector:
         """
         if not self.enabled:
             return False
-        
+
         try:
             interaction = {
                 "id": str(uuid4()),
@@ -87,27 +87,23 @@ class InteractionCollector:
                 "timestamp": datetime.utcnow().isoformat(),
                 "user_id": user_id or "anonymous",
                 "data": data,
-                "metadata": metadata or {}
+                "metadata": metadata or {},
             }
-            
+
             return await self.storage.store_interaction(interaction)
-            
+
         except Exception as e:
             logger.error(f"❌ Error collecting interaction: {e}")
             return False
 
-    async def collect_build_creation(
-        self,
-        build_data: Dict[str, Any],
-        user_id: Optional[str] = None
-    ) -> bool:
+    async def collect_build_creation(self, build_data: Dict[str, Any], user_id: Optional[str] = None) -> bool:
         """
         Collect build creation event.
-        
+
         Args:
             build_data: Build data (anonymized)
             user_id: Optional anonymized user ID
-            
+
         Returns:
             True if collected successfully
         """
@@ -122,25 +118,17 @@ class InteractionCollector:
             "has_skills": bool(build_data.get("skills")),
             "has_equipment": bool(build_data.get("equipment")),
         }
-        
-        return await self.collect_interaction(
-            InteractionType.BUILD_CREATED,
-            anonymous_data,
-            user_id
-        )
 
-    async def collect_team_creation(
-        self,
-        team_data: Dict[str, Any],
-        user_id: Optional[str] = None
-    ) -> bool:
+        return await self.collect_interaction(InteractionType.BUILD_CREATED, anonymous_data, user_id)
+
+    async def collect_team_creation(self, team_data: Dict[str, Any], user_id: Optional[str] = None) -> bool:
         """
         Collect team creation event.
-        
+
         Args:
             team_data: Team data (anonymized)
             user_id: Optional anonymized user ID
-            
+
         Returns:
             True if collected successfully
         """
@@ -151,27 +139,18 @@ class InteractionCollector:
             "build_count": len(team_data.get("build_ids", [])),
             "has_synergies": bool(team_data.get("synergies")),
         }
-        
-        return await self.collect_interaction(
-            InteractionType.TEAM_CREATED,
-            anonymous_data,
-            user_id
-        )
 
-    async def collect_build_rating(
-        self,
-        build_id: str,
-        rating: float,
-        user_id: Optional[str] = None
-    ) -> bool:
+        return await self.collect_interaction(InteractionType.TEAM_CREATED, anonymous_data, user_id)
+
+    async def collect_build_rating(self, build_id: str, rating: float, user_id: Optional[str] = None) -> bool:
         """
         Collect build rating event.
-        
+
         Args:
             build_id: Build ID (anonymized)
             rating: Rating value
             user_id: Optional anonymized user ID
-            
+
         Returns:
             True if collected successfully
         """
@@ -179,17 +158,13 @@ class InteractionCollector:
             "build_id_hash": hash(build_id),  # Anonymized ID
             "rating": rating,
         }
-        
-        return await self.collect_interaction(
-            InteractionType.BUILD_RATED,
-            anonymous_data,
-            user_id
-        )
+
+        return await self.collect_interaction(InteractionType.BUILD_RATED, anonymous_data, user_id)
 
     async def get_statistics(self) -> Dict[str, Any]:
         """
         Get collection statistics.
-        
+
         Returns:
             Dictionary with collection statistics
         """
@@ -198,10 +173,10 @@ class InteractionCollector:
     async def purge_old_data(self, days: int = 90) -> int:
         """
         Purge interaction data older than specified days.
-        
+
         Args:
             days: Number of days to keep
-            
+
         Returns:
             Number of records purged
         """

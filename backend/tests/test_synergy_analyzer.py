@@ -31,26 +31,18 @@ def sample_team():
         game_mode=GameMode.ZERG,
         team_size=10,
     )
-    
+
     # Add diverse builds
     builds = [
-        Build(name="Guardian Support", profession=Profession.GUARDIAN, 
-              game_mode=GameMode.ZERG, role=Role.SUPPORT),
-        Build(name="Warrior Tank", profession=Profession.WARRIOR,
-              game_mode=GameMode.ZERG, role=Role.TANK),
-        Build(name="Mesmer DPS", profession=Profession.MESMER,
-              game_mode=GameMode.ZERG, role=Role.DPS),
-        Build(name="Revenant DPS", profession=Profession.REVENANT,
-              game_mode=GameMode.ZERG, role=Role.DPS),
-        Build(name="Engineer DPS", profession=Profession.ENGINEER,
-              game_mode=GameMode.ZERG, role=Role.DPS),
+        Build(name="Guardian Support", profession=Profession.GUARDIAN, game_mode=GameMode.ZERG, role=Role.SUPPORT),
+        Build(name="Warrior Tank", profession=Profession.WARRIOR, game_mode=GameMode.ZERG, role=Role.TANK),
+        Build(name="Mesmer DPS", profession=Profession.MESMER, game_mode=GameMode.ZERG, role=Role.DPS),
+        Build(name="Revenant DPS", profession=Profession.REVENANT, game_mode=GameMode.ZERG, role=Role.DPS),
+        Build(name="Engineer DPS", profession=Profession.ENGINEER, game_mode=GameMode.ZERG, role=Role.DPS),
     ]
-    
-    team.slots = [
-        TeamSlot(slot_number=i, build=build, priority=1)
-        for i, build in enumerate(builds)
-    ]
-    
+
+    team.slots = [TeamSlot(slot_number=i, build=build, priority=1) for i, build in enumerate(builds)]
+
     return team
 
 
@@ -94,13 +86,13 @@ def test_identify_weaknesses(analyzer, sample_build):
 def test_analyze_build(analyzer, sample_build):
     """Test complete build analysis."""
     analysis = analyzer.analyze_build(sample_build)
-    
+
     assert "boons_provided" in analysis
     assert "role_effectiveness" in analysis
     assert "synergy_potential" in analysis
     assert "strengths" in analysis
     assert "weaknesses" in analysis
-    
+
     assert isinstance(analysis["boons_provided"], list)
     assert isinstance(analysis["role_effectiveness"], float)
     assert isinstance(analysis["strengths"], list)
@@ -109,27 +101,27 @@ def test_analyze_build(analyzer, sample_build):
 def test_analyze_team(analyzer, sample_team):
     """Test team analysis."""
     synergies = analyzer.analyze_team(sample_team)
-    
+
     assert isinstance(synergies, list)
     # Should find some synergies with diverse team
     assert len(synergies) > 0
-    
+
     for synergy in synergies:
-        assert hasattr(synergy, 'synergy_type')
-        assert hasattr(synergy, 'description')
-        assert hasattr(synergy, 'strength')
+        assert hasattr(synergy, "synergy_type")
+        assert hasattr(synergy, "description")
+        assert hasattr(synergy, "strength")
         assert 0 <= synergy.strength <= 10
 
 
 def test_calculate_team_score(analyzer, sample_team):
     """Test team scoring."""
     scores = analyzer.calculate_team_score(sample_team)
-    
+
     assert "boon_coverage" in scores
     assert "role_balance" in scores
     assert "profession_diversity" in scores
     assert "overall" in scores
-    
+
     # All scores should be 0-10
     for key, score in scores.items():
         assert 0 <= score <= 10
@@ -159,15 +151,10 @@ def test_score_profession_diversity(analyzer, sample_team):
 
 def test_empty_team(analyzer):
     """Test analysis with empty team."""
-    empty_team = TeamComposition(
-        name="Empty Team",
-        game_mode=GameMode.ZERG,
-        team_size=0,
-        slots=[]
-    )
-    
+    empty_team = TeamComposition(name="Empty Team", game_mode=GameMode.ZERG, team_size=0, slots=[])
+
     synergies = analyzer.analyze_team(empty_team)
     assert synergies == []
-    
+
     scores = analyzer.calculate_team_score(empty_team)
     assert scores["overall"] >= 0

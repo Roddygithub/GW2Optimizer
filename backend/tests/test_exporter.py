@@ -54,19 +54,19 @@ def sample_team(sample_build):
         strengths=["Good boon coverage"],
         weaknesses=["Low mobility"],
     )
-    
+
     team.slots = [
         TeamSlot(slot_number=0, build=sample_build, player_name="Player1", priority=1),
         TeamSlot(slot_number=1, build=sample_build, player_name="Player2", priority=2),
     ]
-    
+
     return team
 
 
 def test_export_build_json(exporter, sample_build):
     """Test build JSON export."""
     result = exporter.export_build_json(sample_build)
-    
+
     assert isinstance(result, dict)
     assert result["name"] == "Test Guardian Build"
     assert result["profession"] == "Guardian"
@@ -75,7 +75,7 @@ def test_export_build_json(exporter, sample_build):
     assert "skills" in result
     assert "equipment" in result
     assert "metadata" in result
-    
+
     # Check metadata
     metadata = result["metadata"]
     assert metadata["game_mode"] == "zerg"
@@ -87,7 +87,7 @@ def test_export_build_json(exporter, sample_build):
 def test_export_traits(exporter, sample_build):
     """Test trait export."""
     traits = exporter._export_traits(sample_build.trait_lines)
-    
+
     assert isinstance(traits, list)
     assert len(traits) == 2
     assert traits[0]["name"] == "Radiance"
@@ -97,7 +97,7 @@ def test_export_traits(exporter, sample_build):
 def test_export_skills(exporter, sample_build):
     """Test skill export."""
     skills = exporter._export_skills(sample_build.skills)
-    
+
     assert isinstance(skills, list)
     assert len(skills) == 2
     assert skills[0]["slot"] == "Heal"
@@ -107,7 +107,7 @@ def test_export_skills(exporter, sample_build):
 def test_export_equipment(exporter, sample_build):
     """Test equipment export."""
     equipment = exporter._export_equipment(sample_build.equipment)
-    
+
     assert isinstance(equipment, list)
     assert len(equipment) == 2
     assert equipment[0]["slot"] == "Helm"
@@ -117,14 +117,14 @@ def test_export_equipment(exporter, sample_build):
 def test_export_build_html(exporter, sample_build):
     """Test build HTML export."""
     html = exporter.export_build_html(sample_build)
-    
+
     assert isinstance(html, str)
     assert "<!DOCTYPE html>" in html
     assert "Test Guardian Build" in html
     assert "Guardian" in html
     assert "Firebrand" in html
     assert "support" in html
-    
+
     # Check CSS is included
     assert "<style>" in html
     assert "build-container" in html
@@ -133,20 +133,20 @@ def test_export_build_html(exporter, sample_build):
 def test_export_team_json(exporter, sample_team):
     """Test team JSON export."""
     result = exporter.export_team_json(sample_team)
-    
+
     assert isinstance(result, dict)
     assert result["name"] == "Test Team"
     assert result["game_mode"] == "zerg"
     assert result["team_size"] == 5
     assert "slots" in result
     assert len(result["slots"]) == 2
-    
+
     # Check slot structure
     slot = result["slots"][0]
     assert slot["slot_number"] == 0
     assert slot["player_name"] == "Player1"
     assert "build" in slot
-    
+
     # Check metadata
     assert "metadata" in result
     assert "exported_at" in result["metadata"]
@@ -155,7 +155,7 @@ def test_export_team_json(exporter, sample_team):
 def test_get_snowcrows_css(exporter):
     """Test CSS generation."""
     css = exporter._get_snowcrows_css()
-    
+
     assert isinstance(css, str)
     assert len(css) > 0
     assert "build-container" in css
@@ -166,7 +166,7 @@ def test_get_snowcrows_css(exporter):
 def test_render_trait_lines_html(exporter, sample_build):
     """Test trait lines HTML rendering."""
     html = exporter._render_trait_lines_html(sample_build.trait_lines)
-    
+
     assert isinstance(html, str)
     assert "Radiance" in html
     assert "Valor" in html
@@ -176,7 +176,7 @@ def test_render_trait_lines_html(exporter, sample_build):
 def test_render_skills_html(exporter, sample_build):
     """Test skills HTML rendering."""
     html = exporter._render_skills_html(sample_build.skills)
-    
+
     assert isinstance(html, str)
     assert "Heal" in html
     assert "Shelter" in html
@@ -186,7 +186,7 @@ def test_render_skills_html(exporter, sample_build):
 def test_render_equipment_html(exporter, sample_build):
     """Test equipment HTML rendering."""
     html = exporter._render_equipment_html(sample_build.equipment)
-    
+
     assert isinstance(html, str)
     assert "Helm" in html
     assert "Minstrel" in html
@@ -201,7 +201,7 @@ def test_export_empty_build(exporter):
         game_mode=GameMode.ROAMING,
         role=Role.DPS,
     )
-    
+
     result = exporter.export_build_json(minimal_build)
     assert result["name"] == "Minimal Build"
     assert result["profession"] == "Warrior"

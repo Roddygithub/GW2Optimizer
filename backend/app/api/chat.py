@@ -14,7 +14,7 @@ chat_service = ChatService()
 async def chat(request: ChatRequest) -> ChatResponse:
     """
     Process a chat message and return AI response.
-    
+
     The AI can:
     - Answer questions about GW2 builds and meta
     - Parse GW2Skill links

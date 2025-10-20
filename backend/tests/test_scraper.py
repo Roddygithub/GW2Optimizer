@@ -28,7 +28,7 @@ def test_extract_profession_from_text(scraper):
         ("Mesmer Chronomancer", Profession.MESMER),
         ("Revenant Herald Support", Profession.REVENANT),
     ]
-    
+
     for text, expected_prof in test_cases:
         result = scraper._extract_profession_from_text(text)
         assert result == expected_prof
@@ -49,7 +49,7 @@ def test_guess_role_from_name(scraper):
         ("Quickness Firebrand", Role.BOONSHARE),
         ("Condi Damage Necro", Role.DPS),
     ]
-    
+
     for name, expected_role in test_cases:
         result = scraper._guess_role_from_name(name)
         assert result == expected_role
@@ -58,16 +58,15 @@ def test_guess_role_from_name(scraper):
 def test_remove_duplicates(scraper):
     """Test duplicate removal."""
     from app.models.build import Build, GameMode
-    
+
     builds = [
-        Build(name="Guardian Build", profession=Profession.GUARDIAN,
-              game_mode=GameMode.ZERG, role=Role.SUPPORT),
-        Build(name="Guardian Build", profession=Profession.GUARDIAN,
-              game_mode=GameMode.ZERG, role=Role.SUPPORT),  # Duplicate
-        Build(name="Warrior Build", profession=Profession.WARRIOR,
-              game_mode=GameMode.ZERG, role=Role.TANK),
+        Build(name="Guardian Build", profession=Profession.GUARDIAN, game_mode=GameMode.ZERG, role=Role.SUPPORT),
+        Build(
+            name="Guardian Build", profession=Profession.GUARDIAN, game_mode=GameMode.ZERG, role=Role.SUPPORT
+        ),  # Duplicate
+        Build(name="Warrior Build", profession=Profession.WARRIOR, game_mode=GameMode.ZERG, role=Role.TANK),
     ]
-    
+
     unique = scraper._remove_duplicates(builds)
     assert len(unique) == 2
     assert unique[0].name == "Guardian Build"
@@ -84,10 +83,10 @@ async def test_scrape_all_sources_structure(scraper):
         assert isinstance(builds, list)
         # All builds should have required attributes
         for build in builds:
-            assert hasattr(build, 'name')
-            assert hasattr(build, 'profession')
-            assert hasattr(build, 'game_mode')
-            assert hasattr(build, 'role')
+            assert hasattr(build, "name")
+            assert hasattr(build, "profession")
+            assert hasattr(build, "game_mode")
+            assert hasattr(build, "role")
     except Exception as e:
         # Sites might be down or blocking, that's okay for this test
         pytest.skip(f"Scraping failed (expected in test environment): {e}")

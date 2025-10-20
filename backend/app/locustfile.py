@@ -14,9 +14,10 @@ from faker import Faker
 
 fake = Faker()
 
+
 class WebsiteUser(HttpUser):
     wait_time = between(1, 5)
-    
+
     def on_start(self):
         """On start, create a user and log in."""
         self.username = fake.user_name()
@@ -26,15 +27,10 @@ class WebsiteUser(HttpUser):
         self.login()
 
     def register(self):
-        self.client.post("/api/v1/auth/register", json={
-            "email": self.email,
-            "username": self.username,
-            "password": self.password
-        })
+        self.client.post(
+            "/api/v1/auth/register", json={"email": self.email, "username": self.username, "password": self.password}
+        )
 
     @task
     def login(self):
-        self.client.post("/api/v1/auth/token", data={
-            "username": self.email,
-            "password": self.password
-        })
+        self.client.post("/api/v1/auth/token", data={"username": self.email, "password": self.password})

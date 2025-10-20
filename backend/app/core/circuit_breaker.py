@@ -1,6 +1,7 @@
 """
 A simple asynchronous Circuit Breaker implementation.
 """
+
 import time
 from functools import wraps
 from typing import Any, Callable, Coroutine

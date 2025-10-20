@@ -14,11 +14,11 @@ async def init_db() -> None:
     try:
         # Import engine here to avoid circular imports
         from app.db.base import engine
-        
+
         async with engine.begin() as conn:
             # Create all tables
             await conn.run_sync(Base.metadata.create_all)
-        
+
         logger.info("✅ Database initialized successfully")
     except Exception as e:
         logger.error(f"❌ Error initializing database: {e}")
@@ -33,10 +33,10 @@ async def drop_db() -> None:
     try:
         # Import engine here to avoid circular imports
         from app.db.base import engine
-        
+
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
-        
+
         logger.warning("⚠️  All database tables dropped")
     except Exception as e:
         logger.error(f"❌ Error dropping database: {e}")

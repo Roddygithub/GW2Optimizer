@@ -37,24 +37,24 @@ class OllamaService:
     ) -> str:
         """
         Generate text using Ollama.
-        
+
         Args:
             prompt: User prompt
             system_prompt: System instructions
             temperature: Creativity (0-1)
             max_tokens: Max response length
-            
+
         Returns:
             Generated text
         """
         try:
             messages = []
-            
+
             if system_prompt:
                 messages.append({"role": "system", "content": system_prompt})
-            
+
             messages.append({"role": "user", "content": prompt})
-            
+
             payload = {
                 "model": self.model,
                 "messages": messages,
@@ -64,17 +64,17 @@ class OllamaService:
                     "num_predict": max_tokens,
                 },
             }
-            
+
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.post(
                     f"{self.host}/api/chat",
                     json=payload,
                 )
                 response.raise_for_status()
-                
+
                 data = response.json()
                 return data.get("message", {}).get("content", "")
-                
+
         except Exception as e:
             logger.error(f"Error generating with Ollama: {e}")
             raise
@@ -87,12 +87,12 @@ class OllamaService:
     ) -> Dict[str, Any]:
         """
         Generate structured JSON response.
-        
+
         Args:
             prompt: User prompt
             system_prompt: System instructions
             schema: Expected JSON schema
-            
+
         Returns:
             Parsed JSON response
         """
@@ -101,13 +101,13 @@ class OllamaService:
             full_system += f"\n\nRespond with valid JSON matching this schema:\n{json.dumps(schema, indent=2)}"
         else:
             full_system += "\n\nRespond with valid JSON only, no additional text."
-        
+
         response = await self.generate(
             prompt=prompt,
             system_prompt=full_system,
             temperature=0.3,  # Lower temperature for structured output
         )
-        
+
         try:
             # Try to extract JSON from response
             response = response.strip()
@@ -115,7 +115,7 @@ class OllamaService:
                 response = response.split("```json")[1].split("```")[0]
             elif "```" in response:
                 response = response.split("```")[1].split("```")[0]
-            
+
             return json.loads(response)
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse JSON response: {e}\nResponse: {response}")
@@ -128,11 +128,11 @@ class OllamaService:
     ) -> str:
         """
         Continue a conversation.
-        
+
         Args:
             messages: List of {"role": "user/assistant/system", "content": "..."}
             temperature: Creativity (0-1)
-            
+
         Returns:
             Assistant response
         """
@@ -145,17 +145,17 @@ class OllamaService:
                     "temperature": temperature,
                 },
             }
-            
+
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.post(
                     f"{self.host}/api/chat",
                     json=payload,
                 )
                 response.raise_for_status()
-                
+
                 data = response.json()
                 return data.get("message", {}).get("content", "")
-                
+
         except Exception as e:
             logger.error(f"Error in chat with Ollama: {e}")
             raise

@@ -31,7 +31,15 @@ from app.core.redis import get_redis_client
 from app.db.session import get_db
 from app.db.models import User
 from app.models.token import Token
-from app.models.user import UserCreate, UserOut, UserUpdate, UserPreferencesUpdate, PasswordResetRequest, PasswordReset, LoginHistoryOut
+from app.models.user import (
+    UserCreate,
+    UserOut,
+    UserUpdate,
+    UserPreferencesUpdate,
+    PasswordResetRequest,
+    PasswordReset,
+    LoginHistoryOut,
+)
 from app.services.user_service import UserService
 from app.services.email_service import send_password_reset_email, send_verification_email
 
@@ -39,6 +47,7 @@ router = APIRouter(tags=["Authentication"])
 limiter = Limiter(key_func=get_remote_address)
 
 # Password validation
+
 
 @router.post(
     "/register",
@@ -58,7 +67,7 @@ limiter = Limiter(key_func=get_remote_address)
                         "is_active": True,
                     }
                 }
-            }
+            },
         },
         409: {"description": "Email or username already exists"},
         422: {
@@ -70,12 +79,12 @@ limiter = Limiter(key_func=get_remote_address)
                         "detail": "One or more validation errors occurred.",
                         "fields": {
                             "username": "must contain only alphanumeric characters",
-                            "password": "Password must be at least 12 characters long."
+                            "password": "Password must be at least 12 characters long.",
                         },
-                        "correlation_id": "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+                        "correlation_id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
                     }
                 }
-            }
+            },
         },
     },
 )
@@ -86,7 +95,7 @@ async def register(
     db: AsyncSession = Depends(get_db),
 ) -> UserOut:
     """Register a new user with email and password.
-    
+
     - **email**: Must be a valid and unique email address.
     - **username**: Must be a unique username.
     - **password**: Must meet strength requirements.
@@ -96,27 +105,26 @@ async def register(
     if existing_user:
         logger.warning(f"Registration failed: email '{user_in.email}' already exists.")
         raise UserExistsException(field="email")
-    
+
     existing_username = await user_service.get_by_username(user_in.username)
     if existing_username:
         logger.warning(f"Registration failed: username '{user_in.username}' already taken.")
         raise UserExistsException(field="username")
-    
+
     hashed_password = get_password_hash(user_in.password)
     user = await user_service.create_user(
         email=user_in.email,
         username=user_in.username,
         hashed_password=hashed_password,
     )
-    
+
     # In a real app, this would send an email with a verification link
-    verification_token = create_access_token(
-        subject=user.email, expires_delta=timedelta(days=1)
-    )
+    verification_token = create_access_token(subject=user.email, expires_delta=timedelta(days=1))
     await send_verification_email(user.email, user.username, verification_token)
-    
+
     logger.info(f"New user registered: {user.email} (ID: {user.id})")
     return user
+
 
 @router.get("/verify-email/{token}", status_code=status.HTTP_200_OK, summary="Verify user email")
 async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
@@ -145,6 +153,7 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
     logger.info(f"Email verified for user: {email}")
     return {"msg": "Email verified successfully. You can now log in."}
 
+
 @router.post(
     "/token",
     response_model=Token,
@@ -167,7 +176,7 @@ async def login_for_access_token(
     """Login with email (as username) and password."""
     user_service = UserService(db)
     user = await user_service.authenticate_user(form_data.username, form_data.password)
-    
+
     if not user:
         # Handle failed attempt and potential account lock
         await user_service.handle_failed_login(form_data.username)
@@ -180,7 +189,7 @@ async def login_for_access_token(
             },
         )
         raise InvalidCredentialsException()
-    
+
     if not user.is_active:
         logger.warning(
             "Login attempt for inactive/locked user",
@@ -190,17 +199,17 @@ async def login_for_access_token(
             },
         )
         raise AccountLockedException()
-    
+
     await user_service.reset_failed_login_attempts(user.email)
     await user_service.log_login_history(user, request)
-    
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         subject=str(user.id),
         expires_delta=access_token_expires,
     )
     refresh_token = create_refresh_token(subject=str(user.id))
-    
+
     response.set_cookie(
         key=settings.ACCESS_TOKEN_COOKIE_NAME,
         value=access_token,
@@ -209,7 +218,7 @@ async def login_for_access_token(
         secure=not settings.DEBUG,
         samesite="lax",
     )
-    
+
     logger.info(
         "User logged in successfully",
         extra={
@@ -219,6 +228,7 @@ async def login_for_access_token(
         },
     )
     return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
+
 
 @router.post(
     "/refresh",
@@ -248,20 +258,20 @@ async def refresh_token(
 
     user_service = UserService(db)
     user = await user_service.get_by_id(payload["sub"])
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token",
         )
-    
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     new_access_token = create_access_token(
         subject=str(user.id),
         expires_delta=access_token_expires,
     )
     new_refresh_token = create_refresh_token(subject=str(user.id))
-    
+
     response.set_cookie(
         key=settings.ACCESS_TOKEN_COOKIE_NAME,
         value=new_access_token,
@@ -270,9 +280,10 @@ async def refresh_token(
         secure=not settings.DEBUG,
         samesite="lax",
     )
-    
+
     logger.info(f"Token refreshed for user: {user.email} (ID: {user.id})")
     return Token(access_token=new_access_token, refresh_token=new_refresh_token, token_type="bearer")
+
 
 @router.post("/password-recovery/{email}", status_code=status.HTTP_202_ACCEPTED)
 @limiter.limit("2/hour")
@@ -283,15 +294,14 @@ async def recover_password(email: str, request: Request, db: AsyncSession = Depe
     user_service = UserService(db)
     user = await user_service.get_by_email(email)
     if user:
-        password_reset_token = create_access_token(
-            subject=user.email, expires_delta=timedelta(hours=1)
-        )
+        password_reset_token = create_access_token(subject=user.email, expires_delta=timedelta(hours=1))
         await send_password_reset_email(email_to=user.email, token=password_reset_token)
         logger.info(f"Password recovery email sent to {email}")
     else:
         logger.warning(f"Password recovery attempt for non-existent email: {email}")
     # Always return 202 to prevent email enumeration
     return {"msg": "If an account with this email exists, a password recovery link has been sent."}
+
 
 @router.post("/reset-password/", status_code=status.HTTP_204_NO_CONTENT)
 async def reset_password(
@@ -319,6 +329,7 @@ async def reset_password(
     logger.info(f"Password reset successfully for user {email}")
     return
 
+
 @router.get(
     "/me",
     response_model=UserOut,
@@ -332,6 +343,7 @@ async def reset_password(
 async def read_users_me(current_user: User = Depends(get_current_active_user)) -> UserOut:
     """Get the currently authenticated user's details."""
     return current_user
+
 
 @router.post(
     "/logout",

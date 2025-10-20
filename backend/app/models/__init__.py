@@ -13,25 +13,21 @@ __all__ = [
     "BuildCreate",
     "BuildResponse",
     "BuildDB",
-    
     # Team models
     "TeamComposition",
     "TeamResponse",
     "TeamCompositionDB",
     "TeamSlotDB",
-    
     # Chat models
     "ChatMessage",
     "ChatRequest",
     "ChatResponse",
-    
     # User models
     "User",
     "UserCreate",
     "UserLogin",
     "UserOut",
     "UserUpdate",
-    
     # Auth models
     "Token",
     "TokenData",

@@ -16,7 +16,7 @@ build_service = BuildService()
 async def create_build(request: BuildCreate) -> BuildResponse:
     """
     Create a new build.
-    
+
     Can accept:
     - GW2Skill URL to parse
     - Custom requirements for AI to generate

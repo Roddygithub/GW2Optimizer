@@ -14,10 +14,10 @@ class SnowcrowsExporter:
     def export_build_json(self, build: Build) -> Dict:
         """
         Export build to Snowcrows JSON format.
-        
+
         Args:
             build: Build to export
-            
+
         Returns:
             Dictionary in Snowcrows format
         """
@@ -46,10 +46,10 @@ class SnowcrowsExporter:
     def export_build_html(self, build: Build) -> str:
         """
         Export build to Snowcrows-style HTML.
-        
+
         Args:
             build: Build to export
-            
+
         Returns:
             HTML string
         """
@@ -110,10 +110,10 @@ class SnowcrowsExporter:
     def export_team_json(self, team: TeamComposition) -> Dict:
         """
         Export team composition to JSON.
-        
+
         Args:
             team: Team to export
-            
+
         Returns:
             Dictionary with team data
         """
@@ -307,7 +307,7 @@ class SnowcrowsExporter:
         """Render trait lines as HTML."""
         if not trait_lines:
             return "<p>No trait lines specified</p>"
-        
+
         html = ""
         for tl in trait_lines:
             html += f"""
@@ -322,7 +322,7 @@ class SnowcrowsExporter:
         """Render skills as HTML."""
         if not skills:
             return "<p>No skills specified</p>"
-        
+
         html = ""
         for skill in skills:
             html += f"""
@@ -337,7 +337,7 @@ class SnowcrowsExporter:
         """Render equipment as HTML."""
         if not equipment:
             return "<p>No equipment specified</p>"
-        
+
         html = ""
         for eq in equipment:
             html += f"""
@@ -353,7 +353,7 @@ class SnowcrowsExporter:
     def _render_description_html(self, build: Build) -> str:
         """Render description section."""
         html = ""
-        
+
         if build.description:
             html += f"""
             <section class="build-section">
@@ -363,7 +363,7 @@ class SnowcrowsExporter:
                 </div>
             </section>
             """
-        
+
         if build.playstyle:
             html += f"""
             <section class="build-section">
@@ -373,7 +373,7 @@ class SnowcrowsExporter:
                 </div>
             </section>
             """
-        
+
         if build.synergies:
             html += f"""
             <section class="build-section">
@@ -383,7 +383,7 @@ class SnowcrowsExporter:
                 </ul>
             </section>
             """
-        
+
         if build.counters:
             html += f"""
             <section class="build-section">
@@ -393,5 +393,5 @@ class SnowcrowsExporter:
                 </ul>
             </section>
             """
-        
+
         return html

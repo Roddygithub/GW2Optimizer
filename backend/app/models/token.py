@@ -1,6 +1,7 @@
 """
 Pydantic schemas for Token data.
 """
+
 from pydantic import BaseModel
 from typing import Optional
 

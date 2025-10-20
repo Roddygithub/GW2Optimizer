@@ -25,7 +25,7 @@ async def ollama_health() -> JSONResponse:
     """Check Ollama service health."""
     ollama_service = OllamaService()
     is_healthy = await ollama_service.check_health()
-    
+
     return JSONResponse(
         content={
             "status": "healthy" if is_healthy else "unhealthy",
@@ -41,7 +41,7 @@ async def full_health_check() -> JSONResponse:
     """Complete health check of all services."""
     ollama_service = OllamaService()
     ollama_healthy = await ollama_service.check_health()
-    
+
     return JSONResponse(
         content={
             "status": "healthy" if ollama_healthy else "degraded",

@@ -19,12 +19,11 @@ router = APIRouter()
     dependencies=[Depends(get_current_active_user)],
 )
 async def recommend_build(
-    request: Dict[str, Any],
-    current_user: User = Depends(get_current_active_user)
+    request: Dict[str, Any], current_user: User = Depends(get_current_active_user)
 ) -> Dict[str, Any]:
     """
     Get build recommendations for a specific profession and role.
-    
+
     Request body:
     - profession: str - Character profession (Guardian, Warrior, etc.)
     - role: str - Desired role (DPS, Support, Tank, Hybrid)
@@ -39,10 +38,7 @@ async def recommend_build(
         return result
     except Exception as e:
         logger.error(f"Error recommending build: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"AI service error: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"AI service error: {str(e)}")
 
 
 @router.post(
@@ -53,12 +49,11 @@ async def recommend_build(
     dependencies=[Depends(get_current_active_user)],
 )
 async def analyze_team_synergy(
-    request: Dict[str, Any],
-    current_user: User = Depends(get_current_active_user)
+    request: Dict[str, Any], current_user: User = Depends(get_current_active_user)
 ) -> Dict[str, Any]:
     """
     Analyze the synergy of a team composition.
-    
+
     Request body:
     - professions: List[str] - List of team professions
     - game_mode: str - Game mode
@@ -72,10 +67,7 @@ async def analyze_team_synergy(
         return result
     except Exception as e:
         logger.error(f"Error analyzing team synergy: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"AI service error: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"AI service error: {str(e)}")
 
 
 @router.post(
@@ -86,12 +78,11 @@ async def analyze_team_synergy(
     dependencies=[Depends(get_current_active_user)],
 )
 async def optimize_team(
-    request: Dict[str, Any],
-    current_user: User = Depends(get_current_active_user)
+    request: Dict[str, Any], current_user: User = Depends(get_current_active_user)
 ) -> Dict[str, Any]:
     """
     Optimize a team composition.
-    
+
     Request body:
     - current_composition: List[str] - Current team professions
     - objectives: List[str] - Optimization objectives (maximize_boons, maximize_dps, etc.)
@@ -106,10 +97,7 @@ async def optimize_team(
         return result
     except Exception as e:
         logger.error(f"Error optimizing team: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"AI service error: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"AI service error: {str(e)}")
 
 
 @router.post(
@@ -120,17 +108,16 @@ async def optimize_team(
     dependencies=[Depends(get_current_active_user)],
 )
 async def execute_build_optimization(
-    request: Dict[str, Any],
-    current_user: User = Depends(get_current_active_user)
+    request: Dict[str, Any], current_user: User = Depends(get_current_active_user)
 ) -> Dict[str, Any]:
     """
     Execute the complete build optimization workflow.
-    
+
     This workflow:
     1. Generates initial build recommendation
     2. Analyzes synergy with team (if provided)
     3. Generates alternative build variants
-    
+
     Request body:
     - profession: str - Character profession
     - role: str - Desired role
@@ -147,8 +134,7 @@ async def execute_build_optimization(
     except Exception as e:
         logger.error(f"Error executing build optimization workflow: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Workflow execution error: {str(e)}"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Workflow execution error: {str(e)}"
         )
 
 
@@ -160,18 +146,17 @@ async def execute_build_optimization(
     dependencies=[Depends(get_current_active_user)],
 )
 async def execute_team_analysis(
-    request: Dict[str, Any],
-    current_user: User = Depends(get_current_active_user)
+    request: Dict[str, Any], current_user: User = Depends(get_current_active_user)
 ) -> Dict[str, Any]:
     """
     Execute the complete team analysis workflow.
-    
+
     This workflow:
     1. Analyzes current team synergy
     2. Optimizes composition (if requested)
     3. Compares before/after
     4. Provides detailed recommendations
-    
+
     Request body:
     - professions: List[str] - Team professions
     - game_mode: str - Game mode
@@ -187,8 +172,7 @@ async def execute_team_analysis(
     except Exception as e:
         logger.error(f"Error executing team analysis workflow: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Workflow execution error: {str(e)}"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Workflow execution error: {str(e)}"
         )
 
 
@@ -201,7 +185,7 @@ async def execute_team_analysis(
 async def get_ai_status() -> Dict[str, Any]:
     """
     Get the current status of the AI service.
-    
+
     Returns information about:
     - Registered agents
     - Registered workflows
@@ -213,7 +197,4 @@ async def get_ai_status() -> Dict[str, Any]:
         return status_info
     except Exception as e:
         logger.error(f"Error getting AI service status: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Service status error: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Service status error: {str(e)}")

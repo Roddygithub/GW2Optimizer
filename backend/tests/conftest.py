@@ -60,7 +60,9 @@ async def redis_client() -> AsyncGenerator[fakeredis.aioredis.FakeRedis, None]:
 
 
 @pytest_asyncio.fixture()
-async def client(db_session: AsyncSession, redis_client: fakeredis.aioredis.FakeRedis) -> AsyncGenerator[AsyncClient, None]:
+async def client(
+    db_session: AsyncSession, redis_client: fakeredis.aioredis.FakeRedis
+) -> AsyncGenerator[AsyncClient, None]:
     """Yield an HTTP client for the API, with overridden dependencies."""
     app.dependency_overrides[get_db] = lambda: db_session
     app.dependency_overrides[get_redis_client] = lambda: redis_client

@@ -85,7 +85,7 @@ async def test_get_current_user_with_cookie(client: AsyncClient, test_user: User
         "/api/v1/auth/token",
         data={"username": test_user.email, "password": test_user.password},
     )
-    
+
     # Make request without Authorization header, relying on the cookie
     response = await client.get("/api/v1/auth/me")
     assert response.status_code == status.HTTP_200_OK
@@ -115,7 +115,7 @@ async def test_logout(client: AsyncClient, auth_headers: dict):
     assert logout_response.status_code == status.HTTP_204_NO_CONTENT
     # The 'expires' attribute should be in the past, effectively deleting the cookie.
     assert 'expires="Thu, 01 Jan 1970 00:00:00 GMT"' in logout_response.headers["set-cookie"]
-    
+
     # Verify token is revoked
     response = await client.get("/api/v1/auth/me", headers=auth_headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -227,13 +227,16 @@ async def test_register_invalid_username(client: AsyncClient, username: str):
     assert "username" in data["fields"]
 
 
-@pytest.mark.parametrize("password, expected_msg_part", [
-    ("short", "12 caractères"),  # Too short
-    ("nouppercase123!", "lettre majuscule"),  # No uppercase
-    ("NOLOWERCASE123!", "lettre minuscule"),  # No lowercase
-    ("NoDigitsHere!", "un chiffre"),  # No digits
-    ("NoSpecialChar123", "caractère spécial"), # No special char
-])
+@pytest.mark.parametrize(
+    "password, expected_msg_part",
+    [
+        ("short", "12 caractères"),  # Too short
+        ("nouppercase123!", "lettre majuscule"),  # No uppercase
+        ("NOLOWERCASE123!", "lettre minuscule"),  # No lowercase
+        ("NoDigitsHere!", "un chiffre"),  # No digits
+        ("NoSpecialChar123", "caractère spécial"),  # No special char
+    ],
+)
 async def test_register_weak_password_scenarios(client: AsyncClient, password: str, expected_msg_part: str):
     """Test registration with various weak password scenarios."""
     response = await client.post(
@@ -246,11 +249,14 @@ async def test_register_weak_password_scenarios(client: AsyncClient, password: s
     assert expected_msg_part in data["fields"]["password"]
 
 
-@pytest.mark.parametrize("password, username, email", [
-    ("ValidPassword!123", "validuser1", "valid1@example.com"),
-    ("AnotherValidPass!456", "validuser2", "valid2@example.com"),
-    ("SuperSecureP@ssw0rd", "validuser3", "valid3@example.com"),
-])
+@pytest.mark.parametrize(
+    "password, username, email",
+    [
+        ("ValidPassword!123", "validuser1", "valid1@example.com"),
+        ("AnotherValidPass!456", "validuser2", "valid2@example.com"),
+        ("SuperSecureP@ssw0rd", "validuser3", "valid3@example.com"),
+    ],
+)
 async def test_register_valid_passwords(client: AsyncClient, password: str, username: str, email: str):
     """Test registration with various valid passwords."""
     response = await client.post(
@@ -288,7 +294,7 @@ async def test_email_verification_flow(mock_send_email, client: AsyncClient):
     )
     assert reg_response.status_code == status.HTTP_201_CREATED
     mock_send_email.assert_called_once()
-    
+
     # Extract token from mocked call
     verification_token = mock_send_email.call_args[0][2]
 
@@ -304,16 +310,14 @@ async def test_email_verification_flow(mock_send_email, client: AsyncClient):
 
 async def test_update_user_profile(client: AsyncClient, auth_headers: dict):
     """Test updating the current user's profile."""
-    update_data = {
-        "full_name": "Test User Full Name",
-        "bio": "This is my test bio."
-    }
+    update_data = {"full_name": "Test User Full Name", "bio": "This is my test bio."}
     response = await client.put("/api/v1/auth/me", json=update_data, headers=auth_headers)
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert data["full_name"] == "Test User Full Name"
     assert data["bio"] == "This is my test bio."
     assert data["email"] == TEST_USER_EMAIL
+
 
 async def test_update_user_preferences(client: AsyncClient, auth_headers: dict):
     """Test updating user preferences."""
@@ -323,6 +327,7 @@ async def test_update_user_preferences(client: AsyncClient, auth_headers: dict):
     data = response.json()
     assert data["preferences"]["theme"] == "dark"
     assert data["preferences"]["language"] == "fr"
+
 
 async def test_get_login_history(client: AsyncClient, auth_headers: dict):
     """Test retrieving user login history."""
@@ -335,12 +340,10 @@ async def test_get_login_history(client: AsyncClient, auth_headers: dict):
     assert "ip_address" in data[0]
     assert "user_agent" in data[0]
 
+
 async def test_invalid_login_form_data(client: AsyncClient):
     """Test login with invalid form data structure."""
-    response = await client.post(
-        "/api/v1/auth/token",
-        data={"invalid_field": "some_value"}
-    )
+    response = await client.post("/api/v1/auth/token", data={"invalid_field": "some_value"})
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     data = response.json()
     assert data["error_code"] == "VALIDATION_ERROR"
@@ -380,22 +383,22 @@ async def test_refresh_token_invalid(client: AsyncClient):
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     data = response.json()
-    assert data["error_code"] == "HTTP_EXCEPTION" # This comes from a direct HTTPException
+    assert data["error_code"] == "HTTP_EXCEPTION"  # This comes from a direct HTTPException
 
 
 async def test_security_headers_are_present(client: AsyncClient):
     """Test that essential security headers are added to responses."""
-    response = await client.get("/api/v1/health") # A simple, non-protected endpoint
-    
+    response = await client.get("/api/v1/health")  # A simple, non-protected endpoint
+
     assert response.status_code == status.HTTP_200_OK
-    
+
     headers = response.headers
     assert "Content-Security-Policy" in headers
     assert "X-Frame-Options" in headers and headers["X-Frame-Options"] == "DENY"
     assert "X-Content-Type-Options" in headers and headers["X-Content-Type-Options"] == "nosniff"
     assert "X-XSS-Protection" in headers and "1; mode=block" in headers["X-XSS-Protection"]
     assert "Referrer-Policy" in headers
-    
+
     # HSTS is only added in production (is_production=True in middleware)
     # assert "Strict-Transport-Security" in headers
 
@@ -406,6 +409,7 @@ async def test_redis_unavailability_on_auth(mock_sismember, client: AsyncClient,
     Test that if Redis is unavailable during token check, the request fails gracefully.
     """
     from redis.exceptions import ConnectionError
+
     mock_sismember.side_effect = ConnectionError("Simulated Redis is down")
 
     with pytest.raises(ConnectionError):

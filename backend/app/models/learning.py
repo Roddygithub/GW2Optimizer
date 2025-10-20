@@ -32,23 +32,23 @@ class TrainingDatapoint(BaseModel):
 
     id: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    
+
     # Build/Team data
     build_id: Optional[str] = None
     team_id: Optional[str] = None
     data: Dict = Field(default_factory=dict)  # Actual build/team data
-    
+
     # Metadata
     game_mode: str
     profession: Optional[str] = None
     role: Optional[str] = None
     source: DataSource
-    
+
     # Quality
     quality_scores: Optional[QualityScore] = None
     is_validated: bool = False
     validation_date: Optional[datetime] = None
-    
+
     # Storage
     compressed_size_bytes: int = 0
     is_archived: bool = False
@@ -63,15 +63,15 @@ class LearningStats(BaseModel):
     archived_datapoints: int = 0
     average_quality_score: float = 0.0
     total_storage_bytes: int = 0
-    
+
     # By source
     datapoints_by_source: Dict[str, int] = Field(default_factory=dict)
-    
+
     # Quality distribution
     high_quality_count: int = 0  # score >= 8
     medium_quality_count: int = 0  # 5 <= score < 8
     low_quality_count: int = 0  # score < 5
-    
+
     last_cleanup_date: Optional[datetime] = None
     last_training_date: Optional[datetime] = None
 
@@ -83,7 +83,7 @@ class FineTuningConfig(BaseModel):
     min_quality_threshold: float = Field(default=7.0, description="Min quality score")
     training_interval_days: int = Field(default=7, description="Days between trainings")
     max_training_samples: int = Field(default=1000, description="Max samples per training")
-    
+
     # Ollama fine-tuning parameters
     learning_rate: float = 0.0001
     num_epochs: int = 3

@@ -83,74 +83,61 @@ team_builds = Table(
     Column("build_id", String, ForeignKey("builds.id", ondelete="CASCADE"), primary_key=True),
     Column("slot_number", Integer, nullable=False),
     Column("player_name", String(100), nullable=True),
-    Column("priority", Integer, default=1, nullable=False)
+    Column("priority", Integer, default=1, nullable=False),
 )
 
 
 class BuildDB(Base):
     """SQLAlchemy model for Build persistence."""
-    
+
     __tablename__ = "builds"
-    
-    id: Mapped[str] = mapped_column(
-        String,
-        primary_key=True,
-        index=True,
-        default=lambda: str(uuid4())
-    )
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, index=True, default=lambda: str(uuid4()))
     name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     profession: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     specialization: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     game_mode: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
     role: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
-    
+
     # JSON fields for complex data
     trait_lines: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
     skills: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
     equipment: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
     synergies: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
     counters: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
-    
+
     # Metadata
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     playstyle: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     source_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     source_type: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
-    
+
     # Ratings
     effectiveness: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     difficulty: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     is_public: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, index=True)
-    
+
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime,
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow,
-        nullable=False
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
     )
-    
+
     # Foreign Keys
-    user_id: Mapped[str] = mapped_column(
-        String,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True
-    )
-    
+    user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
     # Relationships
     user: Mapped["UserDB"] = relationship("UserDB", back_populates="builds")
-    
+
     def __repr__(self) -> str:
         return f"<BuildDB(id={self.id}, name={self.name}, profession={self.profession})>"
 
 
 class BuildBase(BaseModel):
     """Base model for Build with shared attributes."""
-    
+
     model_config = ConfigDict(from_attributes=True, use_enum_values=True)
-    
+
     name: str = Field(..., min_length=1, max_length=100, description="Build name")
     profession: Profession
     specialization: Optional[str] = Field(None, max_length=100)
@@ -167,12 +154,12 @@ class BuildBase(BaseModel):
 
 class Build(BuildBase):
     """Complete build model for API responses."""
-    
+
     id: str
     user_id: str
     created_at: datetime
     updated_at: datetime
-    
+
     # Build Configuration
     trait_lines: List[TraitLine] = Field(default_factory=list)
     skills: List[Skill] = Field(default_factory=list)
@@ -183,7 +170,7 @@ class Build(BuildBase):
 
 class BuildCreate(BuildBase):
     """Create build request."""
-    
+
     trait_lines: List[TraitLine] = Field(default_factory=list)
     skills: List[Skill] = Field(default_factory=list)
     equipment: List[Equipment] = Field(default_factory=list)
@@ -195,9 +182,9 @@ class BuildCreate(BuildBase):
 
 class BuildUpdate(BaseModel):
     """Update build request."""
-    
+
     model_config = ConfigDict(from_attributes=True)
-    
+
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
     playstyle: Optional[str] = None
@@ -213,9 +200,9 @@ class BuildUpdate(BaseModel):
 
 class BuildResponse(BaseModel):
     """Build response with AI analysis."""
-    
+
     model_config = ConfigDict(from_attributes=True)
-    
+
     build: Build
     ai_analysis: Optional[Dict[str, str]] = Field(default=None, description="AI analysis")
     similar_builds: List[Build] = Field(default_factory=list, description="Similar builds")

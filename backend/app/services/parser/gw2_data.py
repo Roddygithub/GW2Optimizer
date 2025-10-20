@@ -75,14 +75,37 @@ STAT_COMBOS: Dict[str, Dict[str, int]] = {
     "Diviner": {"Power": 3, "Concentration": 2, "Precision": 1, "Ferocity": 1},
     "Marshal": {"Power": 3, "Healing": 2, "Precision": 1, "Condition": 1},
     "Plaguedoctor": {"Vitality": 3, "Healing": 2, "Condition": 1, "Concentration": 1},
-    "Celestial": {"Power": 1, "Precision": 1, "Toughness": 1, "Vitality": 1, "Ferocity": 1, "Healing": 1, "Condition": 1, "Concentration": 1, "Expertise": 1},
+    "Celestial": {
+        "Power": 1,
+        "Precision": 1,
+        "Toughness": 1,
+        "Vitality": 1,
+        "Ferocity": 1,
+        "Healing": 1,
+        "Condition": 1,
+        "Concentration": 1,
+        "Expertise": 1,
+    },
 }
 
 # Equipment slots
 EQUIPMENT_SLOTS: List[str] = [
-    "Helm", "Shoulders", "Coat", "Gloves", "Leggings", "Boots",
-    "Amulet", "Ring1", "Ring2", "Accessory1", "Accessory2", "Backpack",
-    "WeaponA1", "WeaponA2", "WeaponB1", "WeaponB2"
+    "Helm",
+    "Shoulders",
+    "Coat",
+    "Gloves",
+    "Leggings",
+    "Boots",
+    "Amulet",
+    "Ring1",
+    "Ring2",
+    "Accessory1",
+    "Accessory2",
+    "Backpack",
+    "WeaponA1",
+    "WeaponA2",
+    "WeaponB1",
+    "WeaponB2",
 ]
 
 # Rune sets
@@ -125,8 +148,23 @@ SIGIL_TYPES: Dict[str, str] = {
 
 # Weapon types
 WEAPON_TYPES: List[str] = [
-    "Greatsword", "Hammer", "Longbow", "Rifle", "Staff",
-    "Sword", "Axe", "Dagger", "Mace", "Pistol", "Scepter",
-    "Focus", "Shield", "Torch", "Warhorn",
-    "Shortbow", "Harpoon", "Speargun", "Trident"
+    "Greatsword",
+    "Hammer",
+    "Longbow",
+    "Rifle",
+    "Staff",
+    "Sword",
+    "Axe",
+    "Dagger",
+    "Mace",
+    "Pistol",
+    "Scepter",
+    "Focus",
+    "Shield",
+    "Torch",
+    "Warhorn",
+    "Shortbow",
+    "Harpoon",
+    "Speargun",
+    "Trident",
 ]

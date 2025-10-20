@@ -1,6 +1,7 @@
 """
 Pydantic schemas for User data.
 """
+
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from pydantic_core.core_schema import FieldValidationInfo
 from typing import Optional, Dict, Any
@@ -13,15 +14,28 @@ from app.core.logging import logger
 
 class UserBase(BaseModel):
     email: EmailStr = Field(..., description="User's unique email address.", example="user@example.com")
-    username: str = Field(..., min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_]+$", description="User's unique username. Must be alphanumeric with underscores.", example="player_123")
+    username: str = Field(
+        ...,
+        min_length=3,
+        max_length=50,
+        pattern=r"^[a-zA-Z0-9_]+$",
+        description="User's unique username. Must be alphanumeric with underscores.",
+        example="player_123",
+    )
 
 
-COMMON_PASSWORDS = {'password', '123456', 'qwerty', 'azerty', '123456789', 'password123'}
+COMMON_PASSWORDS = {"password", "123456", "qwerty", "azerty", "123456789", "password123"}
+
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=12, description="User's password. Must be at least 12 characters long and contain uppercase, lowercase, a digit, and a special character.", example="ValidPass!123")
+    password: str = Field(
+        ...,
+        min_length=12,
+        description="User's password. Must be at least 12 characters long and contain uppercase, lowercase, a digit, and a special character.",
+        example="ValidPass!123",
+    )
 
-    @field_validator('password')
+    @field_validator("password")
     @classmethod
     def password_complexity(cls, v: str, info: FieldValidationInfo) -> str:
         """Validate password complexity with user-friendly messages."""
@@ -34,18 +48,19 @@ class UserCreate(UserBase):
             errors.append("au moins un chiffre")
         if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", v):
             errors.append("au moins un caractère spécial")
-        
+
         if errors:
             raise ValueError(f"Le mot de passe doit contenir {', '.join(errors)}.")
 
         if v.lower() in COMMON_PASSWORDS:
-            raise ValueError('Ce mot de passe est trop courant et ne peut pas être utilisé.')
+            raise ValueError("Ce mot de passe est trop courant et ne peut pas être utilisé.")
 
         return v
 
 
 class UserLogin(BaseModel):
     """Schema for user login."""
+
     email: EmailStr = Field(..., description="User's email address")
     password: str = Field(..., description="User's password")
 
