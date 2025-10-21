@@ -121,9 +121,11 @@ __all__ = [
     "UserBase",
     "UserCreate",
     "UserUpdate",
-    "UserResponse",
+    "UserOut",
     "UserLogin",
     "UserDB",
+    "UserPreferencesUpdate",
+    "LoginHistoryOut",
     "PasswordResetRequest",
     "PasswordReset",
 ]
