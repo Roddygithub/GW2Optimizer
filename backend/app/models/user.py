@@ -4,12 +4,21 @@ Pydantic schemas for User data.
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from pydantic_core.core_schema import FieldValidationInfo
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, TYPE_CHECKING
 from datetime import datetime
 import uuid
 import re
 
 from app.core.logging import logger
+
+if TYPE_CHECKING:
+    from app.db.models import User as UserDB
+else:
+    # Runtime import for backward compatibility
+    try:
+        from app.db.models import User as UserDB
+    except ImportError:
+        UserDB = None  # type: ignore
 
 
 class UserBase(BaseModel):
@@ -106,3 +115,15 @@ class PasswordResetRequest(BaseModel):
 class PasswordReset(BaseModel):
     token: str
     new_password: str
+
+
+__all__ = [
+    "UserBase",
+    "UserCreate",
+    "UserUpdate",
+    "UserResponse",
+    "UserLogin",
+    "UserDB",
+    "PasswordResetRequest",
+    "PasswordReset",
+]
