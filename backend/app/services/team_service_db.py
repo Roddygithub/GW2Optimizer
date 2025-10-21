@@ -71,7 +71,7 @@ class TeamService:
             await self.db.commit()
             await self.db.refresh(team_db)
 
-            logger.info(f"✅ Created team {team_db.id} for user {user.username}")
+            logger.info(f"✅ Created team {team_db.id} for user {user.id}")
             return team_db
 
         except HTTPException:
@@ -227,7 +227,7 @@ class TeamService:
             await self.db.commit()
             await self.db.refresh(team)
 
-            logger.info(f"✅ Updated team {team_id} for user {user.username}")
+            logger.info(f"✅ Updated team {team_id} for user {user.id}")
             return team
 
         except HTTPException:
@@ -267,7 +267,7 @@ class TeamService:
             await self.db.delete(team)
             await self.db.commit()
 
-            logger.info(f"✅ Deleted team {team_id} for user {user.username}")
+            logger.info(f"✅ Deleted team {team_id} for user {user.id}")
             return True
 
         except HTTPException:

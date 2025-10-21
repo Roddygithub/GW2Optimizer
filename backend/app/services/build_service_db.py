@@ -49,7 +49,7 @@ class BuildService:
             await self.db.commit()
             await self.db.refresh(build_db)
 
-            logger.info(f"✅ Created build {build_db.id} for user {user.username}")
+            logger.info(f"✅ Created build {build_db.id} for user {user.id}")
             return build_db
 
         except Exception as e:
@@ -204,7 +204,7 @@ class BuildService:
             await self.db.commit()
             await self.db.refresh(build)
 
-            logger.info(f"✅ Updated build {build_id} for user {user.username}")
+            logger.info(f"✅ Updated build {build_id} for user {user.id}")
             return build
 
         except HTTPException:
@@ -244,7 +244,7 @@ class BuildService:
             await self.db.delete(build)
             await self.db.commit()
 
-            logger.info(f"✅ Deleted build {build_id} for user {user.username}")
+            logger.info(f"✅ Deleted build {build_id} for user {user.id}")
             return True
 
         except HTTPException:
