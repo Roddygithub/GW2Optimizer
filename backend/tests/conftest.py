@@ -97,3 +97,33 @@ async def auth_headers(test_user: User) -> Dict[str, str]:
     """Return authentication headers for the test user."""
     access_token = create_access_token(subject=str(test_user.id))
     return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.fixture
+def sample_build_data():
+    """Sample build data for testing."""
+    return {
+        "name": "Test Guardian Firebrand",
+        "profession": "Guardian",
+        "specialization": "Firebrand",
+        "game_mode": "wvw",
+        "role": "support",
+        "description": "Test build for CI/CD validation",
+        "trait_lines": [
+            {"id": 1, "traits": [1950, 1942, 1945]},
+            {"id": 42, "traits": [2101, 2159, 2154]},
+            {"id": 62, "traits": [2075, 2103, 2083]},
+        ],
+        "skills": [
+            {"slot": "heal", "id": 9153},
+            {"slot": "utility1", "id": 9246},
+            {"slot": "utility2", "id": 9153},
+            {"slot": "utility3", "id": 9175},
+            {"slot": "elite", "id": 43123},
+        ],
+        "equipment": [],
+        "synergies": ["might", "quickness", "stability"],
+        "counters": [],
+        "tags": ["wvw", "support", "firebrand"],
+        "is_public": True,
+    }
