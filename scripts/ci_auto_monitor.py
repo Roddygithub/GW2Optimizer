@@ -213,10 +213,13 @@ def cleanup_markdown_root() -> List[str]:
 
 
 def monitor(repo: str, branch: str, iterations: int, interval: int, auto_fix: bool, cleanup: bool) -> int:
+    print(f"[monitor] Starting monitor for {repo} on {branch}")
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
+    print(f"[monitor] Fetching workflows...")
     wf_list = list_workflows(repo)
+    print(f"[monitor] Found {len(wf_list)} workflows")
     if not wf_list:
         print("[monitor] Unable to list workflows (missing GH_TOKEN or private repo)")
         return 2
@@ -225,18 +228,24 @@ def monitor(repo: str, branch: str, iterations: int, interval: int, auto_fix: bo
     last_status_signature: Optional[str] = None
 
     for cycle in range(1, iterations + 1):
+        print(f"[monitor] === Cycle {cycle}/{iterations} ===")
         statuses: List[Tuple[str, str, Optional[int]]] = []  # (filename, conclusion, run_id)
 
         for fname in REQUIRED_WORKFLOWS.keys():
+            print(f"[monitor] Checking workflow: {fname}")
             wf = get_workflow_by_filename(wf_list, fname)
             if not wf:
+                print(f"[monitor]   -> NOT FOUND")
                 statuses.append((fname, "missing", None))
                 continue
+            print(f"[monitor]   -> Found ID {wf['id']}, fetching last run...")
             run = get_last_run(repo, wf["id"], branch)
             if not run:
+                print(f"[monitor]   -> No runs")
                 statuses.append((fname, "no_runs", None))
                 continue
             conclusion = run.get("conclusion") or run.get("status") or "unknown"
+            print(f"[monitor]   -> {conclusion}")
             statuses.append((fname, conclusion, run.get("id")))
 
         sig = ",".join(f"{f}:{c}" for f, c, _ in statuses)
