@@ -11,7 +11,7 @@ from app.core.logging import logger
 from app.db.base import get_db
 from app.learning.data.collector import InteractionCollector
 from app.models.build import Build, BuildCreate, BuildDB, BuildResponse, BuildUpdate, GameMode, Profession, Role
-from app.db.models import User as UserDB
+from app.db.models import UserDB
 from app.services.build_service_db import BuildService
 
 router = APIRouter()

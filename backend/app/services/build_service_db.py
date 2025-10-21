@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import logger
 from app.models.build import Build, BuildCreate, BuildDB, BuildUpdate, GameMode, Profession, Role
-from app.db.models import User as UserDB
+from app.db.models import UserDB
 
 
 class BuildService:

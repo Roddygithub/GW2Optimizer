@@ -18,7 +18,7 @@ from app.models.team import (
     TeamCompositionUpdate,
     TeamResponse,
 )
-from app.db.models import User as UserDB
+from app.db.models import UserDB
 from app.services.team_service_db import TeamService
 
 router = APIRouter()

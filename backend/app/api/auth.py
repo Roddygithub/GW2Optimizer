@@ -30,7 +30,7 @@ from app.core.security import (
 from app.exceptions import UserExistsException, InvalidCredentialsException, AccountLockedException
 from app.core.redis import get_redis_client
 from app.db.session import get_db
-from app.db.models import User
+from app.db.models import UserDB as User
 from app.models.token import Token
 from app.models.user import (
     UserCreate,

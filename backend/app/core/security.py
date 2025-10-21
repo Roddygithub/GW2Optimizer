@@ -13,7 +13,7 @@ from pydantic import ValidationError
 
 from app.core.config import settings
 from app.db.session import get_db
-from app.db.models import User
+from app.db.models import UserDB as User
 from app.models.token import TokenData
 from app.core.redis import get_redis_client, redis_circuit_breaker
 from app.core.logging import logger

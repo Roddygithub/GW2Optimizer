@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 from app.core.logging import logger
 from app.models.build import BuildDB, GameMode
 from app.models.team import TeamComposition, TeamCompositionCreate, TeamCompositionDB, TeamCompositionUpdate, TeamSlotDB
-from app.db.models import User as UserDB
+from app.db.models import UserDB
 
 
 class TeamService:

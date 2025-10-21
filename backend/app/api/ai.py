@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 
 from app.core.logging import logger
 from app.services.ai_service import AIService
-from app.db.models import User
+from app.db.models import UserDB as User
 from app.api.auth import get_current_active_user
 
 router = APIRouter()

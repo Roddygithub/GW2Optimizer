@@ -19,7 +19,7 @@ from app.main import app
 from app.db.session import get_db
 from app.core.redis import get_redis_client
 from app.db.base import Base
-from app.db.models import User  # Import your models here
+from app.db.models import UserDB as User  # Import your models here
 from app.core.security import create_access_token, get_password_hash
 
 # Use an in-memory SQLite database for tests

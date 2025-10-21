@@ -12,11 +12,11 @@ import re
 from app.core.logging import logger
 
 if TYPE_CHECKING:
-    from app.db.models import User as UserDB
+    from app.db.models import UserDB
 else:
     # Runtime import for backward compatibility
     try:
-        from app.db.models import User as UserDB
+        from app.db.models import UserDB
     except ImportError:
         UserDB = None  # type: ignore
 

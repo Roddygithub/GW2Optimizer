@@ -3,7 +3,7 @@
 from app.models.build import Build, BuildCreate, BuildResponse, BuildDB
 from app.models.team import TeamComposition, TeamResponse, TeamCompositionDB, TeamSlotDB
 from app.models.chat import ChatMessage, ChatRequest, ChatResponse
-from app.db.models import User, LoginHistory
+from app.db.models import UserDB as User, LoginHistory
 from app.models.user import UserCreate, UserLogin, UserOut, UserUpdate
 from app.models.token import Token, TokenData
 

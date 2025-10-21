@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from passlib.context import CryptContext
 
 from app.core.config import settings
-from app.db.models import User, LoginHistory
+from app.db.models import UserDB as User, LoginHistory
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
