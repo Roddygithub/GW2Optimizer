@@ -313,8 +313,15 @@ class TeamService:
             HTTPException: If team or build not found, or user doesn't have permission
         """
         try:
-            # Get the team
-            team = await self.get_team(team_id, user)
+            # Get the team (without slots for now)
+            stmt = select(TeamCompositionDB).where(
+                and_(
+                    TeamCompositionDB.id == team_id,
+                    or_(TeamCompositionDB.user_id == str(user.id), TeamCompositionDB.is_public == True),
+                )
+            )
+            result = await self.db.execute(stmt)
+            team = result.scalar_one_or_none()
             if not team:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
 
@@ -350,10 +357,8 @@ class TeamService:
 
             self.db.add(slot)
             await self.db.commit()
-            await self.db.refresh(slot)
 
-            # Expire team to force reload with slots
-            await self.db.expire(team)
+            # Reload team with slots
             stmt = (
                 select(TeamCompositionDB)
                 .options(selectinload(TeamCompositionDB.team_slots))
@@ -391,8 +396,15 @@ class TeamService:
             HTTPException: If team or slot not found, or user doesn't have permission
         """
         try:
-            # Get the team
-            team = await self.get_team(team_id, user)
+            # Get the team (without slots for now)
+            stmt = select(TeamCompositionDB).where(
+                and_(
+                    TeamCompositionDB.id == team_id,
+                    or_(TeamCompositionDB.user_id == str(user.id), TeamCompositionDB.is_public == True),
+                )
+            )
+            result = await self.db.execute(stmt)
+            team = result.scalar_one_or_none()
             if not team:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
 
@@ -411,8 +423,7 @@ class TeamService:
             await self.db.delete(slot)
             await self.db.commit()
 
-            # Expire team to force reload with slots
-            await self.db.expire(team)
+            # Reload team with slots
             stmt = (
                 select(TeamCompositionDB)
                 .options(selectinload(TeamCompositionDB.team_slots))
