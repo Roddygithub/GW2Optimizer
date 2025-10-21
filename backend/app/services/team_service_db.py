@@ -352,7 +352,8 @@ class TeamService:
             await self.db.commit()
             await self.db.refresh(slot)
 
-            # Reload team with slots
+            # Expire team to force reload with slots
+            await self.db.expire(team)
             stmt = (
                 select(TeamCompositionDB)
                 .options(selectinload(TeamCompositionDB.team_slots))
@@ -410,7 +411,8 @@ class TeamService:
             await self.db.delete(slot)
             await self.db.commit()
 
-            # Reload team with slots
+            # Expire team to force reload with slots
+            await self.db.expire(team)
             stmt = (
                 select(TeamCompositionDB)
                 .options(selectinload(TeamCompositionDB.team_slots))
