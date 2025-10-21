@@ -106,13 +106,13 @@ def sample_build_data():
         "name": "Test Guardian Firebrand",
         "profession": "Guardian",
         "specialization": "Firebrand",
-        "game_mode": "wvw",
+        "game_mode": "zerg",
         "role": "support",
         "description": "Test build for CI/CD validation",
         "trait_lines": [
-            {"id": 1, "traits": [1950, 1942, 1945]},
-            {"id": 42, "traits": [2101, 2159, 2154]},
-            {"id": 62, "traits": [2075, 2103, 2083]},
+            {"id": 1, "name": "Zeal", "traits": [1950, 1942, 1945]},
+            {"id": 42, "name": "Radiance", "traits": [2101, 2159, 2154]},
+            {"id": 62, "name": "Firebrand", "traits": [2075, 2103, 2083]},
         ],
         "skills": [
             {"slot": "heal", "id": 9153},
@@ -125,5 +125,16 @@ def sample_build_data():
         "synergies": ["might", "quickness", "stability"],
         "counters": [],
         "tags": ["wvw", "support", "firebrand"],
+        "is_public": True,
+    }
+
+
+@pytest.fixture
+def sample_team_data():
+    """Sample team data for testing."""
+    return {
+        "name": "Test WvW Zerg Team",
+        "game_mode": "zerg",
+        "description": "Test team composition for WvW zerg",
         "is_public": True,
     }
