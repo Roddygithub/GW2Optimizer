@@ -78,17 +78,19 @@ async def websocket_mcm_analytics(websocket: WebSocket):
 
     try:
         # Send initial connection confirmation
-        await websocket.send_json({
-            "status": "connected",
-            "module": "McM Analytics",
-            "timestamp": datetime.utcnow().isoformat(),
-            "features": [
-                "zerg_tracking",
-                "squad_analytics",
-                "battle_metrics",
-                "event_notifications",
-            ],
-        })
+        await websocket.send_json(
+            {
+                "status": "connected",
+                "module": "McM Analytics",
+                "timestamp": datetime.utcnow().isoformat(),
+                "features": [
+                    "zerg_tracking",
+                    "squad_analytics",
+                    "battle_metrics",
+                    "event_notifications",
+                ],
+            }
+        )
 
         # Initialize analytics service
         analytics_service = McMAnalyticsService()
@@ -106,36 +108,44 @@ async def websocket_mcm_analytics(websocket: WebSocket):
                 if request_type == "subscribe":
                     # Subscribe to specific analytics streams
                     streams = message.get("streams", [])
-                    await websocket.send_json({
-                        "type": "subscription_confirmed",
-                        "streams": streams,
-                        "timestamp": datetime.utcnow().isoformat(),
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "subscription_confirmed",
+                            "streams": streams,
+                            "timestamp": datetime.utcnow().isoformat(),
+                        }
+                    )
 
                 elif request_type == "get_metrics":
                     # Get current metrics
                     metrics = await analytics_service.get_current_metrics()
-                    await websocket.send_json({
-                        "type": "metrics",
-                        "data": metrics,
-                        "timestamp": datetime.utcnow().isoformat(),
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "metrics",
+                            "data": metrics,
+                            "timestamp": datetime.utcnow().isoformat(),
+                        }
+                    )
 
                 elif request_type == "ping":
                     # Respond to ping
-                    await websocket.send_json({
-                        "type": "pong",
-                        "timestamp": datetime.utcnow().isoformat(),
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "pong",
+                            "timestamp": datetime.utcnow().isoformat(),
+                        }
+                    )
 
             except asyncio.TimeoutError:
                 # Send periodic updates (every 5 seconds)
                 metrics = await analytics_service.get_live_metrics()
-                await websocket.send_json({
-                    "type": "live_update",
-                    "data": metrics,
-                    "timestamp": datetime.utcnow().isoformat(),
-                })
+                await websocket.send_json(
+                    {
+                        "type": "live_update",
+                        "data": metrics,
+                        "timestamp": datetime.utcnow().isoformat(),
+                    }
+                )
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
@@ -164,11 +174,13 @@ async def websocket_mcm_events(websocket: WebSocket):
     await manager.connect(websocket)
 
     try:
-        await websocket.send_json({
-            "status": "connected",
-            "module": "McM Events",
-            "timestamp": datetime.utcnow().isoformat(),
-        })
+        await websocket.send_json(
+            {
+                "status": "connected",
+                "module": "McM Events",
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        )
 
         while True:
             # Send event notifications
