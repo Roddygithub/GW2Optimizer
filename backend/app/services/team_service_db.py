@@ -70,6 +70,11 @@ class TeamService:
 
             await self.db.commit()
             await self.db.refresh(team_db)
+            
+            # Reload with slots to avoid lazy loading issues
+            stmt = select(TeamCompositionDB).options(selectinload(TeamCompositionDB.team_slots)).where(TeamCompositionDB.id == team_db.id)
+            result = await self.db.execute(stmt)
+            team_db = result.scalar_one()
 
             logger.info(f"✅ Created team {team_db.id} for user {user.id}")
             return team_db
@@ -286,7 +291,7 @@ class TeamService:
         user: UserDB,
         slot_number: Optional[int] = None,
         player_name: Optional[str] = None,
-    ) -> TeamSlotDB:
+    ) -> TeamCompositionDB:
         """
         Add a build to a team composition.
 
@@ -343,8 +348,13 @@ class TeamService:
             await self.db.commit()
             await self.db.refresh(slot)
 
+            # Reload team with slots
+            stmt = select(TeamCompositionDB).options(selectinload(TeamCompositionDB.team_slots)).where(TeamCompositionDB.id == team_id)
+            result = await self.db.execute(stmt)
+            team = result.scalar_one()
+
             logger.info(f"✅ Added build {build_id} to team {team_id}")
-            return slot
+            return team
 
         except HTTPException:
             await self.db.rollback()
@@ -356,7 +366,7 @@ class TeamService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to add build to team: {str(e)}"
             )
 
-    async def remove_build_from_team(self, team_id: str, slot_id: str, user: UserDB) -> bool:
+    async def remove_build_from_team(self, team_id: str, slot_id: str, user: UserDB) -> TeamCompositionDB:
         """
         Remove a build from a team composition.
 
@@ -392,8 +402,13 @@ class TeamService:
             await self.db.delete(slot)
             await self.db.commit()
 
+            # Reload team with slots
+            stmt = select(TeamCompositionDB).options(selectinload(TeamCompositionDB.team_slots)).where(TeamCompositionDB.id == team_id)
+            result = await self.db.execute(stmt)
+            team = result.scalar_one()
+
             logger.info(f"✅ Removed slot {slot_id} from team {team_id}")
-            return True
+            return team
 
         except HTTPException:
             await self.db.rollback()

@@ -99,6 +99,11 @@ class TeamCompositionDB(Base):
         "TeamSlotDB", back_populates="team_composition", cascade="all, delete-orphan"
     )
 
+    @property
+    def slots(self):
+        """Alias for team_slots to match test expectations."""
+        return self.team_slots
+
     def __repr__(self) -> str:
         return f"<TeamCompositionDB(id={self.id}, name={self.name}, team_size={self.team_size})>"
 
