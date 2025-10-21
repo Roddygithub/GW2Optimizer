@@ -7,6 +7,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.5.0] - 2025-10-21 - WebSocket McM Analytics & Complete CI/CD Automation 🚀
+
+### 🎉 Major Features & Infrastructure
+
+**Status**: ✅ Production Ready  
+**Focus**: Real-time Analytics, Docker, CI/CD Automation, Documentation
+
+---
+
+### ✨ Added
+
+#### WebSocket McM Analytics
+- **Real-time WebSocket endpoints**: `/ws/mcm` and `/ws/mcm/events`
+- **McMAnalyticsService**: Complete analytics service for World vs World
+- **Live metrics streaming**: Zerg tracking, squad analytics, battle metrics
+- **Event notifications**: Capture events, objective changes, commander movements
+- **Connection management**: WebSocket connection pooling and broadcasting
+
+#### CI/CD Automation
+- **build.yml**: Docker build & test workflow
+- **release.yml**: Automated GitHub release creation
+- **docs.yml**: Documentation generation & publishing to GitHub Pages
+- **Comprehensive workflows**: All CI/CD processes fully automated
+
+#### Docker Support
+- **Production Dockerfile**: Multi-stage build with Python 3.11-slim
+- **Optimized .dockerignore**: Minimal image size
+- **Health checks**: Built-in container health monitoring
+- **GHCR integration**: Automatic image publishing
+
+#### Documentation
+- **MkDocs configuration**: Material theme with code highlighting
+- **API documentation**: Automated with mkdocstrings
+- **pdoc3 integration**: Python API reference generation
+- **GitHub Pages**: Automatic documentation deployment
+
+### 🔧 Fixed
+- **UserDB import**: Added backward-compatible alias in app/models/user.py
+- **__all__ exports**: Fixed UserOut instead of UserResponse
+- **TYPE_CHECKING**: Proper import to avoid circular dependencies
+
+### 📊 Improvements
+- **WebSocket architecture**: Production-ready with connection manager
+- **Service layer**: McMAnalyticsService with 7+ analytics methods
+- **Test coverage**: New tests for WebSocket functionality
+- **Documentation**: Complete API reference and user guides
+
+### 🧪 Tests
+- **WebSocket tests**: test_websocket_mcm.py with 7 test cases
+- **Service tests**: McMAnalyticsService unit tests
+- **Health checks**: WebSocket connection monitoring
+
+### 🐳 Docker
+- **Image size**: Optimized with slim base image
+- **Build time**: Cached layers for faster builds
+- **Security**: Non-root user, minimal attack surface
+- **Deployment**: Ready for Kubernetes/Docker Swarm
+
+### 📝 Documentation
+- **mkdocs.yml**: Complete site configuration
+- **API Reference**: Auto-generated from docstrings
+- **User Guide**: Installation, configuration, usage
+- **Architecture**: System design and components
+
+### 🔗 WebSocket Endpoints
+- `ws://localhost:8000/api/v1/ws/mcm` - Real-time analytics
+- `ws://localhost:8000/api/v1/ws/mcm/events` - Event notifications
+- `GET /api/v1/health` - WebSocket health check
+
+---
+
 ## [1.4.0] - 2025-10-20 - CI/CD Pipeline Fixes & Dependency Resolution 🔧
 
 ### 🎉 CI/CD Stability & Dependency Management

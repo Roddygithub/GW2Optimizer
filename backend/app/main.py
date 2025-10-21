@@ -34,6 +34,7 @@ from app.api import (
     teams,
     builds_db,
     teams_db,
+    websocket_mcm,
 )
 from app.api.auth import limiter as auth_limiter
 
@@ -171,6 +172,7 @@ def include_routers(app: FastAPI) -> None:
     api_router.include_router(teams.router, tags=["Teams"])
     api_router.include_router(builds_db.router, tags=["Builds DB"])
     api_router.include_router(teams_db.router, tags=["Teams DB"])
+    api_router.include_router(websocket_mcm.router, tags=["WebSocket McM"])
 
     app.include_router(api_router)
     logger.info("🔄 API routers included")
