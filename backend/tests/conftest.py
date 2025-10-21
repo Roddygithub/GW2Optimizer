@@ -87,6 +87,10 @@ async def test_user(db_session: AsyncSession) -> User:
     db_session.add(user)
     await db_session.commit()
     await db_session.refresh(user)
+    # Force load all attributes to avoid lazy loading issues
+    _ = user.id  # Access id to ensure it's loaded
+    _ = user.email
+    _ = user.username
     # Attach plain password for tests (not persisted)
     setattr(user, "password", user_data["password"])
     return user
