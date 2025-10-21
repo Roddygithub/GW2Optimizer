@@ -135,6 +135,7 @@ def sample_team_data():
     return {
         "name": "Test WvW Zerg Team",
         "game_mode": "zerg",
+        "team_size": 50,
         "description": "Test team composition for WvW zerg",
         "is_public": True,
     }
