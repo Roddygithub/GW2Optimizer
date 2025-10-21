@@ -135,7 +135,7 @@ def apply_minimal_fixes(log_preview: str) -> List[str]:
         conftest = ROOT / "backend" / "tests" / "conftest.py"
         text = conftest.read_text(encoding="utf-8")
         if "def sample_build_data(" not in text:
-            snippet = """
+            snippet = '''
 
 @pytest.fixture
 def sample_build_data():
@@ -163,7 +163,7 @@ def sample_build_data():
         "counters": [],
         "is_public": True,
     }
-"""
+'''
             conftest.write_text(text + snippet, encoding="utf-8")
             fixes.append("Added sample_build_data fixture to conftest.py")
 
