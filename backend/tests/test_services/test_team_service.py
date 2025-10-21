@@ -27,7 +27,7 @@ class TestTeamService:
         assert result is not None
         assert result.name == sample_team_data["name"]
         assert result.game_mode == sample_team_data["game_mode"]
-        assert result.user_id == test_user.id
+        assert result.user_id == str(test_user.id)
         assert result.is_public == sample_team_data["is_public"]
 
     async def test_create_team_with_builds(
@@ -62,7 +62,7 @@ class TestTeamService:
         assert retrieved_team is not None
         assert retrieved_team.id == created_team.id
         assert retrieved_team.name == created_team.name
-        assert retrieved_team.user_id == test_user.id
+        assert retrieved_team.user_id == str(test_user.id)
 
     async def test_get_public_team_by_other_user(
         self, db_session: AsyncSession, test_user: UserDB, sample_team_data: dict
@@ -125,7 +125,7 @@ class TestTeamService:
         teams = await service.list_user_teams(test_user)
 
         assert len(teams) == 2
-        assert all(team.user_id == test_user.id for team in teams)
+        assert all(team.user_id == str(test_user.id) for team in teams)
 
     async def test_list_public_teams(self, db_session: AsyncSession, test_user: UserDB, sample_team_data: dict):
         """Test listing public teams."""

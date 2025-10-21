@@ -57,7 +57,7 @@ class TeamService:
 
             # Create team composition
             team_dict = team_data.model_dump(exclude={"build_ids"})
-            team_db = TeamCompositionDB(id=str(uuid4()), user_id=user.id, **team_dict)
+            team_db = TeamCompositionDB(id=str(uuid4()), user_id=str(user.id), **team_dict)
 
             self.db.add(team_db)
 

@@ -43,7 +43,7 @@ class BuildService:
             build_dict = build_data.model_dump(exclude_unset=True)
 
             # Create database model
-            build_db = BuildDB(id=str(uuid4()), user_id=user.id, **build_dict)
+            build_db = BuildDB(id=str(uuid4()), user_id=str(user.id), **build_dict)
 
             self.db.add(build_db)
             await self.db.commit()
