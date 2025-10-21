@@ -66,9 +66,25 @@ def list_workflows(repo: str) -> List[Dict]:
 
 
 def get_workflow_by_filename(workflows: List[Dict], filename: str) -> Optional[Dict]:
+    """Match workflow by filename robustly.
+
+    GitHub API returns 'path' that may be just 'ci.yml' or include '.github/workflows/ci.yml'.
+    We match if:
+      - path == filename
+      - basename(path) == filename
+      - path endswith '/.github/workflows/{filename}' or '.github/workflows/{filename}'
+    """
     for wf in workflows:
-        # wf has keys: id, name, path, state, created_at, updated_at
-        if wf.get("path", "").endswith(f"/.github/workflows/{filename}"):
+        path = (wf.get("path") or "").strip()
+        if not path:
+            continue
+        base = path.split("/")[-1]
+        if (
+            path == filename
+            or base == filename
+            or path.endswith(f"/.github/workflows/{filename}")
+            or path == f".github/workflows/{filename}"
+        ):
             return wf
     return None
 
