@@ -358,11 +358,12 @@ class TeamService:
             self.db.add(slot)
             await self.db.commit()
 
-            # Reload team with slots
+            # Reload team with slots using populate_existing to force refresh
             stmt = (
                 select(TeamCompositionDB)
                 .options(selectinload(TeamCompositionDB.team_slots))
                 .where(TeamCompositionDB.id == team_id)
+                .execution_options(populate_existing=True)
             )
             result = await self.db.execute(stmt)
             team = result.scalar_one()
@@ -423,11 +424,12 @@ class TeamService:
             await self.db.delete(slot)
             await self.db.commit()
 
-            # Reload team with slots
+            # Reload team with slots using populate_existing to force refresh
             stmt = (
                 select(TeamCompositionDB)
                 .options(selectinload(TeamCompositionDB.team_slots))
                 .where(TeamCompositionDB.id == team_id)
+                .execution_options(populate_existing=True)
             )
             result = await self.db.execute(stmt)
             team = result.scalar_one()
