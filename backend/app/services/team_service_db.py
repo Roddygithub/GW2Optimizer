@@ -70,9 +70,13 @@ class TeamService:
 
             await self.db.commit()
             await self.db.refresh(team_db)
-            
+
             # Reload with slots to avoid lazy loading issues
-            stmt = select(TeamCompositionDB).options(selectinload(TeamCompositionDB.team_slots)).where(TeamCompositionDB.id == team_db.id)
+            stmt = (
+                select(TeamCompositionDB)
+                .options(selectinload(TeamCompositionDB.team_slots))
+                .where(TeamCompositionDB.id == team_db.id)
+            )
             result = await self.db.execute(stmt)
             team_db = result.scalar_one()
 
@@ -349,7 +353,11 @@ class TeamService:
             await self.db.refresh(slot)
 
             # Reload team with slots
-            stmt = select(TeamCompositionDB).options(selectinload(TeamCompositionDB.team_slots)).where(TeamCompositionDB.id == team_id)
+            stmt = (
+                select(TeamCompositionDB)
+                .options(selectinload(TeamCompositionDB.team_slots))
+                .where(TeamCompositionDB.id == team_id)
+            )
             result = await self.db.execute(stmt)
             team = result.scalar_one()
 
@@ -403,7 +411,11 @@ class TeamService:
             await self.db.commit()
 
             # Reload team with slots
-            stmt = select(TeamCompositionDB).options(selectinload(TeamCompositionDB.team_slots)).where(TeamCompositionDB.id == team_id)
+            stmt = (
+                select(TeamCompositionDB)
+                .options(selectinload(TeamCompositionDB.team_slots))
+                .where(TeamCompositionDB.id == team_id)
+            )
             result = await self.db.execute(stmt)
             team = result.scalar_one()
 
