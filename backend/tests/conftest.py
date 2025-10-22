@@ -125,11 +125,15 @@ async def integration_client(
         app.dependency_overrides.clear()
 
         # Clean up data (not tables) in PostgreSQL
-        async with test_engine.begin() as conn:
-            # Delete all data in reverse order (respect foreign keys)
-            from sqlalchemy import text
+        try:
+            async with test_engine.begin() as conn:
+                # Delete all data in reverse order (respect foreign keys)
+                from sqlalchemy import text
 
-            await conn.execute(text("TRUNCATE builds, teams, users RESTART IDENTITY CASCADE"))
+                await conn.execute(text("TRUNCATE builds, teams, users RESTART IDENTITY CASCADE"))
+        except Exception:
+            # Tables might not exist or already cleaned, ignore
+            pass
     else:
         # Use SQLite (local development)
         test_id = str(uuid.uuid4())[:8]

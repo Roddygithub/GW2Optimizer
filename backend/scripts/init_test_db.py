@@ -24,12 +24,8 @@ async def init_db():
     engine = create_async_engine(database_url, echo=True)
 
     async with engine.begin() as conn:
-        # Drop all tables first (clean slate)
-        print("🗑️  Dropping existing tables...")
-        await conn.run_sync(Base.metadata.drop_all)
-
-        # Create all tables
-        print("✨ Creating all tables...")
+        # Create tables if they don't exist (idempotent)
+        print("✨ Creating tables (if not exist)...")
         await conn.run_sync(Base.metadata.create_all)
 
     await engine.dispose()
