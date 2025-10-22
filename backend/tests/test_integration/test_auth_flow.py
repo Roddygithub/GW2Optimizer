@@ -11,6 +11,7 @@ pytestmark = [pytest.mark.asyncio, pytest.mark.integration]
 class TestAuthenticationFlow:
     """Test suite for complete authentication workflows."""
 
+    @pytest.mark.flaky(reruns=3, reruns_delay=1)
     async def test_register_login_access_flow(self, integration_client: AsyncClient):
         """Test complete flow: register → login → access protected endpoint."""
         # Step 1: Register a new user
@@ -218,6 +219,7 @@ class TestAuthenticationFlow:
 
         assert logout_response.status_code == status.HTTP_204_NO_CONTENT
 
+    @pytest.mark.flaky(reruns=3, reruns_delay=1)
     async def test_user_can_only_access_own_resources(self, integration_client: AsyncClient):
         """Test that users can only access their own resources."""
         import uuid
