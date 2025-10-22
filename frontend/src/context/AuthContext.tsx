@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import { authAPI } from '../services/api';
 import type { User } from '../types';
 
