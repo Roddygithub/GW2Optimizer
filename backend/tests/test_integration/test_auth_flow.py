@@ -220,10 +220,13 @@ class TestAuthenticationFlow:
 
     async def test_user_can_only_access_own_resources(self, integration_client: AsyncClient):
         """Test that users can only access their own resources."""
-        # Create first user
+        import uuid
+
+        # Create first user with unique email
+        unique_id = str(uuid.uuid4())[:8]
         user1_data = {
-            "email": "user1@example.com",
-            "username": "user1",
+            "email": f"user1_{unique_id}@example.com",
+            "username": f"user1_{unique_id}",
             "password": "SecurePassword123!",
         }
         await integration_client.post("/api/v1/auth/register", json=user1_data)
@@ -250,10 +253,10 @@ class TestAuthenticationFlow:
         build_response = await integration_client.post("/api/v1/builds", json=build_data, headers=user1_headers)
         build_id = build_response.json()["id"]
 
-        # Create second user
+        # Create second user with unique email
         user2_data = {
-            "email": "user2@example.com",
-            "username": "user2",
+            "email": f"user2_{unique_id}@example.com",
+            "username": f"user2_{unique_id}",
             "password": "SecurePassword123!",
         }
         await integration_client.post("/api/v1/auth/register", json=user2_data)

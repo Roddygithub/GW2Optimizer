@@ -37,21 +37,31 @@ TestingSessionLocal = sessionmaker(
 # SQLite engine for integration tests (better transaction isolation)
 # Using SQLite ensures commits are immediately visible across sessions
 INTEGRATION_TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+
+
+# Function to set SQLite pragmas for aiosqlite
+def set_sqlite_pragmas(conn):
+    """Enable foreign key constraints for SQLite async connections."""
+    conn.isolation_level = None  # autocommit mode
+    return conn
+
+
 integration_engine = create_async_engine(
     INTEGRATION_TEST_DATABASE_URL,
     echo=False,
-    connect_args={"check_same_thread": False},
+    connect_args={
+        "check_same_thread": False,
+    },
 )
 
 
-# Enable foreign keys for SQLite
-@event.listens_for(Engine, "connect")
+# Add event listener for connection to enable foreign keys
+@event.listens_for(integration_engine.sync_engine, "connect")
 def set_sqlite_pragma(dbapi_conn, connection_record):
     """Enable foreign key constraints for SQLite."""
-    if "sqlite" in str(dbapi_conn.__class__):
-        cursor = dbapi_conn.cursor()
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
+    cursor = dbapi_conn.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
 
 
 IntegrationSessionLocal = sessionmaker(
