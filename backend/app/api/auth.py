@@ -105,12 +105,12 @@ async def register(
     existing_user = await user_service.get_by_email(user_in.email)
     if existing_user:
         logger.warning(f"Registration failed: email '{user_in.email}' already exists.")
-        raise UserExistsException(field="email")
+        raise UserExistsException(detail=f"Email '{user_in.email}' already exists")
 
     existing_username = await user_service.get_by_username(user_in.username)
     if existing_username:
         logger.warning(f"Registration failed: username '{user_in.username}' already taken.")
-        raise UserExistsException(field="username")
+        raise UserExistsException(detail=f"Username '{user_in.username}' already taken")
 
     hashed_password = get_password_hash(user_in.password)
     user = await user_service.create_user(
@@ -229,6 +229,30 @@ async def login_for_access_token(
         },
     )
     return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
+
+
+# Alias for /token endpoint to support /login
+@router.post(
+    "/login",
+    response_model=Token,
+    summary="Login for access token (alias)",
+    description="Authenticate with username and password to get an access token. Alias for /token endpoint.",
+    responses={
+        200: {"description": "Successfully authenticated"},
+        401: {"description": "Incorrect email or password"},
+        403: {"description": "Account locked"},
+        429: {"description": "Too many requests"},
+    },
+)
+@limiter.limit("5/minute")
+async def login_alias(
+    response: Response,
+    request: Request,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db),
+) -> Token:
+    """Login endpoint alias - calls the same logic as /token."""
+    return await login_for_access_token(response, request, form_data, db)
 
 
 @router.post(
