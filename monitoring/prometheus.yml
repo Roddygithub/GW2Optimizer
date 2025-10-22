@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'gw2optimizer-monitor'
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'gw2optimizer-backend'
+    static_configs:
+      - targets: ['host.docker.internal:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'gw2optimizer-frontend'
+    static_configs:
+      - targets: ['host.docker.internal:5173']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
