@@ -93,7 +93,7 @@ class TeamService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create team: {str(e)}"
             )
 
-    async def get_team(self, team_id: str, user: UserDB) -> Optional[TeamCompositionDB]:
+    async def get_team(self, team_id: str, user: UserDB) -> TeamCompositionDB:
         """
         Get a team by ID if it belongs to the user or is public.
 
@@ -102,25 +102,37 @@ class TeamService:
             user: Current user
 
         Returns:
-            Team if found and accessible, None otherwise
+            Team if found and accessible
+
+        Raises:
+            HTTPException: 404 if team not found, 403 if not authorized
         """
         try:
+            # First check if team exists
             stmt = (
                 select(TeamCompositionDB)
                 .options(selectinload(TeamCompositionDB.team_slots))
-                .where(
-                    and_(
-                        TeamCompositionDB.id == team_id,
-                        or_(TeamCompositionDB.user_id == str(user.id), TeamCompositionDB.is_public == True),
-                    )
-                )
+                .where(TeamCompositionDB.id == team_id)
             )
             result = await self.db.execute(stmt)
-            return result.scalar_one_or_none()
+            team = result.scalar_one_or_none()
 
+            if not team:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
+
+            # Then check authorization
+            if team.user_id != str(user.id) and not team.is_public:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this team")
+
+            return team
+
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(f"❌ Error getting team {team_id}: {e}")
-            return None
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to get team: {str(e)}"
+            )
 
     async def list_user_teams(
         self,
@@ -219,12 +231,15 @@ class TeamService:
             HTTPException: If team not found or user doesn't have permission
         """
         try:
-            # Get the team
-            team = await self.get_team(team_id, user)
+            # Check if team exists first (404)
+            stmt = select(TeamCompositionDB).where(TeamCompositionDB.id == team_id)
+            result = await self.db.execute(stmt)
+            team = result.scalar_one_or_none()
+
             if not team:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
 
-            # Check ownership
+            # Then check ownership (403)
             if team.user_id != str(user.id):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this team")
 
@@ -263,12 +278,15 @@ class TeamService:
             HTTPException: If team not found or user doesn't have permission
         """
         try:
-            # Get the team
-            team = await self.get_team(team_id, user)
+            # Check if team exists first (404)
+            stmt = select(TeamCompositionDB).where(TeamCompositionDB.id == team_id)
+            result = await self.db.execute(stmt)
+            team = result.scalar_one_or_none()
+
             if not team:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
 
-            # Check ownership
+            # Then check ownership (403)
             if team.user_id != str(user.id):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this team")
 

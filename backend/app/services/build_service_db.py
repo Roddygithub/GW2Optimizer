@@ -59,7 +59,7 @@ class BuildService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create build: {str(e)}"
             )
 
-    async def get_build(self, build_id: str, user: UserDB) -> Optional[BuildDB]:
+    async def get_build(self, build_id: str, user: UserDB) -> BuildDB:
         """
         Get a build by ID if it belongs to the user or is public.
 
@@ -68,18 +68,33 @@ class BuildService:
             user: Current user
 
         Returns:
-            Build if found and accessible, None otherwise
+            Build if found and accessible
+
+        Raises:
+            HTTPException: 404 if build not found, 403 if not authorized
         """
         try:
-            stmt = select(BuildDB).where(
-                and_(BuildDB.id == build_id, or_(BuildDB.user_id == str(user.id), BuildDB.is_public == True))
-            )
+            # First check if build exists
+            stmt = select(BuildDB).where(BuildDB.id == build_id)
             result = await self.db.execute(stmt)
-            return result.scalar_one_or_none()
+            build = result.scalar_one_or_none()
 
+            if not build:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found")
+
+            # Then check authorization
+            if build.user_id != str(user.id) and not build.is_public:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this build")
+
+            return build
+
+        except HTTPException:
+            raise
         except Exception as e:
             logger.error(f"❌ Error getting build {build_id}: {e}")
-            return None
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to get build: {str(e)}"
+            )
 
     async def list_user_builds(
         self,
@@ -187,12 +202,15 @@ class BuildService:
             HTTPException: If build not found or user doesn't have permission
         """
         try:
-            # Get the build
-            build = await self.get_build(build_id, user)
+            # Check if build exists first (404)
+            stmt = select(BuildDB).where(BuildDB.id == build_id)
+            result = await self.db.execute(stmt)
+            build = result.scalar_one_or_none()
+
             if not build:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found")
 
-            # Check ownership
+            # Then check ownership (403)
             if build.user_id != str(user.id):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this build")
 
@@ -231,12 +249,15 @@ class BuildService:
             HTTPException: If build not found or user doesn't have permission
         """
         try:
-            # Get the build
-            build = await self.get_build(build_id, user)
+            # Check if build exists first (404)
+            stmt = select(BuildDB).where(BuildDB.id == build_id)
+            result = await self.db.execute(stmt)
+            build = result.scalar_one_or_none()
+
             if not build:
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found")
 
-            # Check ownership
+            # Then check ownership (403)
             if build.user_id != str(user.id):
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this build")
 
