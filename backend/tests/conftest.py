@@ -65,28 +65,44 @@ async def redis_client() -> AsyncGenerator[fakeredis.aioredis.FakeRedis, None]:
 
 @pytest_asyncio.fixture()
 async def client(
-    db_session: AsyncSession, redis_client: fakeredis.aioredis.FakeRedis, request
+    db_session: AsyncSession, redis_client: fakeredis.aioredis.FakeRedis
 ) -> AsyncGenerator[AsyncClient, None]:
-    """Yield an HTTP client for the API, with overridden dependencies."""
-
-    # For integration tests, create new session per request to allow commits
-    # For other tests, use shared session
-    if "integration" in request.node.nodeid:
-
-        async def get_test_db():
-            async with TestingSessionLocal() as session:
-                yield session
-
-        app.dependency_overrides[get_db] = get_test_db
-    else:
-        app.dependency_overrides[get_db] = lambda: db_session
-
+    """Yield an HTTP client for the API, with overridden dependencies (unit/API tests)."""
+    app.dependency_overrides[get_db] = lambda: db_session
     app.dependency_overrides[get_redis_client] = lambda: redis_client
 
     async with AsyncClient(app=app, base_url="http://test") as c:
         yield c
 
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture()
+async def integration_client(
+    redis_client: fakeredis.aioredis.FakeRedis,
+) -> AsyncGenerator[AsyncClient, None]:
+    """Yield an HTTP client for integration tests with independent sessions per request."""
+
+    # Create tables once
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    # Each HTTP request gets its own session
+    async def get_test_db():
+        async with TestingSessionLocal() as session:
+            yield session
+
+    app.dependency_overrides[get_db] = get_test_db
+    app.dependency_overrides[get_redis_client] = lambda: redis_client
+
+    async with AsyncClient(app=app, base_url="http://test") as c:
+        yield c
+
+    app.dependency_overrides.clear()
+
+    # Clean up tables
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest_asyncio.fixture
