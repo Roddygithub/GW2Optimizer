@@ -217,14 +217,12 @@ def test_score_profession_diversity(analyzer, sample_team):
 @pytest.mark.legacy
 def test_empty_team(analyzer):
     """Test analysis with empty team."""
-    empty_team = TeamComposition(
-        id=str(uuid4()),
+    from tests.factories import create_test_team_composition
+    
+    empty_team = create_test_team_composition(
         name="Empty Team",
         game_mode=GameMode.ZERG,
         team_size=0,
-        user_id=str(uuid4()),
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
         slots=[],
     )
 
