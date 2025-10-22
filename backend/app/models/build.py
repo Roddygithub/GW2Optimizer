@@ -10,6 +10,7 @@ from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, JS
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
+from app.db.types import GUID
 
 if TYPE_CHECKING:
     from app.models.user import UserDB
@@ -124,7 +125,7 @@ class BuildDB(Base):
     )
 
     # Foreign Keys
-    user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id: Mapped[str] = mapped_column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
 
     # Relationships
     user: Mapped["UserDB"] = relationship("UserDB", back_populates="builds")

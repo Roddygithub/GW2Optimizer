@@ -9,6 +9,7 @@ from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, JS
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
+from app.db.types import GUID
 from app.models.build import Build, GameMode, team_builds
 
 if TYPE_CHECKING:
@@ -92,7 +93,7 @@ class TeamCompositionDB(Base):
     )
 
     # Foreign Keys
-    user_id: Mapped[str] = mapped_column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id: Mapped[str] = mapped_column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
 
     # Relationships
     user: Mapped["UserDB"] = relationship("UserDB", back_populates="team_compositions")
