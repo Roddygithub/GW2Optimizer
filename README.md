@@ -1,9 +1,9 @@
 # GW2Optimizer 🛡️⚔️
 
-[![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)](https://github.com/Roddygithub/GW2Optimizer/releases)
+[![Version](https://img.shields.io/badge/version-2.6.0-blue.svg)](https://github.com/Roddygithub/GW2Optimizer/releases)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/Roddygithub/GW2Optimizer/actions)
-[![Tests](https://img.shields.io/badge/tests-145%2F145%20passing-brightgreen.svg)](https://github.com/Roddygithub/GW2Optimizer/actions)
-[![Coverage](https://img.shields.io/badge/coverage-85%25-brightgreen.svg)](https://github.com/Roddygithub/GW2Optimizer/coverage)
+[![Tests](https://img.shields.io/badge/tests-75%2F79%20passing-green.svg)](https://github.com/Roddygithub/GW2Optimizer/actions)
+[![Coverage](https://img.shields.io/badge/coverage-95%25%20critical-brightgreen.svg)](https://github.com/Roddygithub/GW2Optimizer/coverage)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688.svg)](https://fastapi.tiangolo.com/)
 [![React](https://img.shields.io/badge/React-18.2.0-61DAFB.svg)](https://reactjs.org/)
@@ -234,11 +234,19 @@ Voir [docs/TESTING.md](docs/TESTING.md) pour le guide complet des tests.
 ## 🔄 CI/CD
 
 Le projet utilise GitHub Actions pour :
-- **Linting** automatique sur chaque commit
-- **Tests** unitaires, d'intégration et E2E
-- **Déploiement** automatique sur Windsurf après validation
+- **Linting** automatique sur chaque commit (Black, Flake8)
+- **Tests** unitaires, d'intégration et E2E (79 tests backend)
+- **E2E Real Conditions** avec Mistral AI + GW2 API 🆕
+- **Déploiement** automatique après validation
 - **Merge automatique** des PR si CI/CD OK
 - **Rapports** automatisés sur chaque pipeline
+
+### 🧪 E2E Tests en Conditions Réelles (v2.6.0)
+- ✅ Tests avec **Mistral AI** pour génération de builds
+- ✅ Validation via **API Guild Wars 2** officielle
+- ✅ Tests complets: Auth, Builds, Synergies
+- ✅ Artifacts: Logs + Rapports (30 jours)
+- 📖 Voir [E2E Setup Guide](docs/E2E_REAL_CONDITIONS_SETUP.md)
 
 ## 📈 Mises à Jour
 

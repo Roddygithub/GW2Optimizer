@@ -1,0 +1,164 @@
+name: 🧪 GW2Optimizer - Real Conditions E2E Test
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+
+jobs:
+  e2e-test:
+    name: 🚀 Full Real Conditions Test (Mistral + GW2 API)
+    runs-on: ubuntu-latest
+
+    env:
+      ENVIRONMENT: production
+      MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+      GW2_API_KEY: ${{ secrets.GW2_API_KEY }}
+      DATABASE_URL: sqlite+aiosqlite:///./gw2optimizer_test.db
+      REDIS_ENABLED: "false"
+      SECRET_KEY: test-secret-key-e2e-only
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+
+    steps:
+      # 🧩 1️⃣ Checkout du code
+      - name: 🧩 Checkout repository
+        uses: actions/checkout@v4
+
+      # 🧰 2️⃣ Setup Python pour le backend
+      - name: 🐍 Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      # ⚙️ 3️⃣ Setup Node.js pour le frontend
+      - name: ⚙️ Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # 📦 4️⃣ Installation des dépendances backend
+      - name: 📦 Install backend dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+
+      # 🧠 5️⃣ Installation des dépendances frontend
+      - name: 📦 Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      # 🗄️ 6️⃣ Initialize database
+      - name: 🗄️ Initialize test database
+        run: |
+          cd backend
+          python -c "
+          import asyncio
+          from app.db.base import Base, engine
+          from app.db.models import UserDB, LoginHistory
+          from app.models.build import BuildDB
+          from app.models.team import TeamCompositionDB, TeamSlotDB
+          
+          async def init():
+              async with engine.begin() as conn:
+                  await conn.run_sync(Base.metadata.create_all)
+          
+          asyncio.run(init())
+          print('✅ Database initialized')
+          "
+
+      # 🔧 7️⃣ Démarrage des services backend et frontend
+      - name: 🔧 Start backend and frontend
+        run: |
+          cd backend
+          nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
+          echo $! > backend.pid
+          
+          cd ../frontend
+          nohup npm run dev -- --host 0.0.0.0 --port 5173 > frontend.log 2>&1 &
+          echo $! > frontend.pid
+          
+          echo "⏳ Waiting for services to start..."
+          sleep 15
+
+      # 🏥 8️⃣ Health checks
+      - name: 🏥 Health check backend
+        run: |
+          max_attempts=30
+          attempt=0
+          until curl -f http://localhost:8000/health || [ $attempt -eq $max_attempts ]; do
+            echo "⏳ Waiting for backend... ($attempt/$max_attempts)"
+            sleep 2
+            attempt=$((attempt + 1))
+          done
+          
+          if [ $attempt -eq $max_attempts ]; then
+            echo "❌ Backend health check failed"
+            cat backend/backend.log
+            exit 1
+          fi
+          
+          echo "✅ Backend is healthy"
+
+      - name: 🏥 Health check frontend
+        run: |
+          max_attempts=30
+          attempt=0
+          until curl -f http://localhost:5173 || [ $attempt -eq $max_attempts ]; do
+            echo "⏳ Waiting for frontend... ($attempt/$max_attempts)"
+            sleep 2
+            attempt=$((attempt + 1))
+          done
+          
+          if [ $attempt -eq $max_attempts ]; then
+            echo "❌ Frontend health check failed"
+            cat frontend/frontend.log
+            exit 1
+          fi
+          
+          echo "✅ Frontend is healthy"
+
+      # 🤖 9️⃣ Exécution du test en condition réelle
+      - name: 🧪 Run Real Conditions Test
+        run: |
+          chmod +x test_real_conditions_extended.sh
+          ./test_real_conditions_extended.sh
+
+      # 📈 🔟 Upload des rapports de test
+      - name: 📊 Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gw2optimizer-test-report
+          path: test_report.txt
+          retention-days: 30
+
+      # 🔍 1️⃣1️⃣ Upload des logs
+      - name: 📜 Upload Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gw2optimizer-logs
+          path: |
+            backend/backend.log
+            frontend/frontend.log
+            response.json
+            gw2optimizer_test.db
+          retention-days: 30
+
+      # 🧹 1️⃣2️⃣ Cleanup
+      - name: 🧹 Cleanup services
+        if: always()
+        run: |
+          if [ -f backend/backend.pid ]; then
+            kill $(cat backend/backend.pid) 2>/dev/null || true
+          fi
+          if [ -f frontend/frontend.pid ]; then
+            kill $(cat frontend/frontend.pid) 2>/dev/null || true
+          fi
