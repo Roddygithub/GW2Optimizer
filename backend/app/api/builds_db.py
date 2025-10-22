@@ -10,7 +10,19 @@ from app.core.cache import cacheable, invalidate_cache
 from app.core.logging import logger
 from app.db.base import get_db
 from app.learning.data.collector import InteractionCollector
-from app.models.build import Build, BuildCreate, BuildDB, BuildResponse, BuildUpdate, Equipment, GameMode, Profession, Role, Skill, TraitLine
+from app.models.build import (
+    Build,
+    BuildCreate,
+    BuildDB,
+    BuildResponse,
+    BuildUpdate,
+    Equipment,
+    GameMode,
+    Profession,
+    Role,
+    Skill,
+    TraitLine,
+)
 from app.db.models import UserDB
 from app.services.build_service_db import BuildService
 

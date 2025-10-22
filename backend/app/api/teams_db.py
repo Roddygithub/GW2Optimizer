@@ -32,7 +32,7 @@ def team_db_to_pydantic(team_db: TeamCompositionDB) -> TeamComposition:
     """Convert TeamCompositionDB to Pydantic TeamComposition model."""
     # Convert team slots
     slots = []
-    for slot_db in (team_db.team_slots or []):
+    for slot_db in team_db.team_slots or []:
         if slot_db.build:
             slots.append(
                 TeamSlot(
@@ -42,15 +42,15 @@ def team_db_to_pydantic(team_db: TeamCompositionDB) -> TeamComposition:
                     priority=slot_db.priority,
                 )
             )
-    
+
     # Convert synergies
     synergies = []
-    for syn in (team_db.synergies or []):
+    for syn in team_db.synergies or []:
         if isinstance(syn, dict):
             synergies.append(TeamSynergy(**syn))
         else:
             synergies.append(syn)
-    
+
     return TeamComposition(
         id=team_db.id,
         user_id=team_db.user_id,
