@@ -18,10 +18,14 @@ def analyzer():
 def sample_build():
     """Create sample build."""
     return Build(
+        id=str(uuid4()),
         name="Test Guardian Build",
         profession=Profession.GUARDIAN,
         game_mode=GameMode.ZERG,
         role=Role.SUPPORT,
+        user_id=str(uuid4()),
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
     )
 
 
@@ -39,12 +43,14 @@ def sample_team():
     )
 
     # Add diverse builds
+    base_user_id = str(uuid4())
+    now = datetime.utcnow()
     builds = [
-        Build(name="Guardian Support", profession=Profession.GUARDIAN, game_mode=GameMode.ZERG, role=Role.SUPPORT),
-        Build(name="Warrior Tank", profession=Profession.WARRIOR, game_mode=GameMode.ZERG, role=Role.TANK),
-        Build(name="Mesmer DPS", profession=Profession.MESMER, game_mode=GameMode.ZERG, role=Role.DPS),
-        Build(name="Revenant DPS", profession=Profession.REVENANT, game_mode=GameMode.ZERG, role=Role.DPS),
-        Build(name="Engineer DPS", profession=Profession.ENGINEER, game_mode=GameMode.ZERG, role=Role.DPS),
+        Build(id=str(uuid4()), name="Guardian Support", profession=Profession.GUARDIAN, game_mode=GameMode.ZERG, role=Role.SUPPORT, user_id=base_user_id, created_at=now, updated_at=now),
+        Build(id=str(uuid4()), name="Warrior Tank", profession=Profession.WARRIOR, game_mode=GameMode.ZERG, role=Role.TANK, user_id=base_user_id, created_at=now, updated_at=now),
+        Build(id=str(uuid4()), name="Mesmer DPS", profession=Profession.MESMER, game_mode=GameMode.ZERG, role=Role.DPS, user_id=base_user_id, created_at=now, updated_at=now),
+        Build(id=str(uuid4()), name="Revenant DPS", profession=Profession.REVENANT, game_mode=GameMode.ZERG, role=Role.DPS, user_id=base_user_id, created_at=now, updated_at=now),
+        Build(id=str(uuid4()), name="Engineer DPS", profession=Profession.ENGINEER, game_mode=GameMode.ZERG, role=Role.DPS, user_id=base_user_id, created_at=now, updated_at=now),
     ]
 
     team.slots = [
