@@ -36,6 +36,7 @@ def team_db_to_pydantic(team_db: TeamCompositionDB) -> TeamComposition:
         if slot_db.build:
             slots.append(
                 TeamSlot(
+                    id=slot_db.id,
                     slot_number=slot_db.slot_number,
                     build=build_db_to_pydantic(slot_db.build),
                     player_name=slot_db.player_name,
@@ -293,7 +294,7 @@ async def delete_team(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error deleting team: {str(e)}")
 
 
-@router.post("/teams/{team_id}/builds/{build_id}", status_code=status.HTTP_201_CREATED)
+@router.post("/teams/{team_id}/builds/{build_id}", response_model=TeamComposition)
 @invalidate_cache("team:{team_id}")
 async def add_build_to_team(
     team_id: str,
@@ -302,7 +303,7 @@ async def add_build_to_team(
     player_name: Optional[str] = Query(None, max_length=100, description="Player name"),
     current_user: UserDB = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
-) -> dict:
+) -> TeamComposition:
     """
     Add a build to a team composition.
 
@@ -319,11 +320,11 @@ async def add_build_to_team(
     """
     try:
         service = TeamService(db)
-        slot = await service.add_build_to_team(
+        team = await service.add_build_to_team(
             team_id=team_id, build_id=build_id, user=current_user, slot_number=slot_number, player_name=player_name
         )
 
-        return {"message": "Build added to team successfully", "slot_id": slot.id, "slot_number": slot.slot_number}
+        return team_db_to_pydantic(team)
 
     except HTTPException:
         raise

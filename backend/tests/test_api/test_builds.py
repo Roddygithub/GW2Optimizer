@@ -160,7 +160,7 @@ class TestBuildAPI:
         # Delete the build
         response = await client.delete(f"/api/v1/builds/{build_id}", headers=auth_headers)
 
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_204_NO_CONTENT
 
         # Verify build is deleted
         get_response = await client.get(f"/api/v1/builds/{build_id}", headers=auth_headers)

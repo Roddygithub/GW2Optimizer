@@ -133,7 +133,7 @@ class TestTeamAPI:
         # Delete the team
         response = await client.delete(f"/api/v1/teams/{team_id}", headers=auth_headers)
 
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_204_NO_CONTENT
 
         # Verify team is deleted
         get_response = await client.get(f"/api/v1/teams/{team_id}", headers=auth_headers)
@@ -157,7 +157,7 @@ class TestTeamAPI:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert len(data["slots"]) == 1
-        assert data["slots"][0]["build_id"] == build_id
+        assert data["slots"][0]["build"]["id"] == build_id
 
     async def test_remove_build_from_team(
         self, client: AsyncClient, auth_headers: dict, sample_team_data: dict, sample_build_data: dict
@@ -176,8 +176,11 @@ class TestTeamAPI:
         # Remove build from team
         response = await client.delete(f"/api/v1/teams/{team_id}/slots/{slot_id}", headers=auth_headers)
 
-        assert response.status_code == status.HTTP_200_OK
-        data = response.json()
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        
+        # Verify slot was removed
+        get_response = await client.get(f"/api/v1/teams/{team_id}", headers=auth_headers)
+        data = get_response.json()
         assert len(data["slots"]) == 0
 
     async def test_get_team_stats(self, client: AsyncClient, auth_headers: dict, sample_team_data: dict):

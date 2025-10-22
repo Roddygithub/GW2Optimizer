@@ -49,6 +49,7 @@ class TeamSlot(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+    id: str
     slot_number: int = Field(ge=1, le=50)
     build: Build
     player_name: Optional[str] = Field(None, max_length=100)

@@ -71,10 +71,10 @@ class TeamService:
             await self.db.commit()
             await self.db.refresh(team_db)
 
-            # Reload with slots to avoid lazy loading issues
+            # Reload with slots and builds to avoid lazy loading issues
             stmt = (
                 select(TeamCompositionDB)
-                .options(selectinload(TeamCompositionDB.team_slots))
+                .options(selectinload(TeamCompositionDB.team_slots).selectinload(TeamSlotDB.build))
                 .where(TeamCompositionDB.id == team_db.id)
             )
             result = await self.db.execute(stmt)
@@ -111,7 +111,7 @@ class TeamService:
             # Check if team exists and is accessible
             stmt = (
                 select(TeamCompositionDB)
-                .options(selectinload(TeamCompositionDB.team_slots))
+                .options(selectinload(TeamCompositionDB.team_slots).selectinload(TeamSlotDB.build))
                 .where(TeamCompositionDB.id == team_id)
             )
             result = await self.db.execute(stmt)
@@ -156,7 +156,7 @@ class TeamService:
         try:
             stmt = (
                 select(TeamCompositionDB)
-                .options(selectinload(TeamCompositionDB.team_slots))
+                .options(selectinload(TeamCompositionDB.team_slots).selectinload(TeamSlotDB.build))
                 .where(TeamCompositionDB.user_id == str(user.id))
             )
 
@@ -193,7 +193,7 @@ class TeamService:
         try:
             stmt = (
                 select(TeamCompositionDB)
-                .options(selectinload(TeamCompositionDB.team_slots))
+                .options(selectinload(TeamCompositionDB.team_slots).selectinload(TeamSlotDB.build))
                 .where(TeamCompositionDB.is_public == True)
             )
 
@@ -245,7 +245,15 @@ class TeamService:
                 setattr(team, field, value)
 
             await self.db.commit()
-            await self.db.refresh(team)
+            
+            # Reload with relationships
+            stmt = (
+                select(TeamCompositionDB)
+                .options(selectinload(TeamCompositionDB.team_slots).selectinload(TeamSlotDB.build))
+                .where(TeamCompositionDB.id == team_id)
+            )
+            result = await self.db.execute(stmt)
+            team = result.scalar_one()
 
             logger.info(f"✅ Updated team {team_id} for user {user.id}")
             return team
@@ -373,15 +381,15 @@ class TeamService:
             # Reload team with slots using populate_existing to force refresh
             stmt = (
                 select(TeamCompositionDB)
-                .options(selectinload(TeamCompositionDB.team_slots))
+                .options(selectinload(TeamCompositionDB.team_slots).selectinload(TeamSlotDB.build))
                 .where(TeamCompositionDB.id == team_id)
                 .execution_options(populate_existing=True)
             )
             result = await self.db.execute(stmt)
-            team = result.scalar_one()
+            team_db = result.scalar_one()
 
             logger.info(f"✅ Added build {build_id} to team {team_id}")
-            return team
+            return team_db
 
         except HTTPException:
             await self.db.rollback()
@@ -439,15 +447,15 @@ class TeamService:
             # Reload team with slots using populate_existing to force refresh
             stmt = (
                 select(TeamCompositionDB)
-                .options(selectinload(TeamCompositionDB.team_slots))
+                .options(selectinload(TeamCompositionDB.team_slots).selectinload(TeamSlotDB.build))
                 .where(TeamCompositionDB.id == team_id)
                 .execution_options(populate_existing=True)
             )
             result = await self.db.execute(stmt)
-            team = result.scalar_one()
+            team_db = result.scalar_one()
 
-            logger.info(f"✅ Removed slot {slot_id} from team {team_id}")
-            return team
+            logger.info(f"✅ Removed build from team {team_id}")
+            return team_db
 
         except HTTPException:
             await self.db.rollback()
