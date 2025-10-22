@@ -1,4 +1,74 @@
-# 🔍 CI/CD Debug Report - Run #40
+# 🔍 CI/CD DEBUG LOGS - Auto-Fix Mode Continu
+
+**Mode**: Boucle Continue Automatique  
+**Intervalle**: 2 minutes  
+**Objectif**: 100% GREEN CI/CD  
+**Last Update**: 2025-10-22 10:45 UTC+02:00
+
+---
+
+## 📊 CYCLE ACTUEL - Run #66
+
+**Date**: 2025-10-22 10:45  
+**Status**: ❌ **FAILURE** (3/27 API tests passing - 11%)  
+**Run**: #66 (https://github.com/Roddygithub/GW2Optimizer/actions/runs/)
+
+### Status Workflows
+- ❌ **CI/CD Pipeline #66**: FAILURE (24/27 tests échouent)
+- ✅ **Docker Build & Test #47**: SUCCESS
+- ✅ **Deploy to Windsurf #66**: SUCCESS
+- ❌ **Release Automation #6**: FAILURE
+
+### Tests Locaux vs CI
+- **Local**: 59/59 tests (100%) ✅
+- **CI**: 3/27 tests (11%) ❌
+- **Problème**: CI teste commit plus ancien que corrections locales
+
+---
+
+## 🔧 CORRECTIONS DÉJÀ APPLIQUÉES (Localement)
+
+### Commit History (15 commits)
+1. `eb358df` - fix: resolve API test errors for builds
+2. `01bba21` - fix: resolve API test errors for teams
+3. `b5ae064` - style: apply Black formatting to API files
+4. `80a60ba` - fix: resolve all API test errors
+5. `b7aea5d` - docs: add all tests fixed report for v1.8.1
+6. `5c190df` - fix: resolve all remaining API test errors
+7. `db606a0` - fix: resolve test_auth import errors
+8. `f6cc269` - style: apply Black formatting
+9. `2c99421` - docs: add final session report for v1.9.0
+
+### Fixes Applied
+- ✅ Settings configuration (ACCESS_TOKEN_COOKIE_NAME, OLD_SECRET_KEYS)
+- ✅ Build/Team DB to Pydantic helpers
+- ✅ Enum conversion (Profession, GameMode, Role)
+- ✅ Lazy loading fixes (selectinload everywhere)
+- ✅ TeamSlot id field added
+- ✅ Router configuration (disabled old routers)
+- ✅ Test fixes (status codes, expectations)
+- ✅ Black formatting
+- ✅ Import fixes (UserDB)
+
+---
+
+## 🔄 PROCHAINES ACTIONS AUTO
+
+### Cycle 2 (dans 2 minutes)
+1. Attendre nouveau run CI/CD
+2. Vérifier si corrections sont testées
+3. Si encore échecs: analyser nouveaux logs
+4. Appliquer corrections supplémentaires si nécessaire
+5. Commit + push automatique
+
+### Stratégie
+- Continuer boucle jusqu'à 100% GREEN
+- Pas d'intervention manuelle requise
+- Rapports automatiques à chaque cycle
+
+---
+
+## 📈 HISTORIQUE PRÉCÉDENT - Run #40
 
 **Date**: 2025-10-22 00:46  
 **Status**: 🟡 **PARTIAL SUCCESS** (19/32 tests passing - 59%)  
