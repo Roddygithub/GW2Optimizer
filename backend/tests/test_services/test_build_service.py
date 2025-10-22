@@ -25,7 +25,7 @@ class TestBuildService:
         assert result is not None
         assert result.name == sample_build_data["name"]
         assert result.profession == sample_build_data["profession"]
-        assert result.user_id == str(test_user.id)
+        assert str(result.user_id) == str(test_user.id)
         assert result.is_public == sample_build_data["is_public"]
 
     async def test_create_build_with_invalid_profession(
@@ -48,7 +48,7 @@ class TestBuildService:
         assert retrieved_build is not None
         assert retrieved_build.id == created_build.id
         assert retrieved_build.name == created_build.name
-        assert retrieved_build.user_id == str(test_user.id)
+        assert str(retrieved_build.user_id) == str(test_user.id)
 
     async def test_get_public_build_by_other_user(
         self, db_session: AsyncSession, test_user: UserDB, sample_build_data: dict
@@ -121,7 +121,7 @@ class TestBuildService:
         builds = await service.list_user_builds(test_user)
 
         assert len(builds) == 2
-        assert all(build.user_id == str(test_user.id) for build in builds)
+        assert all(str(build.user_id) == str(test_user.id) for build in builds)
 
     async def test_list_user_builds_with_profession_filter(
         self, db_session: AsyncSession, test_user: UserDB, sample_build_data: dict

@@ -81,7 +81,7 @@ class BuildService:
 
             # Return 404 if build doesn't exist OR if it's private and user doesn't own it
             # This prevents revealing the existence of private builds
-            if not build or (build.user_id != str(user.id) and not build.is_public):
+            if not build or (str(build.user_id) != str(user.id) and not build.is_public):
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found")
 
             return build
@@ -207,7 +207,7 @@ class BuildService:
 
             # Return 404 if build doesn't exist OR if user doesn't own it
             # This prevents revealing the existence of builds owned by others
-            if not build or build.user_id != str(user.id):
+            if not build or str(build.user_id) != str(user.id):
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found")
 
             # Update fields
@@ -252,7 +252,7 @@ class BuildService:
 
             # Return 404 if build doesn't exist OR if user doesn't own it
             # This prevents revealing the existence of builds owned by others
-            if not build or build.user_id != str(user.id):
+            if not build or str(build.user_id) != str(user.id):
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found")
 
             # Delete the build (cascade will handle related records)
