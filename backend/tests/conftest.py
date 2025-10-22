@@ -34,39 +34,9 @@ TestingSessionLocal = sessionmaker(
     autocommit=False, autoflush=False, bind=engine, class_=AsyncSession, expire_on_commit=False
 )
 
-# SQLite engine for integration tests (better transaction isolation)
-# Using SQLite ensures commits are immediately visible across sessions
-INTEGRATION_TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-
-
-# Function to set SQLite pragmas for aiosqlite
-def set_sqlite_pragmas(conn):
-    """Enable foreign key constraints for SQLite async connections."""
-    conn.isolation_level = None  # autocommit mode
-    return conn
-
-
-integration_engine = create_async_engine(
-    INTEGRATION_TEST_DATABASE_URL,
-    echo=False,
-    connect_args={
-        "check_same_thread": False,
-    },
-)
-
-
-# Add event listener for connection to enable foreign keys
-@event.listens_for(integration_engine.sync_engine, "connect")
-def set_sqlite_pragma(dbapi_conn, connection_record):
-    """Enable foreign key constraints for SQLite."""
-    cursor = dbapi_conn.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
-
-
-IntegrationSessionLocal = sessionmaker(
-    autocommit=False, autoflush=False, bind=integration_engine, class_=AsyncSession, expire_on_commit=False
-)
+# SQLite engine for integration tests will be created per fixture
+# This ensures complete isolation between tests
+IntegrationSessionLocal = None  # Will be set per test fixture
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -120,17 +90,49 @@ async def integration_client(
 ) -> AsyncGenerator[AsyncClient, None]:
     """Yield an HTTP client for integration tests with independent sessions per request.
 
-    Uses SQLite instead of PostgreSQL to avoid transaction isolation issues.
-    SQLite commits are immediately visible across all sessions.
+    Uses a temporary SQLite file per test for complete isolation.
+    This prevents state leakage between tests and ensures foreign keys work correctly.
     """
+    import tempfile
+    import uuid
 
-    # Create tables once using SQLite engine
-    async with integration_engine.begin() as conn:
+    # Create a unique temporary SQLite file for this test
+    test_id = str(uuid.uuid4())[:8]
+    db_file = tempfile.NamedTemporaryFile(delete=False, suffix=f"_{test_id}.db")
+    db_path = db_file.name
+    db_file.close()
+
+    # Create engine for this specific test
+    test_db_url = f"sqlite+aiosqlite:///{db_path}"
+    test_engine = create_async_engine(
+        test_db_url,
+        echo=False,
+        connect_args={"check_same_thread": False},
+    )
+
+    # Enable foreign keys for this engine
+    @event.listens_for(test_engine.sync_engine, "connect")
+    def enable_fk(dbapi_conn, connection_record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
+    # Create session factory for this test
+    TestSessionLocal = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=test_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+
+    # Create tables
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # Each HTTP request gets its own session from SQLite
+    # Each HTTP request gets its own session
     async def get_test_db():
-        async with IntegrationSessionLocal() as session:
+        async with TestSessionLocal() as session:
             yield session
 
     app.dependency_overrides[get_db] = get_test_db
@@ -141,9 +143,14 @@ async def integration_client(
 
     app.dependency_overrides.clear()
 
-    # Clean up tables
-    async with integration_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    # Clean up
+    await test_engine.dispose()
+
+    # Remove temporary file
+    try:
+        os.unlink(db_path)
+    except Exception:
+        pass
 
 
 @pytest_asyncio.fixture
