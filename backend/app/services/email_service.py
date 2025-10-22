@@ -10,12 +10,13 @@ from app.core.logging import logger
 from app.core.config import settings
 
 
-async def send_verification_email(email_to: str, username: str):
+async def send_verification_email(email_to: str, username: str, verification_token: str = ""):
     """
     Simulates sending a verification email to a new user.
     """
     # In a real app, you would generate a verification token and a URL
-    verification_link = f"http://{settings.SERVER_HOST}/verify?token=some_verification_token"
+    token = verification_token or "some_verification_token"
+    verification_link = f"http://{settings.SERVER_HOST}/verify?token={token}"
     logger.info("---- SENDING VERIFICATION EMAIL (SIMULATED) ----")
     logger.info(f"To: {email_to}")
     logger.info(f"Subject: Welcome to GW2Optimizer, {username}!")
