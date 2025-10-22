@@ -68,12 +68,12 @@ async def client(
     db_session: AsyncSession, redis_client: fakeredis.aioredis.FakeRedis
 ) -> AsyncGenerator[AsyncClient, None]:
     """Yield an HTTP client for the API, with overridden dependencies."""
-    
+
     # Create a new session for each request to allow proper commits
     async def get_test_db():
         async with TestingSessionLocal() as session:
             yield session
-    
+
     app.dependency_overrides[get_db] = get_test_db
     app.dependency_overrides[get_redis_client] = lambda: redis_client
 
