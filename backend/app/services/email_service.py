@@ -16,7 +16,8 @@ async def send_verification_email(email_to: str, username: str, verification_tok
     """
     # In a real app, you would generate a verification token and a URL
     token = verification_token or "some_verification_token"
-    verification_link = f"http://{settings.SERVER_HOST}/verify?token={token}"
+    server_host = getattr(settings, 'SERVER_HOST', 'localhost:8000')
+    verification_link = f"http://{server_host}/verify?token={token}"
     logger.info("---- SENDING VERIFICATION EMAIL (SIMULATED) ----")
     logger.info(f"To: {email_to}")
     logger.info(f"Subject: Welcome to GW2Optimizer, {username}!")
@@ -28,7 +29,8 @@ async def send_password_reset_email(email_to: str, token: str):
     """
     Simulates sending a password reset email.
     """
-    reset_link = f"http://{settings.SERVER_HOST}/reset-password?token={token}"
+    server_host = getattr(settings, 'SERVER_HOST', 'localhost:8000')
+    reset_link = f"http://{server_host}/reset-password?token={token}"
     logger.info("---- SENDING PASSWORD RESET EMAIL (SIMULATED) ----")
     logger.info(f"To: {email_to}")
     logger.info(f"Subject: GW2Optimizer - Password Reset Request")
