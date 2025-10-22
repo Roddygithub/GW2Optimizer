@@ -4,7 +4,7 @@ from fastapi import status
 from datetime import timedelta
 from unittest.mock import patch
 
-from app.models.user import User
+from app.models.user import UserDB
 from app.core.security import create_access_token
 
 # Mark all tests in this file as asyncio
@@ -26,7 +26,7 @@ async def test_register_user_success(client: AsyncClient):
     assert "hashed_password" not in data
 
 
-async def test_register_user_duplicate_email(client: AsyncClient, test_user: User):
+async def test_register_user_duplicate_email(client: AsyncClient, test_user: UserDB):
     """Test registration with a duplicate email."""
     response = await client.post(
         "/api/v1/auth/register",
@@ -37,7 +37,7 @@ async def test_register_user_duplicate_email(client: AsyncClient, test_user: Use
     assert data["error_code"] == "USER_EMAIL_EXISTS"
 
 
-async def test_login_success(client: AsyncClient, test_user: User):
+async def test_login_success(client: AsyncClient, test_user: UserDB):
     """Test successful login and cookie setting."""
     response = await client.post(
         "/api/v1/auth/token",
@@ -50,7 +50,7 @@ async def test_login_success(client: AsyncClient, test_user: User):
     assert "access_token" in response.cookies
 
 
-async def test_login_wrong_password(client: AsyncClient, test_user: User):
+async def test_login_wrong_password(client: AsyncClient, test_user: UserDB):
     """Test login with an incorrect password."""
     response = await client.post(
         "/api/v1/auth/token",
@@ -61,7 +61,7 @@ async def test_login_wrong_password(client: AsyncClient, test_user: User):
     assert data["error_code"] == "INVALID_CREDENTIALS"
 
 
-async def test_login_wrong_email(client: AsyncClient, test_user: User):
+async def test_login_wrong_email(client: AsyncClient, test_user: UserDB):
     """Test login with a non-existent email."""
     response = await client.post(
         "/api/v1/auth/token",
@@ -78,7 +78,7 @@ async def test_get_current_user_with_token(client: AsyncClient, auth_headers: di
     assert data["email"] == TEST_USER_EMAIL
 
 
-async def test_get_current_user_with_cookie(client: AsyncClient, test_user: User):
+async def test_get_current_user_with_cookie(client: AsyncClient, test_user: UserDB):
     """Test accessing a protected endpoint with a valid cookie."""
     # Log in to set the cookie
     await client.post(
@@ -121,7 +121,7 @@ async def test_logout(client: AsyncClient, auth_headers: dict):
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-async def test_account_lockout(client: AsyncClient, test_user: User):
+async def test_account_lockout(client: AsyncClient, test_user: UserDB):
     """Test that an account is locked after too many failed login attempts."""
     for i in range(5):
         response = await client.post(
@@ -148,7 +148,7 @@ async def test_account_lockout(client: AsyncClient, test_user: User):
 
 
 @patch("app.api.auth.send_password_reset_email")
-async def test_password_recovery(mock_send_email, client: AsyncClient, test_user: User):
+async def test_password_recovery(mock_send_email, client: AsyncClient, test_user: UserDB):
     """Test the password recovery request endpoint."""
     response = await client.post(f"/api/v1/auth/password-recovery/{test_user.email}")
     assert response.status_code == status.HTTP_202_ACCEPTED
@@ -156,7 +156,7 @@ async def test_password_recovery(mock_send_email, client: AsyncClient, test_user
 
 
 @patch("app.api.auth.send_password_reset_email")
-async def test_reset_password_success(mock_send_email, client: AsyncClient, test_user: User):
+async def test_reset_password_success(mock_send_email, client: AsyncClient, test_user: UserDB):
     """Test the password reset endpoint with a valid token."""
     # 1. Generate a valid token for the user
     reset_token = create_access_token(subject=test_user.email)
@@ -350,7 +350,7 @@ async def test_invalid_login_form_data(client: AsyncClient):
     assert "username" in data["fields"]
 
 
-async def test_refresh_token_success(client: AsyncClient, test_user: User):
+async def test_refresh_token_success(client: AsyncClient, test_user: UserDB):
     """Test successful token refresh."""
     # 1. Log in to get tokens
     login_response = await client.post(
