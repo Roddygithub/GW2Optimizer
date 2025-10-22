@@ -1,6 +1,8 @@
 """Test synergy analyzer."""
 
 import pytest
+from datetime import datetime
+from uuid import uuid4
 from app.models.build import Build, GameMode, Profession, Role
 from app.models.team import TeamComposition, TeamSlot
 from app.services.synergy_analyzer import SynergyAnalyzer
@@ -27,9 +29,13 @@ def sample_build():
 def sample_team():
     """Create sample team with multiple builds."""
     team = TeamComposition(
+        id=str(uuid4()),
         name="Test Team",
         game_mode=GameMode.ZERG,
         team_size=10,
+        user_id=str(uuid4()),
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
     )
 
     # Add diverse builds
@@ -41,7 +47,9 @@ def sample_team():
         Build(name="Engineer DPS", profession=Profession.ENGINEER, game_mode=GameMode.ZERG, role=Role.DPS),
     ]
 
-    team.slots = [TeamSlot(slot_number=i, build=build, priority=1) for i, build in enumerate(builds)]
+    team.slots = [
+        TeamSlot(id=str(uuid4()), slot_number=i + 1, build=build, priority=1) for i, build in enumerate(builds)
+    ]
 
     return team
 
@@ -151,7 +159,16 @@ def test_score_profession_diversity(analyzer, sample_team):
 
 def test_empty_team(analyzer):
     """Test analysis with empty team."""
-    empty_team = TeamComposition(name="Empty Team", game_mode=GameMode.ZERG, team_size=0, slots=[])
+    empty_team = TeamComposition(
+        id=str(uuid4()),
+        name="Empty Team",
+        game_mode=GameMode.ZERG,
+        team_size=0,
+        user_id=str(uuid4()),
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+        slots=[],
+    )
 
     synergies = analyzer.analyze_team(empty_team)
     assert synergies == []
