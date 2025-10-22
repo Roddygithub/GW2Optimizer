@@ -49,27 +49,16 @@ def event_loop(request):
 
 @pytest_asyncio.fixture()
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Create a new database session for each test with transaction isolation.
+    """Create a new database session for each test (unit/API tests).
 
-    Uses BEGIN/ROLLBACK pattern for complete test isolation.
-    Each test runs in its own transaction that is rolled back afterwards.
+    Simple session for fast unit and API tests.
+    Creates/drops tables per test for isolation.
     """
-    # Create all tables if they don't exist
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # Start a transaction for the test
-    async with engine.connect() as conn:
-        await conn.execute(text("BEGIN"))
-
-        # Create session bound to this connection
-        async_session = sessionmaker(bind=conn, class_=AsyncSession, expire_on_commit=False)
-
-        async with async_session() as session:
-            yield session
-
-        # Rollback transaction after test
-        await conn.execute(text("ROLLBACK"))
+    async with TestingSessionLocal() as session:
+        yield session
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -113,38 +102,46 @@ async def integration_client(
     is_postgresql = "postgresql" in test_db_url
 
     if is_postgresql:
-        # Use PostgreSQL with transaction isolation (CI environment)
+        # Use PostgreSQL (CI environment) - simplified approach
         test_engine = engine  # Use global engine
 
         # Create tables if they don't exist
         async with test_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
-        # Start transaction for test isolation
-        async with test_engine.connect() as conn:
-            await conn.execute(text("BEGIN"))
+        TestSessionLocal = sessionmaker(
+            autocommit=False,
+            autoflush=False,
+            bind=test_engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
+        )
 
-            TestSessionLocal = sessionmaker(
-                bind=conn,
-                class_=AsyncSession,
-                expire_on_commit=False,
-            )
-
-            # Each HTTP request gets its own session from the transaction
-            async def get_test_db():
-                async with TestSessionLocal() as session:
+        # Each HTTP request gets its own session
+        async def get_test_db():
+            async with TestSessionLocal() as session:
+                try:
                     yield session
+                    await session.commit()
+                except Exception:
+                    await session.rollback()
+                    raise
 
-            app.dependency_overrides[get_db] = get_test_db
-            app.dependency_overrides[get_redis_client] = lambda: redis_client
+        app.dependency_overrides[get_db] = get_test_db
+        app.dependency_overrides[get_redis_client] = lambda: redis_client
 
-            async with AsyncClient(app=app, base_url="http://test") as c:
-                yield c
+        async with AsyncClient(app=app, base_url="http://test") as c:
+            yield c
 
-            app.dependency_overrides.clear()
+        app.dependency_overrides.clear()
 
-            # Rollback transaction after test (complete isolation)
-            await conn.execute(text("ROLLBACK"))
+        # Clean up data after test using DELETE (safer than TRUNCATE)
+        async with test_engine.begin() as conn:
+            # Delete in correct order (respect foreign keys)
+            await conn.execute(text("DELETE FROM team_slots"))
+            await conn.execute(text("DELETE FROM team_compositions"))
+            await conn.execute(text("DELETE FROM builds"))
+            await conn.execute(text("DELETE FROM users"))
     else:
         # Use SQLite (local development)
         test_id = str(uuid.uuid4())[:8]
