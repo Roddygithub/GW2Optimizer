@@ -17,11 +17,56 @@ from app.models.team import (
     TeamCompositionDB,
     TeamCompositionUpdate,
     TeamResponse,
+    TeamSlot,
+    TeamSynergy,
 )
+from app.models.build import Build
 from app.db.models import UserDB
 from app.services.team_service_db import TeamService
+from app.api.builds_db import build_db_to_pydantic
 
 router = APIRouter()
+
+
+def team_db_to_pydantic(team_db: TeamCompositionDB) -> TeamComposition:
+    """Convert TeamCompositionDB to Pydantic TeamComposition model."""
+    # Convert team slots
+    slots = []
+    for slot_db in (team_db.team_slots or []):
+        if slot_db.build:
+            slots.append(
+                TeamSlot(
+                    slot_number=slot_db.slot_number,
+                    build=build_db_to_pydantic(slot_db.build),
+                    player_name=slot_db.player_name,
+                    priority=slot_db.priority,
+                )
+            )
+    
+    # Convert synergies
+    synergies = []
+    for syn in (team_db.synergies or []):
+        if isinstance(syn, dict):
+            synergies.append(TeamSynergy(**syn))
+        else:
+            synergies.append(syn)
+    
+    return TeamComposition(
+        id=team_db.id,
+        user_id=team_db.user_id,
+        name=team_db.name,
+        game_mode=team_db.game_mode,
+        team_size=team_db.team_size,
+        description=team_db.description,
+        is_public=team_db.is_public,
+        slots=slots,
+        synergies=synergies,
+        weaknesses=team_db.weaknesses or [],
+        strengths=team_db.strengths or [],
+        overall_rating=team_db.overall_rating,
+        created_at=team_db.created_at,
+        updated_at=team_db.updated_at,
+    )
 
 
 @router.post("/teams", response_model=TeamComposition, status_code=status.HTTP_201_CREATED)
@@ -69,7 +114,7 @@ async def create_team(
             logger.warning(f"Failed to collect interaction: {e}")
 
         # Convert to Pydantic model
-        return TeamComposition.model_validate(team_db)
+        return team_db_to_pydantic(team_db)
 
     except HTTPException:
         raise
@@ -105,7 +150,7 @@ async def get_team(
         if not team_db:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
 
-        return TeamComposition.model_validate(team_db)
+        return team_db_to_pydantic(team_db)
 
     except HTTPException:
         raise
@@ -143,7 +188,7 @@ async def list_user_teams(
             user=current_user, skip=skip, limit=limit, game_mode=game_mode, is_public=is_public
         )
 
-        return [TeamComposition.model_validate(team) for team in teams_db]
+        return [team_db_to_pydantic(team) for team in teams_db]
 
     except Exception as e:
         logger.error(f"Error listing teams: {e}")
@@ -174,7 +219,7 @@ async def list_public_teams(
         service = TeamService(db)
         teams_db = await service.list_public_teams(skip=skip, limit=limit, game_mode=game_mode)
 
-        return [TeamComposition.model_validate(team) for team in teams_db]
+        return [team_db_to_pydantic(team) for team in teams_db]
 
     except Exception as e:
         logger.error(f"Error listing public teams: {e}")
@@ -212,7 +257,7 @@ async def update_team(
         if not team_db:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
 
-        return TeamComposition.model_validate(team_db)
+        return team_db_to_pydantic(team_db)
 
     except HTTPException:
         raise
