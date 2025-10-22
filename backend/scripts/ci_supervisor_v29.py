@@ -65,32 +65,77 @@ def run_real_e2e():
     
     timestamp = datetime.utcnow().isoformat()
     
-    # Simulated E2E test (real implementation would call GW2 API + Mistral)
-    e2e_data = {
-        "timestamp": timestamp,
-        "test_type": "E2E Real Conditions",
-        "status": "simulated",
-        "gw2_api": {
-            "status": "not_implemented",
-            "note": "Requires GW2_API_KEY secret"
-        },
-        "mistral_ai": {
-            "status": "not_implemented",
-            "note": "Requires MISTRAL_API_KEY secret"
-        },
-        "team_composition": {
-            "name": "Simulated Zerg Team",
-            "size": 50,
-            "builds": [
-                {"profession": "Guardian", "role": "Support", "count": 10},
-                {"profession": "Warrior", "role": "Tank", "count": 5},
-                {"profession": "Necromancer", "role": "DPS", "count": 15},
-                {"profession": "Mesmer", "role": "Support", "count": 10},
-                {"profession": "Revenant", "role": "DPS", "count": 10},
-            ]
-        },
-        "message": "E2E Real Conditions test framework ready. Implement GW2 API and Mistral AI integration."
-    }
+    # Try to use real services
+    try:
+        import asyncio
+        import sys
+        sys.path.insert(0, str(BACKEND_DIR))
+        
+        from app.services.gw2_api import get_gw2_api_service
+        from app.services.mistral_ai import get_mistral_service
+        
+        async def fetch_and_generate():
+            gw2_service = get_gw2_api_service()
+            mistral_service = get_mistral_service()
+            
+            try:
+                # Fetch live WvW data
+                log("  📡 Fetching live WvW data from GW2 API...", Colors.BLUE)
+                wvw_data = await gw2_service.fetch_live_wvw_data()
+                
+                # Generate team composition with Mistral AI
+                log("  🤖 Generating team composition with Mistral AI...", Colors.BLUE)
+                team_comp = await mistral_service.generate_team_composition(
+                    wvw_data=wvw_data,
+                    team_size=50,
+                    game_mode="zerg"
+                )
+                
+                return {
+                    "timestamp": timestamp,
+                    "test_type": "E2E Real Conditions",
+                    "status": "success",
+                    "gw2_data": wvw_data,
+                    "team_composition": team_comp,
+                }
+            finally:
+                await gw2_service.close()
+                await mistral_service.close()
+        
+        # Run async function
+        e2e_data = asyncio.run(fetch_and_generate())
+        log("  ✅ Real E2E test completed successfully", Colors.GREEN)
+        
+    except Exception as e:
+        log(f"  ⚠️ Real E2E failed, using fallback: {str(e)}", Colors.YELLOW)
+        
+        # Fallback to simulated data
+        e2e_data = {
+            "timestamp": timestamp,
+            "test_type": "E2E Real Conditions",
+            "status": "fallback",
+            "error": str(e),
+            "gw2_api": {
+                "status": "unavailable",
+                "note": "Check GW2_API_KEY configuration"
+            },
+            "mistral_ai": {
+                "status": "unavailable",
+                "note": "Check MISTRAL_API_KEY configuration"
+            },
+            "team_composition": {
+                "name": "Fallback Zerg Team",
+                "size": 50,
+                "builds": [
+                    {"profession": "Guardian", "role": "Support", "count": 10},
+                    {"profession": "Warrior", "role": "Tank", "count": 5},
+                    {"profession": "Necromancer", "role": "DPS", "count": 15},
+                    {"profession": "Mesmer", "role": "Support", "count": 10},
+                    {"profession": "Revenant", "role": "DPS", "count": 10},
+                ]
+            },
+            "message": "E2E test ran with fallback data. Configure API keys for real integration."
+        }
     
     # Save JSON report
     report_path = E2E_REPORT_DIR / f"team_report_{timestamp.replace(':', '-')}.json"

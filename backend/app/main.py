@@ -21,6 +21,21 @@ from app.core.logging import logger
 from app.middleware import add_security_middleware
 from app.core.redis import connect_to_redis, redis_client
 from app.exceptions import add_exception_handlers
+
+# Monitoring imports
+try:
+    from prometheus_fastapi_instrumentator import Instrumentator
+    PROMETHEUS_AVAILABLE = True
+except ImportError:
+    PROMETHEUS_AVAILABLE = False
+    logger.warning("⚠️ Prometheus instrumentator not available")
+
+try:
+    import sentry_sdk
+    SENTRY_AVAILABLE = True
+except ImportError:
+    SENTRY_AVAILABLE = False
+    logger.warning("⚠️ Sentry SDK not available")
 from app.api import (
     ai,
     auth,
@@ -130,6 +145,21 @@ def create_application() -> FastAPI:
 
     # Add health check endpoint
     add_health_check(app)
+
+    # Initialize Sentry (production only)
+    if SENTRY_AVAILABLE and not settings.TESTING and hasattr(settings, 'SENTRY_DSN') and settings.SENTRY_DSN:
+        sentry_sdk.init(
+            dsn=settings.SENTRY_DSN,
+            traces_sample_rate=1.0,
+            environment=settings.ENVIRONMENT,
+            release=f"gw2optimizer@{settings.API_VERSION}",
+        )
+        logger.info("📊 Sentry error tracking initialized")
+
+    # Initialize Prometheus metrics (production only)
+    if PROMETHEUS_AVAILABLE and not settings.TESTING:
+        Instrumentator().instrument(app).expose(app, endpoint="/metrics")
+        logger.info("📈 Prometheus metrics endpoint enabled at /metrics")
 
     return app
 
