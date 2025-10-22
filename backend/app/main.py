@@ -50,6 +50,7 @@ from app.api import (
     builds_db,
     teams_db,
     websocket_mcm,
+    sentry_debug,
 )
 from app.api.auth import limiter as auth_limiter
 
@@ -153,6 +154,7 @@ def create_application() -> FastAPI:
             traces_sample_rate=1.0,
             environment=settings.ENVIRONMENT,
             release=f"gw2optimizer@{settings.API_VERSION}",
+            send_default_pii=True,  # Include request headers and IP for better debugging
         )
         logger.info("📊 Sentry error tracking initialized")
 
@@ -207,6 +209,11 @@ def include_routers(app: FastAPI) -> None:
     api_router.include_router(builds_db.router, tags=["Builds"])
     api_router.include_router(teams_db.router, tags=["Teams"])
     api_router.include_router(websocket_mcm.router, tags=["WebSocket McM"])
+    
+    # Sentry debug endpoint (development/testing only)
+    if settings.DEBUG or settings.ENVIRONMENT == "development":
+        api_router.include_router(sentry_debug.router, tags=["Debug"])
+        logger.info("🐛 Sentry debug endpoint enabled at /api/v1/sentry-debug")
 
     app.include_router(api_router)
     logger.info("🔄 API routers included")
