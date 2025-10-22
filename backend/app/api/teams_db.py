@@ -55,7 +55,7 @@ def team_db_to_pydantic(team_db: TeamCompositionDB) -> TeamComposition:
         id=team_db.id,
         user_id=team_db.user_id,
         name=team_db.name,
-        game_mode=team_db.game_mode,
+        game_mode=GameMode(team_db.game_mode) if isinstance(team_db.game_mode, str) else team_db.game_mode,
         team_size=team_db.team_size,
         description=team_db.description,
         is_public=team_db.is_public,

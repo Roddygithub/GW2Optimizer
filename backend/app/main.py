@@ -163,15 +163,15 @@ def include_routers(app: FastAPI) -> None:
     api_router = APIRouter(prefix=settings.API_V1_STR)
     api_router.include_router(ai.router, prefix="/ai", tags=["AI"])
     api_router.include_router(health.router, tags=["Health"])
-    api_router.include_router(builds.router, tags=["Builds"])
+    # api_router.include_router(builds.router, tags=["Builds"])  # Replaced by builds_db
     api_router.include_router(chat.router, tags=["Chat"])
     api_router.include_router(export.router, tags=["Export"])
     api_router.include_router(learning.router, tags=["Learning"])
     api_router.include_router(meta.router, tags=["Meta"])
     api_router.include_router(scraper.router, tags=["Scraper"])
-    api_router.include_router(teams.router, tags=["Teams"])
-    api_router.include_router(builds_db.router, tags=["Builds DB"])
-    api_router.include_router(teams_db.router, tags=["Teams DB"])
+    # api_router.include_router(teams.router, tags=["Teams"])  # Replaced by teams_db
+    api_router.include_router(builds_db.router, tags=["Builds"])
+    api_router.include_router(teams_db.router, tags=["Teams"])
     api_router.include_router(websocket_mcm.router, tags=["WebSocket McM"])
 
     app.include_router(api_router)
