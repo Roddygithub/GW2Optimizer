@@ -55,6 +55,7 @@ def test_guess_role_from_name(scraper):
         assert result == expected_role
 
 
+@pytest.mark.legacy
 def test_remove_duplicates(scraper):
     """Test duplicate removal."""
     from app.models.build import Build, GameMode

@@ -73,6 +73,7 @@ def build_data():
 
 
 @pytest.mark.asyncio
+@pytest.mark.legacy
 async def test_create_build_success(db_session: AsyncSession, test_user: UserDB, build_data: BuildCreate):
     """Test successful build creation."""
     service = BuildService(db_session)
@@ -87,6 +88,7 @@ async def test_create_build_success(db_session: AsyncSession, test_user: UserDB,
 
 
 @pytest.mark.asyncio
+@pytest.mark.legacy
 async def test_get_build_owner(db_session: AsyncSession, test_user: UserDB, build_data: BuildCreate):
     """Test getting a build by its owner."""
     service = BuildService(db_session)
@@ -103,6 +105,7 @@ async def test_get_build_owner(db_session: AsyncSession, test_user: UserDB, buil
 
 
 @pytest.mark.asyncio
+@pytest.mark.legacy
 async def test_get_build_public(db_session: AsyncSession, test_user: UserDB, build_data: BuildCreate):
     """Test getting a public build by another user."""
     service = BuildService(db_session)
@@ -125,6 +128,7 @@ async def test_get_build_public(db_session: AsyncSession, test_user: UserDB, bui
 
 
 @pytest.mark.asyncio
+@pytest.mark.legacy
 async def test_get_build_private_unauthorized(db_session: AsyncSession, test_user: UserDB, build_data: BuildCreate):
     """Test that private builds cannot be accessed by other users."""
     service = BuildService(db_session)
@@ -147,6 +151,7 @@ async def test_get_build_private_unauthorized(db_session: AsyncSession, test_use
 
 
 @pytest.mark.asyncio
+@pytest.mark.legacy
 async def test_list_user_builds(db_session: AsyncSession, test_user: UserDB, build_data: BuildCreate):
     """Test listing builds for a user."""
     service = BuildService(db_session)
@@ -165,6 +170,7 @@ async def test_list_user_builds(db_session: AsyncSession, test_user: UserDB, bui
 
 
 @pytest.mark.asyncio
+@pytest.mark.legacy
 async def test_list_builds_with_filters(db_session: AsyncSession, test_user: UserDB, build_data: BuildCreate):
     """Test listing builds with filters."""
     service = BuildService(db_session)
@@ -184,6 +190,7 @@ async def test_list_builds_with_filters(db_session: AsyncSession, test_user: Use
 
 
 @pytest.mark.asyncio
+@pytest.mark.legacy
 async def test_update_build(db_session: AsyncSession, test_user: UserDB, build_data: BuildCreate):
     """Test updating a build."""
     service = BuildService(db_session)
@@ -201,6 +208,7 @@ async def test_update_build(db_session: AsyncSession, test_user: UserDB, build_d
 
 
 @pytest.mark.asyncio
+@pytest.mark.legacy
 async def test_delete_build(db_session: AsyncSession, test_user: UserDB, build_data: BuildCreate):
     """Test deleting a build."""
     service = BuildService(db_session)
@@ -220,6 +228,7 @@ async def test_delete_build(db_session: AsyncSession, test_user: UserDB, build_d
 
 
 @pytest.mark.asyncio
+@pytest.mark.legacy
 async def test_count_user_builds(db_session: AsyncSession, test_user: UserDB, build_data: BuildCreate):
     """Test counting user builds."""
     service = BuildService(db_session)
@@ -236,6 +245,7 @@ async def test_count_user_builds(db_session: AsyncSession, test_user: UserDB, bu
 
 
 @pytest.mark.asyncio
+@pytest.mark.legacy
 async def test_list_public_builds(db_session: AsyncSession, test_user: UserDB, build_data: BuildCreate):
     """Test listing public builds."""
     service = BuildService(db_session)

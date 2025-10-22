@@ -15,6 +15,7 @@ async def test_health_check(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+@pytest.mark.legacy
 async def test_root_endpoint(client: AsyncClient):
     """Test root endpoint."""
     response = await client.get("/")

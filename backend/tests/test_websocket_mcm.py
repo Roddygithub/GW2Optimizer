@@ -9,6 +9,7 @@ from app.main import app
 client = TestClient(app)
 
 
+@pytest.mark.legacy
 def test_websocket_health_endpoint():
     """Test the WebSocket health check endpoint."""
     response = client.get("/api/v1/health")

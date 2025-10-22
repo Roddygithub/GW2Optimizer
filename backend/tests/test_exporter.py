@@ -63,6 +63,7 @@ def sample_team(sample_build):
     return team
 
 
+@pytest.mark.legacy
 def test_export_build_json(exporter, sample_build):
     """Test build JSON export."""
     result = exporter.export_build_json(sample_build)
@@ -84,6 +85,7 @@ def test_export_build_json(exporter, sample_build):
     assert metadata["difficulty"] == 3
 
 
+@pytest.mark.legacy
 def test_export_traits(exporter, sample_build):
     """Test trait export."""
     traits = exporter._export_traits(sample_build.trait_lines)
@@ -94,6 +96,7 @@ def test_export_traits(exporter, sample_build):
     assert traits[0]["traits"] == [123, 456, 789]
 
 
+@pytest.mark.legacy
 def test_export_skills(exporter, sample_build):
     """Test skill export."""
     skills = exporter._export_skills(sample_build.skills)
@@ -104,6 +107,7 @@ def test_export_skills(exporter, sample_build):
     assert skills[0]["name"] == "Shelter"
 
 
+@pytest.mark.legacy
 def test_export_equipment(exporter, sample_build):
     """Test equipment export."""
     equipment = exporter._export_equipment(sample_build.equipment)
@@ -114,6 +118,7 @@ def test_export_equipment(exporter, sample_build):
     assert equipment[0]["stats"] == "Minstrel"
 
 
+@pytest.mark.legacy
 def test_export_build_html(exporter, sample_build):
     """Test build HTML export."""
     html = exporter.export_build_html(sample_build)
@@ -130,6 +135,7 @@ def test_export_build_html(exporter, sample_build):
     assert "build-container" in html
 
 
+@pytest.mark.legacy
 def test_export_team_json(exporter, sample_team):
     """Test team JSON export."""
     result = exporter.export_team_json(sample_team)
@@ -163,6 +169,7 @@ def test_get_snowcrows_css(exporter):
     assert "#c89b3c" in css  # GW2 gold color
 
 
+@pytest.mark.legacy
 def test_render_trait_lines_html(exporter, sample_build):
     """Test trait lines HTML rendering."""
     html = exporter._render_trait_lines_html(sample_build.trait_lines)
@@ -173,6 +180,7 @@ def test_render_trait_lines_html(exporter, sample_build):
     assert "trait-line" in html
 
 
+@pytest.mark.legacy
 def test_render_skills_html(exporter, sample_build):
     """Test skills HTML rendering."""
     html = exporter._render_skills_html(sample_build.skills)
@@ -183,6 +191,7 @@ def test_render_skills_html(exporter, sample_build):
     assert "skill" in html
 
 
+@pytest.mark.legacy
 def test_render_equipment_html(exporter, sample_build):
     """Test equipment HTML rendering."""
     html = exporter._render_equipment_html(sample_build.equipment)

@@ -214,6 +214,7 @@ def test_score_profession_diversity(analyzer, sample_team):
     assert score >= 5.0
 
 
+@pytest.mark.legacy
 def test_empty_team(analyzer):
     """Test analysis with empty team."""
     empty_team = TeamComposition(
