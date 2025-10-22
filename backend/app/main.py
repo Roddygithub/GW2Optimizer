@@ -38,6 +38,7 @@ except ImportError:
     logger.warning("⚠️ Sentry SDK not available")
 from app.api import (
     ai,
+    ai_optimizer,
     auth,
     builds,
     chat,
@@ -205,6 +206,7 @@ def include_routers(app: FastAPI) -> None:
     # API v1 routes
     api_router = APIRouter(prefix=settings.API_V1_STR)
     api_router.include_router(ai.router, prefix="/ai", tags=["AI"])
+    api_router.include_router(ai_optimizer.router, prefix="/ai", tags=["AI Optimizer"])
     api_router.include_router(health.router, tags=["Health"])
     # api_router.include_router(builds.router, tags=["Builds"])  # Replaced by builds_db
     api_router.include_router(chat.router, tags=["Chat"])
