@@ -245,7 +245,7 @@ class TeamService:
                 setattr(team, field, value)
 
             await self.db.commit()
-            
+
             # Reload with relationships
             stmt = (
                 select(TeamCompositionDB)

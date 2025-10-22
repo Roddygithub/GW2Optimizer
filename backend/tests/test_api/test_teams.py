@@ -177,7 +177,7 @@ class TestTeamAPI:
         response = await client.delete(f"/api/v1/teams/{team_id}/slots/{slot_id}", headers=auth_headers)
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        
+
         # Verify slot was removed
         get_response = await client.get(f"/api/v1/teams/{team_id}", headers=auth_headers)
         data = get_response.json()
