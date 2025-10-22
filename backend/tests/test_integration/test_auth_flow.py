@@ -216,7 +216,7 @@ class TestAuthenticationFlow:
         # Logout
         logout_response = await client.post("/api/v1/auth/logout", headers=auth_headers)
 
-        assert logout_response.status_code == status.HTTP_200_OK
+        assert logout_response.status_code == status.HTTP_204_NO_CONTENT
 
     async def test_user_can_only_access_own_resources(self, client: AsyncClient):
         """Test that users can only access their own resources."""

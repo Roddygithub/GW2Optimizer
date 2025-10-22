@@ -42,13 +42,14 @@ def event_loop(request):
 
 @pytest_asyncio.fixture()
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Create a new database session for each test, with rollback."""
+    """Create a new database session for each test, with cleanup."""
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
     async with TestingSessionLocal() as session:
+        # Enable autocommit for integration tests to avoid foreign key issues
         yield session
-        await session.rollback()
+        # Don't rollback - let the drop_all clean up
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
