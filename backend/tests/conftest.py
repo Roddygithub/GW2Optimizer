@@ -13,6 +13,8 @@ import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 import fakeredis.aioredis
 
 from app.main import app
@@ -35,7 +37,23 @@ TestingSessionLocal = sessionmaker(
 # SQLite engine for integration tests (better transaction isolation)
 # Using SQLite ensures commits are immediately visible across sessions
 INTEGRATION_TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-integration_engine = create_async_engine(INTEGRATION_TEST_DATABASE_URL, echo=False)
+integration_engine = create_async_engine(
+    INTEGRATION_TEST_DATABASE_URL,
+    echo=False,
+    connect_args={"check_same_thread": False},
+)
+
+
+# Enable foreign keys for SQLite
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_conn, connection_record):
+    """Enable foreign key constraints for SQLite."""
+    if "sqlite" in str(dbapi_conn.__class__):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
+
 IntegrationSessionLocal = sessionmaker(
     autocommit=False, autoflush=False, bind=integration_engine, class_=AsyncSession, expire_on_commit=False
 )
