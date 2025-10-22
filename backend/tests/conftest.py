@@ -26,9 +26,18 @@ import os
 # Use TEST_DATABASE_URL from environment, fallback to SQLite in-memory
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
+# Main engine for unit/API tests
 engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestingSessionLocal = sessionmaker(
     autocommit=False, autoflush=False, bind=engine, class_=AsyncSession, expire_on_commit=False
+)
+
+# SQLite engine for integration tests (better transaction isolation)
+# Using SQLite ensures commits are immediately visible across sessions
+INTEGRATION_TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+integration_engine = create_async_engine(INTEGRATION_TEST_DATABASE_URL, echo=False)
+IntegrationSessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=integration_engine, class_=AsyncSession, expire_on_commit=False
 )
 
 
@@ -81,15 +90,19 @@ async def client(
 async def integration_client(
     redis_client: fakeredis.aioredis.FakeRedis,
 ) -> AsyncGenerator[AsyncClient, None]:
-    """Yield an HTTP client for integration tests with independent sessions per request."""
+    """Yield an HTTP client for integration tests with independent sessions per request.
 
-    # Create tables once
-    async with engine.begin() as conn:
+    Uses SQLite instead of PostgreSQL to avoid transaction isolation issues.
+    SQLite commits are immediately visible across all sessions.
+    """
+
+    # Create tables once using SQLite engine
+    async with integration_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # Each HTTP request gets its own session
+    # Each HTTP request gets its own session from SQLite
     async def get_test_db():
-        async with TestingSessionLocal() as session:
+        async with IntegrationSessionLocal() as session:
             yield session
 
     app.dependency_overrides[get_db] = get_test_db
@@ -101,7 +114,7 @@ async def integration_client(
     app.dependency_overrides.clear()
 
     # Clean up tables
-    async with engine.begin() as conn:
+    async with integration_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
 
