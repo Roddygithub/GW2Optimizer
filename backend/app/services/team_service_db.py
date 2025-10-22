@@ -108,7 +108,7 @@ class TeamService:
             HTTPException: 404 if team not found, 403 if not authorized
         """
         try:
-            # First check if team exists
+            # Check if team exists and is accessible
             stmt = (
                 select(TeamCompositionDB)
                 .options(selectinload(TeamCompositionDB.team_slots))
@@ -117,12 +117,10 @@ class TeamService:
             result = await self.db.execute(stmt)
             team = result.scalar_one_or_none()
 
-            if not team:
+            # Return 404 if team doesn't exist OR if it's private and user doesn't own it
+            # This prevents revealing the existence of private teams
+            if not team or (team.user_id != str(user.id) and not team.is_public):
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
-
-            # Then check authorization
-            if team.user_id != str(user.id) and not team.is_public:
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to access this team")
 
             return team
 
