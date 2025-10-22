@@ -65,16 +65,22 @@ async def redis_client() -> AsyncGenerator[fakeredis.aioredis.FakeRedis, None]:
 
 @pytest_asyncio.fixture()
 async def client(
-    db_session: AsyncSession, redis_client: fakeredis.aioredis.FakeRedis
+    db_session: AsyncSession, redis_client: fakeredis.aioredis.FakeRedis, request
 ) -> AsyncGenerator[AsyncClient, None]:
     """Yield an HTTP client for the API, with overridden dependencies."""
 
-    # Create a new session for each request to allow proper commits
-    async def get_test_db():
-        async with TestingSessionLocal() as session:
-            yield session
+    # For integration tests, create new session per request to allow commits
+    # For other tests, use shared session
+    if "integration" in request.node.nodeid:
 
-    app.dependency_overrides[get_db] = get_test_db
+        async def get_test_db():
+            async with TestingSessionLocal() as session:
+                yield session
+
+        app.dependency_overrides[get_db] = get_test_db
+    else:
+        app.dependency_overrides[get_db] = lambda: db_session
+
     app.dependency_overrides[get_redis_client] = lambda: redis_client
 
     async with AsyncClient(app=app, base_url="http://test") as c:
