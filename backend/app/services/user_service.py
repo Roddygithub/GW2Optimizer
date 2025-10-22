@@ -128,6 +128,7 @@ class UserService:
                 user_id=user.id,
                 ip_address=request.client.host,
                 user_agent=request.headers.get("user-agent", "N/A"),
+                success=True,
             )
             self.db.add(login_record)
             await self.db.flush()

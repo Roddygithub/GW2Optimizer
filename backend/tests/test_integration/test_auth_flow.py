@@ -159,7 +159,7 @@ class TestAuthenticationFlow:
         # Second registration with same email
         register_data["username"] = "user2"
         response2 = await client.post("/api/v1/auth/register", json=register_data)
-        assert response2.status_code == status.HTTP_400_BAD_REQUEST
+        assert response2.status_code == status.HTTP_409_CONFLICT
 
     async def test_duplicate_username_registration(self, client: AsyncClient):
         """Test that duplicate username registration fails."""
@@ -176,7 +176,7 @@ class TestAuthenticationFlow:
         # Second registration with same username
         register_data["email"] = "user2@example.com"
         response2 = await client.post("/api/v1/auth/register", json=register_data)
-        assert response2.status_code == status.HTTP_400_BAD_REQUEST
+        assert response2.status_code == status.HTTP_409_CONFLICT
 
     async def test_weak_password_registration(self, client: AsyncClient):
         """Test that weak passwords are rejected."""
