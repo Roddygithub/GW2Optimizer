@@ -125,6 +125,13 @@ jobs:
           cd backend
           pytest tests/test_api/ -v --cov=app/api --cov-report=xml:coverage-api.xml --cov-report=term
       
+      - name: Initialize Test Database
+        env:
+          TEST_DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
+        run: |
+          cd backend
+          python scripts/init_test_db.py
+      
       - name: Run Integration Tests
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
