@@ -90,102 +90,67 @@ async def integration_client(
 ) -> AsyncGenerator[AsyncClient, None]:
     """Yield an HTTP client for integration tests with independent sessions per request.
 
-    Uses either PostgreSQL (in CI) or a temporary SQLite file (local) for complete isolation.
+    Uses a temporary SQLite file per test for complete isolation.
     This prevents state leakage between tests and ensures foreign keys work correctly.
     """
     import tempfile
     import uuid
 
-    # Check if we're using PostgreSQL (CI) or SQLite (local)
-    test_db_url = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+    # Create a unique temporary SQLite file for this test
+    test_id = str(uuid.uuid4())[:8]
+    db_file = tempfile.NamedTemporaryFile(delete=False, suffix=f"_{test_id}.db")
+    db_path = db_file.name
+    db_file.close()
 
-    if "postgresql" in test_db_url:
-        # Use PostgreSQL - create a unique schema for this test
-        test_engine = engine  # Use the global PostgreSQL engine
-        test_id = str(uuid.uuid4())[:8]
+    # Create engine for this specific test
+    test_db_url = f"sqlite+aiosqlite:///{db_path}"
+    test_engine = create_async_engine(
+        test_db_url,
+        echo=False,
+        connect_args={"check_same_thread": False},
+    )
 
-        # Create session factory
-        TestSessionLocal = sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=test_engine,
-            class_=AsyncSession,
-            expire_on_commit=False,
-        )
+    # Enable foreign keys for this engine
+    @event.listens_for(test_engine.sync_engine, "connect")
+    def enable_fk(dbapi_conn, connection_record):
+        cursor = dbapi_conn.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
-        # Create tables in PostgreSQL
-        async with test_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+    # Create session factory for this test
+    TestSessionLocal = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=test_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
 
-        # Each HTTP request gets its own session
-        async def get_test_db():
-            async with TestSessionLocal() as session:
-                yield session
+    # Create tables
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
-        app.dependency_overrides[get_db] = get_test_db
-        app.dependency_overrides[get_redis_client] = lambda: redis_client
+    # Each HTTP request gets its own session
+    async def get_test_db():
+        async with TestSessionLocal() as session:
+            yield session
 
-        async with AsyncClient(app=app, base_url="http://test") as c:
-            yield c
+    app.dependency_overrides[get_db] = get_test_db
+    app.dependency_overrides[get_redis_client] = lambda: redis_client
 
-        app.dependency_overrides.clear()
+    async with AsyncClient(app=app, base_url="http://test") as c:
+        yield c
 
-        # Clean up tables
-        async with test_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.drop_all)
+    app.dependency_overrides.clear()
 
-    else:
-        # Use SQLite - create temporary file
-        test_id = str(uuid.uuid4())[:8]
-        db_file = tempfile.NamedTemporaryFile(delete=False, suffix=f"_{test_id}.db")
-        db_path = db_file.name
-        db_file.close()
+    # Clean up
+    await test_engine.dispose()
 
-        test_db_url = f"sqlite+aiosqlite:///{db_path}"
-        test_engine = create_async_engine(
-            test_db_url,
-            echo=False,
-            connect_args={"check_same_thread": False},
-        )
-
-        # Enable foreign keys
-        @event.listens_for(test_engine.sync_engine, "connect")
-        def enable_fk(dbapi_conn, connection_record):
-            cursor = dbapi_conn.cursor()
-            cursor.execute("PRAGMA foreign_keys=ON")
-            cursor.close()
-
-        TestSessionLocal = sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=test_engine,
-            class_=AsyncSession,
-            expire_on_commit=False,
-        )
-
-        # Create tables
-        async with test_engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-
-        # Each HTTP request gets its own session
-        async def get_test_db():
-            async with TestSessionLocal() as session:
-                yield session
-
-        app.dependency_overrides[get_db] = get_test_db
-        app.dependency_overrides[get_redis_client] = lambda: redis_client
-
-        async with AsyncClient(app=app, base_url="http://test") as c:
-            yield c
-
-        app.dependency_overrides.clear()
-
-        # Clean up
-        await test_engine.dispose()
-        try:
-            os.unlink(db_path)
-        except Exception:
-            pass
+    # Remove temporary file
+    try:
+        os.unlink(db_path)
+    except Exception:
+        pass
 
 
 @pytest_asyncio.fixture
