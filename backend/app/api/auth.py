@@ -45,7 +45,20 @@ from app.services.user_service import UserService
 from app.services.email_service import send_password_reset_email, send_verification_email
 
 router = APIRouter(tags=["Authentication"])
-limiter = Limiter(key_func=get_remote_address)
+
+# Conditional rate limiting based on TESTING environment variable
+if settings.TESTING:
+    # No-op limiter for tests - all limits are bypassed
+    class NoOpLimiter:
+        def limit(self, *args, **kwargs):
+            def decorator(func):
+                return func
+
+            return decorator
+
+    limiter = NoOpLimiter()
+else:
+    limiter = Limiter(key_func=get_remote_address)
 
 # Password validation
 
