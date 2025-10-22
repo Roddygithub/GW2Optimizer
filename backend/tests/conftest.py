@@ -21,9 +21,10 @@ from app.core.redis import get_redis_client
 from app.db.base import Base
 from app.db.models import UserDB as User  # Import your models here
 from app.core.security import create_access_token, get_password_hash
+import os
 
-# Use an in-memory SQLite database for tests
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# Use TEST_DATABASE_URL from environment, fallback to SQLite in-memory
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 
 engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestingSessionLocal = sessionmaker(
