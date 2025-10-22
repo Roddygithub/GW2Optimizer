@@ -151,12 +151,19 @@ def create_application() -> FastAPI:
     if SENTRY_AVAILABLE and not settings.TESTING and hasattr(settings, 'SENTRY_DSN') and settings.SENTRY_DSN:
         sentry_sdk.init(
             dsn=settings.SENTRY_DSN,
-            traces_sample_rate=1.0,
+            # Performance monitoring
+            traces_sample_rate=1.0,  # Capture 100% of transactions
+            # Profiling
+            profiles_sample_rate=1.0,  # Profile 100% of sessions
+            # Data collection
+            send_default_pii=True,  # Include request headers and IP
+            # Logging
+            enable_tracing=True,  # Enable performance tracing
+            # Environment
             environment=settings.ENVIRONMENT,
             release=f"gw2optimizer@{settings.API_VERSION}",
-            send_default_pii=True,  # Include request headers and IP for better debugging
         )
-        logger.info("📊 Sentry error tracking initialized")
+        logger.info("📊 Sentry error tracking initialized (tracing + profiling enabled)")
 
     # Initialize Prometheus metrics (production only)
     if PROMETHEUS_AVAILABLE and not settings.TESTING:

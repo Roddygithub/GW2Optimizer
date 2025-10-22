@@ -10,11 +10,13 @@
 ### Backend (FastAPI)
 ```python
 ✅ Sentry SDK installé: sentry-sdk[fastapi]==1.40.0
-✅ DSN configuré dans .env.example
+✅ DSN Backend: https://d7067f5675913b468876ace2ce7cfefd@o4510235525120000.ingest.de.sentry.io/4510235538489424
 ✅ Intégration dans app/main.py
 ✅ Endpoint de test: /api/v1/sentry-debug
 ✅ send_default_pii: True (headers + IP)
 ✅ traces_sample_rate: 1.0 (100%)
+✅ profiles_sample_rate: 1.0 (100%)
+✅ enable_tracing: True
 ✅ Environment tracking
 ✅ Release versioning
 ```
@@ -22,11 +24,15 @@
 ### Frontend (React)
 ```typescript
 ✅ Sentry SDK: @sentry/react==7.100.0
+✅ DSN Frontend: https://bdd0ff8259b4cbc7214e79260ad04614@o4510235525120000.ingest.de.sentry.io/4510235571847248
 ✅ Intégration dans src/main.tsx
 ✅ Browser tracing
-✅ Session replay
-✅ Error replay
+✅ Session replay (10% sessions, 100% errors)
+✅ Trace propagation
+✅ sendDefaultPii: True
+✅ enableLogs: True
 ✅ Production only
+✅ Test button component
 ```
 
 ---

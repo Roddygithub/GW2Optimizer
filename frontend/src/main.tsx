@@ -8,16 +8,25 @@ import App from './App.tsx'
 if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
+    // Integrations
     integrations: [
       Sentry.browserTracingIntegration(),
       Sentry.replayIntegration(),
     ],
-    tracesSampleRate: 1.0,
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
+    // Performance monitoring
+    tracesSampleRate: 1.0,  // Capture 100% of transactions
+    tracePropagationTargets: ["localhost", /^https:\/\/api\.gw2optimizer\.com/],
+    // Session Replay
+    replaysSessionSampleRate: 0.1,  // 10% of sessions
+    replaysOnErrorSampleRate: 1.0,  // 100% of errors
+    // Data collection
+    sendDefaultPii: true,  // Include IP addresses
+    // Logging
+    enableLogs: true,  // Send logs to Sentry
+    // Environment
     environment: import.meta.env.MODE,
   });
-  console.log("📊 Sentry error tracking initialized");
+  console.log("📊 Sentry error tracking initialized (tracing + replay + logs enabled)");
 }
 
 createRoot(document.getElementById('root')!).render(
