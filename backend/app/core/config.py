@@ -58,6 +58,9 @@ class Settings(BaseSettings):
 
     # Logging
     LOG_LEVEL: str = "INFO"
+
+    # Testing
+    TESTING: bool = False  # Disable rate limiting and other restrictions in tests
     LOG_FILE: str = "logs/gw2optimizer.log"
 
     # Learning Configuration

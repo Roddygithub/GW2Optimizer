@@ -108,9 +108,13 @@ def create_application() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Add rate limiting
-    app.state.limiter = auth_limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    # Add rate limiting (disabled in testing mode)
+    if not settings.TESTING:
+        app.state.limiter = auth_limiter
+        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    else:
+        # Disable rate limiting in tests
+        logger.info("⚠️  Rate limiting DISABLED (TESTING=True)")
 
     # Configure CORS
     configure_cors(app)
