@@ -10,11 +10,38 @@ from app.core.cache import cacheable, invalidate_cache
 from app.core.logging import logger
 from app.db.base import get_db
 from app.learning.data.collector import InteractionCollector
-from app.models.build import Build, BuildCreate, BuildDB, BuildResponse, BuildUpdate, GameMode, Profession, Role
+from app.models.build import Build, BuildCreate, BuildDB, BuildResponse, BuildUpdate, Equipment, GameMode, Profession, Role, Skill, TraitLine
 from app.db.models import UserDB
 from app.services.build_service_db import BuildService
 
 router = APIRouter()
+
+
+def build_db_to_pydantic(build_db: BuildDB) -> Build:
+    """Convert BuildDB to Pydantic Build model."""
+    return Build(
+        id=build_db.id,
+        user_id=build_db.user_id,
+        name=build_db.name,
+        profession=build_db.profession,
+        specialization=build_db.specialization,
+        game_mode=build_db.game_mode,
+        role=build_db.role,
+        description=build_db.description,
+        playstyle=build_db.playstyle,
+        source_url=build_db.source_url,
+        source_type=build_db.source_type,
+        effectiveness=build_db.effectiveness,
+        difficulty=build_db.difficulty,
+        is_public=build_db.is_public,
+        trait_lines=[TraitLine(**tl) if isinstance(tl, dict) else tl for tl in (build_db.trait_lines or [])],
+        skills=[Skill(**s) if isinstance(s, dict) else s for s in (build_db.skills or [])],
+        equipment=[Equipment(**e) if isinstance(e, dict) else e for e in (build_db.equipment or [])],
+        synergies=build_db.synergies or [],
+        counters=build_db.counters or [],
+        created_at=build_db.created_at,
+        updated_at=build_db.updated_at,
+    )
 
 
 @router.post("/builds", response_model=Build, status_code=status.HTTP_201_CREATED)
@@ -60,7 +87,7 @@ async def create_build(
             logger.warning(f"Failed to collect interaction: {e}")
 
         # Convert to Pydantic model
-        return Build.model_validate(build_db)
+        return build_db_to_pydantic(build_db)
 
     except HTTPException:
         raise
@@ -96,7 +123,7 @@ async def get_build(
         if not build_db:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found")
 
-        return Build.model_validate(build_db)
+        return build_db_to_pydantic(build_db)
 
     except HTTPException:
         raise
@@ -144,7 +171,7 @@ async def list_user_builds(
             is_public=is_public,
         )
 
-        return [Build.model_validate(build) for build in builds_db]
+        return [build_db_to_pydantic(build) for build in builds_db]
 
     except Exception as e:
         logger.error(f"Error listing builds: {e}")
@@ -181,7 +208,7 @@ async def list_public_builds(
             skip=skip, limit=limit, profession=profession, game_mode=game_mode, role=role
         )
 
-        return [Build.model_validate(build) for build in builds_db]
+        return [build_db_to_pydantic(build) for build in builds_db]
 
     except Exception as e:
         logger.error(f"Error listing public builds: {e}")
@@ -219,7 +246,7 @@ async def update_build(
         if not build_db:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found")
 
-        return Build.model_validate(build_db)
+        return build_db_to_pydantic(build_db)
 
     except HTTPException:
         raise
