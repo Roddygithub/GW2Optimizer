@@ -33,7 +33,7 @@ def build_db_to_pydantic(build_db: BuildDB) -> Build:
     """Convert BuildDB to Pydantic Build model."""
     return Build(
         id=build_db.id,
-        user_id=build_db.user_id,
+        user_id=str(build_db.user_id),
         name=build_db.name,
         profession=Profession(build_db.profession) if isinstance(build_db.profession, str) else build_db.profession,
         specialization=build_db.specialization,
