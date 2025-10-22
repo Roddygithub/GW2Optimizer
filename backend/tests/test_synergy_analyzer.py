@@ -46,15 +46,66 @@ def sample_team():
     base_user_id = str(uuid4())
     now = datetime.utcnow()
     builds = [
-        Build(id=str(uuid4()), name="Guardian Support", profession=Profession.GUARDIAN, game_mode=GameMode.ZERG, role=Role.SUPPORT, user_id=base_user_id, created_at=now, updated_at=now),
-        Build(id=str(uuid4()), name="Warrior Tank", profession=Profession.WARRIOR, game_mode=GameMode.ZERG, role=Role.TANK, user_id=base_user_id, created_at=now, updated_at=now),
-        Build(id=str(uuid4()), name="Mesmer DPS", profession=Profession.MESMER, game_mode=GameMode.ZERG, role=Role.DPS, user_id=base_user_id, created_at=now, updated_at=now),
-        Build(id=str(uuid4()), name="Revenant DPS", profession=Profession.REVENANT, game_mode=GameMode.ZERG, role=Role.DPS, user_id=base_user_id, created_at=now, updated_at=now),
-        Build(id=str(uuid4()), name="Engineer DPS", profession=Profession.ENGINEER, game_mode=GameMode.ZERG, role=Role.DPS, user_id=base_user_id, created_at=now, updated_at=now),
+        Build(
+            id=str(uuid4()),
+            name="Guardian Support",
+            profession=Profession.GUARDIAN,
+            game_mode=GameMode.ZERG,
+            role=Role.SUPPORT,
+            user_id=base_user_id,
+            created_at=now,
+            updated_at=now,
+        ),
+        Build(
+            id=str(uuid4()),
+            name="Warrior Tank",
+            profession=Profession.WARRIOR,
+            game_mode=GameMode.ZERG,
+            role=Role.TANK,
+            user_id=base_user_id,
+            created_at=now,
+            updated_at=now,
+        ),
+        Build(
+            id=str(uuid4()),
+            name="Mesmer DPS",
+            profession=Profession.MESMER,
+            game_mode=GameMode.ZERG,
+            role=Role.DPS,
+            user_id=base_user_id,
+            created_at=now,
+            updated_at=now,
+        ),
+        Build(
+            id=str(uuid4()),
+            name="Revenant DPS",
+            profession=Profession.REVENANT,
+            game_mode=GameMode.ZERG,
+            role=Role.DPS,
+            user_id=base_user_id,
+            created_at=now,
+            updated_at=now,
+        ),
+        Build(
+            id=str(uuid4()),
+            name="Engineer DPS",
+            profession=Profession.ENGINEER,
+            game_mode=GameMode.ZERG,
+            role=Role.DPS,
+            user_id=base_user_id,
+            created_at=now,
+            updated_at=now,
+        ),
     ]
 
     team.slots = [
-        TeamSlot(id=str(uuid4()), slot_number=i + 1, build=build, priority=1) for i, build in enumerate(builds)
+        TeamSlot(
+            id=str(uuid4()),
+            slot_number=i + 1,
+            build=build,
+            priority=1,
+        )
+        for i, build in enumerate(builds)
     ]
 
     return team
