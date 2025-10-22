@@ -14,6 +14,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from sqlalchemy.ext.asyncio import create_async_engine
 from app.db.base import Base
 
+# Import all models so they're registered with Base.metadata
+from app.db.models import UserDB, LoginHistory  # noqa: F401
+from app.models.build import BuildDB  # noqa: F401
+from app.models.team import TeamCompositionDB, TeamSlotDB  # noqa: F401
+
 
 async def init_db():
     """Create all tables in the test database."""
