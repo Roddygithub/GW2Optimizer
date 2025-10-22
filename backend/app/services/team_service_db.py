@@ -229,17 +229,15 @@ class TeamService:
             HTTPException: If team not found or user doesn't have permission
         """
         try:
-            # Check if team exists first (404)
+            # Check if team exists
             stmt = select(TeamCompositionDB).where(TeamCompositionDB.id == team_id)
             result = await self.db.execute(stmt)
             team = result.scalar_one_or_none()
 
-            if not team:
+            # Return 404 if team doesn't exist OR if user doesn't own it
+            # This prevents revealing the existence of teams owned by others
+            if not team or team.user_id != str(user.id):
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
-
-            # Then check ownership (403)
-            if team.user_id != str(user.id):
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this team")
 
             # Update fields
             update_data = team_data.model_dump(exclude_unset=True)
@@ -276,17 +274,15 @@ class TeamService:
             HTTPException: If team not found or user doesn't have permission
         """
         try:
-            # Check if team exists first (404)
+            # Check if team exists
             stmt = select(TeamCompositionDB).where(TeamCompositionDB.id == team_id)
             result = await self.db.execute(stmt)
             team = result.scalar_one_or_none()
 
-            if not team:
+            # Return 404 if team doesn't exist OR if user doesn't own it
+            # This prevents revealing the existence of teams owned by others
+            if not team or team.user_id != str(user.id):
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
-
-            # Then check ownership (403)
-            if team.user_id != str(user.id):
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this team")
 
             # Delete the team (cascade will handle team_slots)
             await self.db.delete(team)

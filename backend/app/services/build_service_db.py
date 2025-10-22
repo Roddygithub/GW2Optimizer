@@ -205,12 +205,10 @@ class BuildService:
             result = await self.db.execute(stmt)
             build = result.scalar_one_or_none()
 
-            if not build:
+            # Return 404 if build doesn't exist OR if user doesn't own it
+            # This prevents revealing the existence of builds owned by others
+            if not build or build.user_id != str(user.id):
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found")
-
-            # Then check ownership (403)
-            if build.user_id != str(user.id):
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to update this build")
 
             # Update fields
             update_data = build_data.model_dump(exclude_unset=True)
@@ -247,17 +245,15 @@ class BuildService:
             HTTPException: If build not found or user doesn't have permission
         """
         try:
-            # Check if build exists first (404)
+            # Check if build exists
             stmt = select(BuildDB).where(BuildDB.id == build_id)
             result = await self.db.execute(stmt)
             build = result.scalar_one_or_none()
 
-            if not build:
+            # Return 404 if build doesn't exist OR if user doesn't own it
+            # This prevents revealing the existence of builds owned by others
+            if not build or build.user_id != str(user.id):
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Build not found")
-
-            # Then check ownership (403)
-            if build.user_id != str(user.id):
-                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this build")
 
             # Delete the build (cascade will handle related records)
             await self.db.delete(build)
