@@ -13,7 +13,7 @@ import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import event
+from sqlalchemy import event, text
 from sqlalchemy.engine import Engine
 import fakeredis.aioredis
 
@@ -49,14 +49,27 @@ def event_loop(request):
 
 @pytest_asyncio.fixture()
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Create a new database session for each test, with cleanup."""
+    """Create a new database session for each test with transaction isolation.
+
+    Uses BEGIN/ROLLBACK pattern for complete test isolation.
+    Each test runs in its own transaction that is rolled back afterwards.
+    """
+    # Create all tables if they don't exist
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    async with TestingSessionLocal() as session:
-        # Enable autocommit for integration tests to avoid foreign key issues
-        yield session
-        # Don't rollback - let the drop_all clean up
+    # Start a transaction for the test
+    async with engine.connect() as conn:
+        await conn.execute(text("BEGIN"))
+
+        # Create session bound to this connection
+        async_session = sessionmaker(bind=conn, class_=AsyncSession, expire_on_commit=False)
+
+        async with async_session() as session:
+            yield session
+
+        # Rollback transaction after test
+        await conn.execute(text("ROLLBACK"))
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -100,40 +113,38 @@ async def integration_client(
     is_postgresql = "postgresql" in test_db_url
 
     if is_postgresql:
-        # Use PostgreSQL (CI environment) - tables already exist
+        # Use PostgreSQL with transaction isolation (CI environment)
         test_engine = engine  # Use global engine
 
-        TestSessionLocal = sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=test_engine,
-            class_=AsyncSession,
-            expire_on_commit=False,
-        )
+        # Create tables if they don't exist
+        async with test_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
 
-        # Each HTTP request gets its own session
-        async def get_test_db():
-            async with TestSessionLocal() as session:
-                yield session
+        # Start transaction for test isolation
+        async with test_engine.connect() as conn:
+            await conn.execute(text("BEGIN"))
 
-        app.dependency_overrides[get_db] = get_test_db
-        app.dependency_overrides[get_redis_client] = lambda: redis_client
+            TestSessionLocal = sessionmaker(
+                bind=conn,
+                class_=AsyncSession,
+                expire_on_commit=False,
+            )
 
-        async with AsyncClient(app=app, base_url="http://test") as c:
-            yield c
+            # Each HTTP request gets its own session from the transaction
+            async def get_test_db():
+                async with TestSessionLocal() as session:
+                    yield session
 
-        app.dependency_overrides.clear()
+            app.dependency_overrides[get_db] = get_test_db
+            app.dependency_overrides[get_redis_client] = lambda: redis_client
 
-        # Clean up data (not tables) in PostgreSQL
-        try:
-            async with test_engine.begin() as conn:
-                # Delete all data in reverse order (respect foreign keys)
-                from sqlalchemy import text
+            async with AsyncClient(app=app, base_url="http://test") as c:
+                yield c
 
-                await conn.execute(text("TRUNCATE builds, teams, users RESTART IDENTITY CASCADE"))
-        except Exception:
-            # Tables might not exist or already cleaned, ignore
-            pass
+            app.dependency_overrides.clear()
+
+            # Rollback transaction after test (complete isolation)
+            await conn.execute(text("ROLLBACK"))
     else:
         # Use SQLite (local development)
         test_id = str(uuid.uuid4())[:8]
