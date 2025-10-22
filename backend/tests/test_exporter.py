@@ -5,6 +5,7 @@ import json
 from app.models.build import Build, GameMode, Profession, Role, TraitLine, Skill, Equipment
 from app.models.team import TeamComposition, TeamSlot
 from app.services.exporter.snowcrows_exporter import SnowcrowsExporter
+from tests.factories import create_test_build, create_test_team_composition, create_test_team_slot
 
 
 @pytest.fixture
@@ -16,7 +17,7 @@ def exporter():
 @pytest.fixture
 def sample_build():
     """Create sample build with all data."""
-    return Build(
+    return create_test_build(
         name="Test Guardian Build",
         profession=Profession.GUARDIAN,
         specialization="Firebrand",
@@ -46,7 +47,7 @@ def sample_build():
 @pytest.fixture
 def sample_team(sample_build):
     """Create sample team."""
-    team = TeamComposition(
+    team = create_test_team_composition(
         name="Test Team",
         game_mode=GameMode.ZERG,
         team_size=5,
@@ -56,8 +57,8 @@ def sample_team(sample_build):
     )
 
     team.slots = [
-        TeamSlot(slot_number=0, build=sample_build, player_name="Player1", priority=1),
-        TeamSlot(slot_number=1, build=sample_build, player_name="Player2", priority=2),
+        create_test_team_slot(slot_number=1, build=sample_build, player_name="Player1", priority=1),
+        create_test_team_slot(slot_number=2, build=sample_build, player_name="Player2", priority=2),
     ]
 
     return team

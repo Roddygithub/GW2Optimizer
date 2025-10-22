@@ -59,13 +59,14 @@ def test_guess_role_from_name(scraper):
 def test_remove_duplicates(scraper):
     """Test duplicate removal."""
     from app.models.build import Build, GameMode
+    from tests.factories import create_test_build
 
     builds = [
-        Build(name="Guardian Build", profession=Profession.GUARDIAN, game_mode=GameMode.ZERG, role=Role.SUPPORT),
-        Build(
+        create_test_build(name="Guardian Build", profession=Profession.GUARDIAN, game_mode=GameMode.ZERG, role=Role.SUPPORT),
+        create_test_build(
             name="Guardian Build", profession=Profession.GUARDIAN, game_mode=GameMode.ZERG, role=Role.SUPPORT
         ),  # Duplicate
-        Build(name="Warrior Build", profession=Profession.WARRIOR, game_mode=GameMode.ZERG, role=Role.TANK),
+        create_test_build(name="Warrior Build", profession=Profession.WARRIOR, game_mode=GameMode.ZERG, role=Role.TANK),
     ]
 
     unique = scraper._remove_duplicates(builds)

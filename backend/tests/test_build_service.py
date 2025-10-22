@@ -1,6 +1,7 @@
 """Tests for BuildService with database persistence."""
 
 import pytest
+from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -40,7 +41,7 @@ async def db_session():
 async def test_user(db_session: AsyncSession):
     """Create a test user."""
     user = UserDB(
-        id="test-user-id",
+        id=str(uuid4()),
         email="test@example.com",
         username="testuser",
         hashed_password="hashed_password",
