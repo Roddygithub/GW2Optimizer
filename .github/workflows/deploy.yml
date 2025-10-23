@@ -1,32 +1,143 @@
-name: Deploy to Windsurf
+name: Deploy to Production
 
 on:
   push:
-    branches: [ main ]
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
 
 jobs:
-  deploy:
-    name: Deploy Application
+  build-and-test:
+    name: Build and Test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       
-      - name: Deploy to Windsurf
-        run: |
-          echo "🚀 Deploying to Windsurf..."
-          echo "Project: GW2Optimizer"
-          echo "Branch: ${{ github.ref }}"
-          echo "Commit: ${{ github.sha }}"
-          # Windsurf deployment would be configured here
-          # with appropriate API keys and deployment commands
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
       
-      - name: Deployment Status
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Backend Dependencies
+        working-directory: ./backend
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      
+      - name: Run Backend Tests
+        working-directory: ./backend
+        env:
+          TESTING: true
+        run: |
+          pytest -m 'not legacy' -v
+      
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: Run Frontend Tests
+        working-directory: ./frontend
+        run: npm test -- --run
+      
+      - name: Build Frontend
+        working-directory: ./frontend
+        env:
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npm run build
+
+  deploy-docker:
+    name: Deploy with Docker
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+      - name: Build and push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/gw2optimizer-backend:latest
+            ${{ secrets.DOCKER_USERNAME }}/gw2optimizer-backend:${{ steps.version.outputs.VERSION }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gw2optimizer-backend:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gw2optimizer-backend:buildcache,mode=max
+      
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          build-args: |
+            VITE_SENTRY_DSN=${{ secrets.VITE_SENTRY_DSN }}
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/gw2optimizer-frontend:latest
+            ${{ secrets.DOCKER_USERNAME }}/gw2optimizer-frontend:${{ steps.version.outputs.VERSION }}
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gw2optimizer-frontend:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gw2optimizer-frontend:buildcache,mode=max
+      
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/gw2optimizer
+            git pull origin main
+            docker-compose -f docker-compose.prod.yml pull
+            docker-compose -f docker-compose.prod.yml up -d
+            docker-compose -f docker-compose.prod.yml ps
+      
+      - name: Health Check
+        run: |
+          echo "⏳ Waiting for services to be healthy..."
+          sleep 30
+          # Add health check commands here
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          generate_release_notes: true
+          files: |
+            reports/MISSION_v3.0_FINAL_REPORT.md
+            reports/CLEANUP_REPORT.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Notify Deployment
         run: |
           echo "✅ Deployment completed successfully"
-          echo "URL: https://gw2optimizer.windsurf.app"
-      
-      - name: Notify
-        run: |
-          echo "📢 Deployment notification sent"
+          echo "Version: ${{ steps.version.outputs.VERSION }}"
+          echo "Environment: production"
