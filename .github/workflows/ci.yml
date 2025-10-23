@@ -177,6 +177,7 @@ jobs:
           pytest --cov=app --cov-report=xml:coverage-all.xml --cov-report=term
       
       - name: Upload coverage to Codecov
+        continue-on-error: true
         uses: codecov/codecov-action@v4
         with:
           files: ./backend/coverage.xml
@@ -184,8 +185,7 @@ jobs:
           name: backend-coverage
           fail_ci_if_error: false
           verbose: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN }}
       
       - name: Archive coverage report
         uses: actions/upload-artifact@v4
