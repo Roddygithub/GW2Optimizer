@@ -1,113 +1,123 @@
-import { Link } from 'react-router-dom';
-import { Shield, Users, Sword, BarChart3, ArrowRight } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { useState } from 'react';
+import { Bot, Sparkles, Users } from 'lucide-react';
+import { ChatBox } from '../components/ai/ChatBox';
+import { BuildGroupCard, Build } from '../components/builds/BuildGroupCard';
+import { APP_NAME, APP_VERSION, APP_FULL_TITLE } from '../config/version';
 
 export const Home = () => {
+  // État pour stocker les builds générés par l'IA
+  const [generatedBuilds, setGeneratedBuilds] = useState<Array<{ build: Build; count: number }>>([]);
+
+  // Fonction pour regrouper les builds identiques
+  const groupBuilds = (builds: Build[]) => {
+    const grouped = new Map<string, { build: Build; count: number }>();
+    
+    builds.forEach((build) => {
+      const key = `${build.profession}-${build.name}-${build.role}`;
+      const existing = grouped.get(key);
+      
+      if (existing) {
+        existing.count++;
+      } else {
+        grouped.set(key, { build, count: 1 });
+      }
+    });
+    
+    return Array.from(grouped.values());
+  };
+
+  // Fonction appelée quand l'IA génère des builds
+  const handleBuildsGenerated = (builds: Build[]) => {
+    const grouped = groupBuilds(builds);
+    setGeneratedBuilds(grouped);
+  };
+
   return (
-    <div className="space-y-12">
+    <div className="space-y-8 relative min-h-screen">
+      {/* ChatBox IA - Toujours visible */}
+      <ChatBox defaultOpen={true} className="z-40" />
+      
       {/* Hero Section */}
-      <section className="text-center space-y-6 py-12">
+      <section className="text-center space-y-6 py-8">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gw2-gold/10 border border-gw2-gold/30">
-          <Shield className="h-4 w-4 text-gw2-gold" />
-          <span className="text-sm text-gw2-gold font-medium">WvW McM Dashboard v1.7.0</span>
+          <Bot className="h-4 w-4 text-gw2-gold" />
+          <span className="text-sm text-gw2-gold font-medium">{APP_FULL_TITLE}</span>
         </div>
         
-        <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-gw2-gold via-gw2-blue to-gw2-purple bg-clip-text text-transparent">
-          Optimisez vos Escouades WvW
+        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-gw2-gold via-gw2-blue to-gw2-purple bg-clip-text text-transparent">
+          Assistant IA pour Compositions WvW
         </h1>
         
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Créez, gérez et optimisez vos compositions d'escouade pour dominer le Monde contre Monde de Guild Wars 2
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          Utilisez l'intelligence artificielle Mistral pour générer et optimiser vos compositions d'escouade WvW
         </p>
         
-        <div className="flex items-center justify-center gap-4">
-          <Link to="/dashboard">
-            <Button variant="gw2" size="lg" className="gap-2">
-              Accéder au Dashboard
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-          <Link to="/builds">
-            <Button variant="outline" size="lg">
-              Explorer les Builds
-            </Button>
-          </Link>
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+          <Sparkles className="h-4 w-4 text-gw2-gold" />
+          <span>Propulsé par Ollama avec Mistral</span>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card className="border-profession-guardian/30 hover:shadow-glow transition-shadow">
-          <CardHeader>
-            <Users className="h-10 w-10 text-profession-guardian mb-2" />
-            <CardTitle>Gestion d'Escouades</CardTitle>
-            <CardDescription>
-              Créez et gérez vos compositions d'escouade avec un système de slots intelligent
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>• Jusqu'à 50 joueurs par escouade</li>
-              <li>• Assignation automatique des rôles</li>
-              <li>• Analyse des synergies en temps réel</li>
-            </ul>
-          </CardContent>
-        </Card>
+      {/* Builds générés par l'IA */}
+      {generatedBuilds.length > 0 && (
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Users className="h-6 w-6 text-gw2-gold" />
+                Composition Générée
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                {generatedBuilds.reduce((acc, { count }) => acc + count, 0)} joueurs • {generatedBuilds.length} builds uniques
+              </p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {generatedBuilds.map(({ build, count }, idx) => (
+              <BuildGroupCard
+                key={`${build.id}-${idx}`}
+                build={build}
+                playerCount={count}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
-        <Card className="border-profession-warrior/30 hover:shadow-glow transition-shadow">
-          <CardHeader>
-            <Sword className="h-10 w-10 text-profession-warrior mb-2" />
-            <CardTitle>Bibliothèque de Builds</CardTitle>
-            <CardDescription>
-              Accédez à une vaste collection de builds optimisés pour le WvW
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>• Builds pour toutes les professions</li>
-              <li>• Filtres par rôle et mode de jeu</li>
-              <li>• Partage avec la communauté</li>
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card className="border-gw2-gold/30 hover:shadow-glow transition-shadow">
-          <CardHeader>
-            <BarChart3 className="h-10 w-10 text-gw2-gold mb-2" />
-            <CardTitle>Statistiques Avancées</CardTitle>
-            <CardDescription>
-              Analysez les performances et optimisez vos stratégies
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>• Taux de victoire par composition</li>
-              <li>• Analyse des synergies d'équipe</li>
-              <li>• Recommandations personnalisées</li>
-            </ul>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* CTA Section */}
-      <section className="text-center space-y-6 py-12 px-6 rounded-2xl bg-gradient-to-r from-gw2-gold/10 via-gw2-blue/10 to-gw2-purple/10 border border-gw2-gold/20">
-        <h2 className="text-3xl font-bold">Prêt à Dominer le WvW ?</h2>
-        <p className="text-muted-foreground max-w-xl mx-auto">
-          Rejoignez des milliers de commandants qui utilisent GW2 Optimizer pour créer les meilleures compositions d'escouade
-        </p>
-        <Link to="/register">
-          <Button variant="gw2" size="lg">
-            Commencer Gratuitement
-          </Button>
-        </Link>
-      </section>
-
-      {/* Footer Note */}
-      <div className="text-center text-xs text-muted-foreground/70 py-4">
-        <p>Empowered by Ollama with Mistral</p>
-        <p className="mt-1">© 2025 GW2 Optimizer - Tous droits réservés</p>
-      </div>
+      {/* Instructions d'utilisation */}
+      {generatedBuilds.length === 0 && (
+        <section className="text-center space-y-6 py-12 px-6 rounded-2xl bg-gradient-to-r from-gw2-gold/10 via-gw2-blue/10 to-gw2-purple/10 border border-gw2-gold/20">
+          <Bot className="h-16 w-16 text-gw2-gold mx-auto" />
+          <h2 className="text-2xl font-bold">Comment utiliser l'Assistant IA ?</h2>
+          <div className="max-w-2xl mx-auto space-y-4 text-left">
+            <div className="p-4 rounded-lg bg-background/50">
+              <h3 className="font-semibold mb-2">1. Ouvrez la ChatBox</h3>
+              <p className="text-sm text-muted-foreground">
+                Cliquez sur le bouton de chat en bas à droite pour ouvrir l'assistant IA.
+              </p>
+            </div>
+            <div className="p-4 rounded-lg bg-background/50">
+              <h3 className="font-semibold mb-2">2. Décrivez votre besoin</h3>
+              <p className="text-sm text-muted-foreground">
+                Demandez une composition d'escouade, par exemple : "Crée-moi une composition de 50 joueurs pour le WvW avec un bon équilibre entre DPS et support"
+              </p>
+            </div>
+            <div className="p-4 rounded-lg bg-background/50">
+              <h3 className="font-semibold mb-2">3. Visualisez les résultats</h3>
+              <p className="text-sm text-muted-foreground">
+                L'IA génère une composition optimisée qui s'affiche automatiquement ci-dessous avec tous les détails des builds.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+      {/* Footer */}
+      <footer className="text-center text-xs text-muted-foreground/70 py-8 border-t border-border mt-12">
+        <p className="font-medium">{APP_NAME} v{APP_VERSION}</p>
+        <p className="mt-2">Propulsé par Ollama avec Mistral</p>
+        <p className="mt-1">© 2025 - WvW McM Dashboard - Tous droits réservés</p>
+      </footer>
     </div>
   );
 };

@@ -31,8 +31,17 @@ describe('App', () => {
     
     render(<App />);
     
-    // Home page should be visible
-    expect(await screen.findByText(/GW2Optimizer/i)).toBeInTheDocument();
+    // Vérifie que le titre de l'application est affiché dans la barre de navigation
+    const titleElement = await screen.findByRole('link', { name: /GW2 Optimizer/i });
+    expect(titleElement).toBeInTheDocument();
+    
+    // Vérifie que le sous-titre est présent dans la barre de navigation
+    const navSubtitles = screen.getAllByText(/WvW McM Dashboard/i);
+    expect(navSubtitles.length).toBeGreaterThan(0);
+    
+    // Vérifie qu'au moins un élément avec la version est présent
+    const versionElements = screen.getAllByText(/v4.1.0/i);
+    expect(versionElements.length).toBeGreaterThan(0);
   });
 
   it('wraps app with AuthProvider', () => {

@@ -3,6 +3,10 @@ import { createRoot } from 'react-dom/client'
 import * as Sentry from "@sentry/react";
 import './index.css'
 import App from './App.tsx'
+import { exposeVersionToWindow } from './hooks/useAppVersion'
+
+// Expose version utilities to window and display welcome message
+exposeVersionToWindow();
 
 // Initialize Sentry (production only)
 if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
@@ -21,8 +25,6 @@ if (import.meta.env.PROD && import.meta.env.VITE_SENTRY_DSN) {
     replaysOnErrorSampleRate: 1.0,  // 100% of errors
     // Data collection
     sendDefaultPii: true,  // Include IP addresses
-    // Logging
-    enableLogs: true,  // Send logs to Sentry
     // Environment
     environment: import.meta.env.MODE,
   });

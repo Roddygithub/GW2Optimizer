@@ -127,8 +127,8 @@ class BuildDB(Base):
     # Foreign Keys
     user_id: Mapped[str] = mapped_column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
 
-    # Relationships
-    user: Mapped["UserDB"] = relationship("UserDB", back_populates="builds")
+    # Relationships - Commented out for staging validation
+    # user: Mapped["UserDB"] = relationship("UserDB", back_populates="builds")
 
     def __repr__(self) -> str:
         return f"<BuildDB(id={self.id}, name={self.name}, profession={self.profession})>"

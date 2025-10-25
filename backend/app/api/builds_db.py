@@ -56,7 +56,7 @@ def build_db_to_pydantic(build_db: BuildDB) -> Build:
     )
 
 
-@router.post("/builds", response_model=Build, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=Build, status_code=status.HTTP_201_CREATED)
 async def create_build(
     build_data: BuildCreate, current_user: UserDB = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ) -> Build:
@@ -108,7 +108,7 @@ async def create_build(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error creating build: {str(e)}")
 
 
-@router.get("/builds/{build_id}", response_model=Build)
+@router.get("/{build_id}", response_model=Build)
 @cacheable("build:{build_id}", ttl=3600)
 async def get_build(
     build_id: str, current_user: UserDB = Depends(get_current_user), db: AsyncSession = Depends(get_db)
@@ -144,7 +144,7 @@ async def get_build(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error fetching build: {str(e)}")
 
 
-@router.get("/builds", response_model=List[Build])
+@router.get("/", response_model=List[Build])
 async def list_user_builds(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=100, description="Maximum number of records"),
@@ -190,7 +190,7 @@ async def list_user_builds(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error listing builds: {str(e)}")
 
 
-@router.get("/builds/public/all", response_model=List[Build])
+@router.get("/public/all", response_model=List[Build])
 @cacheable("builds:public:{profession}:{game_mode}:{role}", ttl=1800)
 async def list_public_builds(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
@@ -294,7 +294,7 @@ async def delete_build(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error deleting build: {str(e)}")
 
 
-@router.get("/builds/stats/count", response_model=dict)
+@router.get("/stats/count", response_model=dict)
 async def get_build_count(current_user: UserDB = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> dict:
     """
     Get the total number of builds for the authenticated user.

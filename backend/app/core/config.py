@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # Ollama Configuration
     OLLAMA_HOST: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "mistral:latest"
+    OLLAMA_MODEL: str = "mistral:7b"
 
     # Database
     DATABASE_PATH: str = "./data/local_db/gw2optimizer.db"
@@ -47,6 +47,14 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3000",
     ]
 
+    # AI Configuration
+    AI_MODEL_NAME: str = "gpt-4"
+    AI_TEMPERATURE: float = 0.7
+    AI_MAX_TOKENS: int = 2048
+    
+    # Frontend URL
+    FRONTEND_URL: str = "http://localhost:5173"
+    
     # Scraping Configuration
     SCRAPER_UPDATE_INTERVAL: int = 604800  # 7 days in seconds
     SCRAPER_USER_AGENT: str = "GW2Optimizer/1.0"
@@ -67,6 +75,14 @@ class Settings(BaseSettings):
     LEARNING_DATA_DIR: str = "./data/learning"
     MAX_LEARNING_ITEMS: int = 10000
     LEARNING_ENABLED: bool = True
+
+    # AI Core Configuration (v4.1.0)
+    AI_CORE_ENABLED: bool = True  # Feature flag for AI Core
+    MISTRAL_API_KEY: str | None = None  # Mistral AI API key
+    AI_TIMEOUT: float = 2.0  # Timeout for AI requests in seconds
+    AI_RATE_LIMIT: int = 60  # Max requests per minute for /compose endpoint
+    ML_TRAINING_ENABLED: bool = False  # Feature flag for ML training in prod
+    AI_FALLBACK_ENABLED: bool = True  # Use rule-based fallback if AI fails
 
     model_config = SettingsConfigDict(
         env_file=".env",

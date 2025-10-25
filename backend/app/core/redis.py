@@ -11,7 +11,7 @@ from app.core.logging import logger
 from app.core.circuit_breaker import CircuitBreaker
 
 redis_client: Optional[Redis] = None
-redis_circuit_breaker = CircuitBreaker(max_failures=5, reset_timeout=60)
+redis_circuit_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=60)
 
 
 async def get_redis_client() -> Optional[Redis]:

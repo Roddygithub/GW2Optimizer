@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom';
 import { Home } from './Home';
 
@@ -11,39 +12,33 @@ describe('Home Page', () => {
       </BrowserRouter>
     );
     
-    expect(screen.getByText(/Optimisez vos Escouades WvW/i)).toBeInTheDocument();
+    // Vérifie que le titre principal est affiché
+    expect(screen.getByText(/Assistant IA pour Compositions WvW/i)).toBeInTheDocument();
   });
 
-  it('renders CTA buttons', () => {
+  it('renders chat box', () => {
     render(
       <BrowserRouter>
         <Home />
       </BrowserRouter>
     );
     
-    expect(screen.getByText(/Accéder au Dashboard/i)).toBeInTheDocument();
-    expect(screen.getByText(/Explorer les Builds/i)).toBeInTheDocument();
+    // Vérifie que la chatbox est présente en cherchant un élément plus spécifique
+    const chatBoxTitles = screen.getAllByText(/Comment puis-je vous aider \?/i);
+    expect(chatBoxTitles.length).toBeGreaterThan(0);
+    expect(chatBoxTitles[0]).toBeInTheDocument();
   });
 
-  it('renders feature cards', () => {
+  it('renders version info', () => {
     render(
       <BrowserRouter>
         <Home />
       </BrowserRouter>
     );
     
-    expect(screen.getByText(/Gestion d'Escouades/i)).toBeInTheDocument();
-    expect(screen.getByText(/Bibliothèque de Builds/i)).toBeInTheDocument();
-    expect(screen.getByText(/Statistiques Avancées/i)).toBeInTheDocument();
-  });
-
-  it('renders Ollama branding', () => {
-    render(
-      <BrowserRouter>
-        <Home />
-      </BrowserRouter>
-    );
-    
-    expect(screen.getByText(/Empowered by Ollama with Mistral/i)).toBeInTheDocument();
+    // Vérifie que la version est affichée en cherchant une partie du texte
+    const versionElements = screen.getAllByText(/GW2 Optimizer v4.1.0/i);
+    expect(versionElements.length).toBeGreaterThan(0);
+    expect(versionElements[0]).toBeInTheDocument();
   });
 });

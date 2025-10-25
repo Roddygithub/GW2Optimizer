@@ -6,7 +6,7 @@ import time
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from passlib.context import CryptContext
+import bcrypt
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 from pydantic import ValidationError
@@ -18,8 +18,6 @@ from app.models.token import TokenData
 from app.core.redis import get_redis_client, redis_circuit_breaker
 from app.core.logging import logger
 from app.services.user_service import UserService
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
@@ -90,14 +88,15 @@ def decode_token(token: str) -> Optional[dict]:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against a hashed password."""
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 
 def get_password_hash(password: str) -> str:
     """
     Hash a password.
     """
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 
 async def get_current_user(

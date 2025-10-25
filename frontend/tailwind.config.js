@@ -7,7 +7,20 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        // Premium GW2 Fonts
+        serif: ['Cinzel', 'Georgia', 'serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
       colors: {
+        // GW2 Premium Theme Colors
+        'gw-dark': '#1a1a1a',
+        'gw-dark-secondary': '#282828',
+        'gw-red': '#c02c2c',
+        'gw-red-dark': '#a01c1c',
+        'gw-gold': '#d4af37',
+        'gw-offwhite': '#f1f1f1',
+        'gw-gray': '#a0a0a0',
         // Guild Wars 2 Official Colors
         gw2: {
           gold: '#C59A4E',
@@ -79,10 +92,20 @@ export default {
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gw2-pattern': "url('/patterns/gw2-bg.png')",
+        'gw-stone': "url('https://www.transparenttextures.com/patterns/concrete-wall.png')",
       },
       boxShadow: {
         'gw2': '0 4px 20px rgba(197, 154, 78, 0.3)',
         'glow': '0 0 20px rgba(74, 144, 226, 0.5)',
+      },
+      keyframes: {
+        pulseMist: {
+          '0%, 100%': { opacity: '0.7' },
+          '50%': { opacity: '1' },
+        },
+      },
+      animation: {
+        pulseMist: 'pulseMist 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
     },
   },

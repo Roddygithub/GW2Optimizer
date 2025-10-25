@@ -95,8 +95,8 @@ class TeamCompositionDB(Base):
     # Foreign Keys
     user_id: Mapped[str] = mapped_column(GUID(), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
 
-    # Relationships
-    user: Mapped["UserDB"] = relationship("UserDB", back_populates="team_compositions")
+    # Relationships - Commented out for staging validation
+    # user: Mapped["UserDB"] = relationship("UserDB", back_populates="team_compositions")
     team_slots: Mapped[List["TeamSlotDB"]] = relationship(
         "TeamSlotDB", back_populates="team_composition", cascade="all, delete-orphan"
     )

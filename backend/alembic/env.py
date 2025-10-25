@@ -1,32 +1,37 @@
+import os
+import sys
 from logging.config import fileConfig
+from pathlib import Path
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
 from alembic import context
+
+# Add the project root to the Python path
+sys.path.append(str(Path(__file__).parents[1]))
+
+# Import the app's settings
+from app.core.config import settings
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# Override the SQLAlchemy URL from settings
+config.set_main_option('sqlalchemy.url', str(settings.DATABASE_URL))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-import sys
-from pathlib import Path
-
-# Add parent directory to path
-sys.path.append(str(Path(__file__).parents[1]))
-
+# Import the Base class and all models for autogenerate support
 from app.db.base_class import Base
 
-# Import all models here for autogenerate
+# Import all models to ensure they are registered with SQLAlchemy
 from app.models.user import UserDB
 
+# Set the metadata for Alembic to use
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
@@ -64,16 +69,26 @@ def run_migrations_online() -> None:
 
     In this scenario we need to create an Engine
     and associate a connection with the context.
-
     """
+    # Use the URL from settings
+    url = str(settings.DATABASE_URL)
+    
+    # Configure the engine
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        {"sqlalchemy.url": url},
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
-        context.configure(connection=connection, target_metadata=target_metadata)
+        context.configure(
+            connection=connection, 
+            target_metadata=target_metadata,
+            compare_type=True,
+            compare_server_default=True,
+            include_schemas=True,
+            render_as_batch=True,  # For SQLite support
+        )
 
         with context.begin_transaction():
             context.run_migrations()

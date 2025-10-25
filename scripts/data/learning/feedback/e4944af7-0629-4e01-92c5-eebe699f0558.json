@@ -1,0 +1,10 @@
+{
+  "id": "e4944af7-0629-4e01-92c5-eebe699f0558",
+  "composition_id": "test-comp-123",
+  "user_id": "test-user-456",
+  "type": "explicit_rating",
+  "rating": 8.5,
+  "comments": "Great composition!",
+  "metadata": {},
+  "timestamp": "2025-10-24T09:15:17.148380"
+}

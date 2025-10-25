@@ -117,3 +117,40 @@ export interface AuthResponse {
 export interface ApiError {
   detail: string;
 }
+
+export interface ChatMessage {
+  id: string;
+  content: string;
+  role: 'user' | 'assistant';
+  timestamp: string;
+}
+
+export interface BuildSuggestion {
+  id: string;
+  name: string;
+  profession: string;
+  role: string;
+  weapons: {
+    mainHand?: string;
+    offHand?: string;
+    twoHanded?: string;
+  };
+  traits: string[];
+  skills: string[];
+  stats: {
+    power?: number;
+    precision?: number;
+    toughness?: number;
+    vitality?: number;
+    condition?: number;
+    healing?: number;
+  };
+  playerCount: number;
+}
+
+export interface ChatResponse {
+  response: string;
+  suggestions?: string[];
+  builds_mentioned?: BuildSuggestion[];
+  action_required?: string | null;
+}

@@ -1,6 +1,7 @@
 """Ollama service for AI interactions."""
 
 import json
+import time
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -16,7 +17,7 @@ class OllamaService:
         """Initialize Ollama service."""
         self.host = settings.OLLAMA_HOST
         self.model = settings.OLLAMA_MODEL
-        self.timeout = 120.0
+        self.timeout = 300.0  # Augmenté à 5 minutes
 
     async def check_health(self) -> bool:
         """Check if Ollama service is available."""
@@ -146,15 +147,35 @@ class OllamaService:
                 },
             }
 
+            logger.info(f"Sending request to Ollama with model: {self.model}")
+            logger.debug(f"Request payload: {json.dumps(payload, indent=2)}")
+            
+            start_time = time.time()
+            
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    f"{self.host}/api/chat",
-                    json=payload,
-                )
-                response.raise_for_status()
-
-                data = response.json()
-                return data.get("message", {}).get("content", "")
+                try:
+                    response = await client.post(
+                        f"{self.host}/api/chat",
+                        json=payload,
+                    )
+                    response.raise_for_status()
+                    
+                    elapsed = time.time() - start_time
+                    logger.info(f"Ollama response received in {elapsed:.2f} seconds")
+                    
+                    data = response.json()
+                    logger.debug(f"Ollama response: {json.dumps(data, indent=2)}")
+                    
+                    content = data.get("message", {}).get("content", "")
+                    logger.info(f"Extracted content length: {len(content)} characters")
+                    
+                    return content
+                except httpx.HTTPStatusError as e:
+                    logger.error(f"Ollama API error: {e.response.status_code} - {e.response.text}")
+                    raise
+                except httpx.RequestError as e:
+                    logger.error(f"Request to Ollama failed: {str(e)}")
+                    raise
 
         except Exception as e:
             logger.error(f"Error in chat with Ollama: {e}")

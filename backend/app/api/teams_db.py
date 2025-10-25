@@ -70,7 +70,7 @@ def team_db_to_pydantic(team_db: TeamCompositionDB) -> TeamComposition:
     )
 
 
-@router.post("/teams", response_model=TeamComposition, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=TeamComposition, status_code=status.HTTP_201_CREATED)
 async def create_team(
     team_data: TeamCompositionCreate,
     current_user: UserDB = Depends(get_current_user),
@@ -124,7 +124,7 @@ async def create_team(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error creating team: {str(e)}")
 
 
-@router.get("/teams/{team_id}", response_model=TeamComposition)
+@router.get("/{team_id}", response_model=TeamComposition)
 @cacheable("team:{team_id}", ttl=3600)
 async def get_team(
     team_id: str, current_user: UserDB = Depends(get_current_user), db: AsyncSession = Depends(get_db)
@@ -160,7 +160,7 @@ async def get_team(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error fetching team: {str(e)}")
 
 
-@router.get("/teams", response_model=List[TeamComposition])
+@router.get("/", response_model=List[TeamComposition])
 async def list_user_teams(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=100, description="Maximum number of records"),
@@ -196,7 +196,7 @@ async def list_user_teams(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error listing teams: {str(e)}")
 
 
-@router.get("/teams/public/all", response_model=List[TeamComposition])
+@router.get("/public/all", response_model=List[TeamComposition])
 @cacheable("teams:public:{game_mode}", ttl=1800)
 async def list_public_teams(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
@@ -362,7 +362,7 @@ async def remove_build_from_team(
         )
 
 
-@router.get("/teams/stats/count", response_model=dict)
+@router.get("/stats/count", response_model=dict)
 async def get_team_count(current_user: UserDB = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> dict:
     """
     Get the total number of teams for the authenticated user.

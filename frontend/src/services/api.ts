@@ -1,7 +1,7 @@
 import axios from 'axios';
-import type { AuthResponse, Build, TeamComposition, User } from '../types';
+import type { AuthResponse, Build, TeamComposition, User, ChatResponse } from '../types';
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+const API_BASE_URL = 'http://127.0.0.1:8001/api/v1';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -42,7 +42,7 @@ export const authAPI = {
     formData.append('username', email);
     formData.append('password', password);
     
-    const response = await api.post<AuthResponse>('/api/auth/login', formData, {
+    const response = await api.post<AuthResponse>('/auth/token', formData, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
     
@@ -54,7 +54,7 @@ export const authAPI = {
   },
 
   register: async (email: string, username: string, password: string): Promise<User> => {
-    const response = await api.post<User>('/api/auth/register', {
+    const response = await api.post<User>('/auth/register', {
       email,
       username,
       password,
@@ -67,7 +67,7 @@ export const authAPI = {
   },
 
   getCurrentUser: async (): Promise<User> => {
-    const response = await api.get<User>('/api/auth/me');
+    const response = await api.get<User>('/auth/me');
     return response.data;
   },
 };
@@ -82,27 +82,27 @@ export const buildsAPI = {
     role?: string;
     is_public?: boolean;
   }): Promise<Build[]> => {
-    const response = await api.get<Build[]>('/api/builds/', { params });
+    const response = await api.get<Build[]>('/builds', { params });
     return response.data;
   },
 
   get: async (id: string): Promise<Build> => {
-    const response = await api.get<Build>(`/api/builds/${id}`);
+    const response = await api.get<Build>(`/builds/${id}`);
     return response.data;
   },
 
   create: async (build: Partial<Build>): Promise<Build> => {
-    const response = await api.post<Build>('/api/builds/', build);
+    const response = await api.post<Build>('/builds', build);
     return response.data;
   },
 
   update: async (id: string, build: Partial<Build>): Promise<Build> => {
-    const response = await api.put<Build>(`/api/builds/${id}`, build);
+    const response = await api.put<Build>(`/builds/${id}`, build);
     return response.data;
   },
 
   delete: async (id: string): Promise<void> => {
-    await api.delete(`/api/builds/${id}`);
+    await api.delete(`/builds/${id}`);
   },
 
   listPublic: async (params?: {
@@ -112,8 +112,51 @@ export const buildsAPI = {
     game_mode?: string;
     role?: string;
   }): Promise<Build[]> => {
-    const response = await api.get<Build[]>('/api/builds/public', { params });
+    // For now, use the same endpoint as list since we don't have a separate public endpoint
+    const response = await api.get<Build[]>('/builds', { params });
     return response.data;
+  },
+};
+
+// Chat API
+export const chatAPI = {
+  sendMessage: async (message: string, version: string): Promise<ChatResponse> => {
+    console.log('Envoi du message au chat:', { message, version });
+    try {
+      const response = await api.post<ChatResponse>('/chat/chat', { 
+        message, 
+        version 
+      });
+      
+      console.log('Réponse du chat reçue:', response.data);
+      
+      // S'assurer que la réponse a la structure attendue
+      if (!response.data.response) {
+        console.warn('La réponse du chat ne contient pas de champ "response"');
+        response.data.response = 'Je n\'ai pas pu traiter votre demande.';
+      }
+      
+      // S'assurer que builds_mentioned est un tableau
+      if (response.data.builds_mentioned && !Array.isArray(response.data.builds_mentioned)) {
+        console.warn('Le champ builds_mentioned n\'est pas un tableau:', response.data.builds_mentioned);
+        response.data.builds_mentioned = [];
+      }
+      
+      // S'assurer que suggestions est un tableau
+      if (response.data.suggestions && !Array.isArray(response.data.suggestions)) {
+        console.warn('Le champ suggestions n\'est pas un tableau:', response.data.suggestions);
+        response.data.suggestions = [];
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi du message au chat:', error);
+      return {
+        response: 'Une erreur est survenue lors de la communication avec le serveur.',
+        builds_mentioned: [],
+        suggestions: []
+      };
+    }
   },
 };
 

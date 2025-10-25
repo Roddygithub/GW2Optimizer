@@ -34,9 +34,9 @@ class UserDB(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    # Relationships
-    builds = relationship("BuildDB", back_populates="user", cascade="all, delete-orphan")
-    team_compositions = relationship("TeamCompositionDB", back_populates="user", cascade="all, delete-orphan")
+    # Relationships - Commented out for staging validation
+    # builds = relationship("BuildDB", back_populates="user", cascade="all, delete-orphan")
+    # team_compositions = relationship("TeamCompositionDB", back_populates="user", cascade="all, delete-orphan")
 
 
 class LoginHistory(Base):

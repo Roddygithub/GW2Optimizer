@@ -3,27 +3,104 @@ import axios from 'axios';
 import { authAPI, buildsAPI, teamsAPI } from './api';
 
 // Mock axios
-vi.mock('axios');
+const mockAxiosInstance = vi.hoisted(() => ({
+  interceptors: {
+    request: {
+      use: vi.fn(),
+      eject: vi.fn()
+    },
+    response: {
+      use: vi.fn(),
+      eject: vi.fn()
+    }
+  },
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+  delete: vi.fn(),
+  defaults: {
+    headers: {
+      common: {}
+    }
+  }
+}));
+
+vi.mock('axios', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual as object,
+    default: {
+      create: vi.fn(() => mockAxiosInstance)
+    }
+  };
+});
+
+// Mock des réponses API
+const mockAuthResponse = {
+  data: {
+    access_token: 'test-token',
+    token_type: 'bearer'
+  }
+};
+
+const mockUser = {
+  data: {
+    id: '1',
+    email: 'test@example.com',
+    username: 'testuser',
+    is_active: true
+  }
+};
+
+const mockBuilds = {
+  data: [
+    {
+      id: '1',
+      name: 'Test Build',
+      profession: 'Guardian',
+      game_mode: 'WvW',
+      role: 'Support',
+      is_public: true,
+      created_at: '2023-01-01T00:00:00Z',
+      updated_at: '2023-01-01T00:00:00Z'
+    }
+  ]
+};
+
+const mockTeams = {
+  data: [
+    {
+      id: '1',
+      name: 'Test Team',
+      game_mode: 'WvW',
+      is_public: true,
+      created_at: '2023-01-01T00:00:00Z',
+      updated_at: '2023-01-01T00:00:00Z'
+    }
+  ]
+};
 
 // Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-  return {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => {
-      store[key] = value;
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      store = {};
-    },
-  };
-})();
+const localStorageMock = {
+  store: {} as Record<string, string>,
+  getItem: vi.fn(function (key: string) {
+    return this.store[key] || null;
+  }),
+  setItem: vi.fn(function (key: string, value: string) {
+    this.store[key] = value;
+  }),
+  removeItem: vi.fn(function (key: string) {
+    delete this.store[key];
+  }),
+  clear: vi.fn(function () {
+    this.store = {};
+  })
+};
 
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
+  configurable: true,
+  writable: true
 });
 
 describe('API Services', () => {
@@ -37,59 +114,48 @@ describe('API Services', () => {
   });
 
   describe('authAPI', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockAxiosInstance.post.mockResolvedValue(mockAuthResponse);
+    });
+
     it('login stores token and returns auth response', async () => {
-      const mockResponse = {
-        data: {
-          access_token: 'test-token',
-          user: { id: '1', email: 'test@example.com', username: 'testuser' },
-        },
-      };
-
-      const mockAxios = vi.mocked(axios);
-      mockAxios.create = vi.fn().mockReturnValue({
-        post: vi.fn().mockResolvedValue(mockResponse),
-        get: vi.fn(),
-        put: vi.fn(),
-        delete: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      } as any);
-
-      // Re-import to get mocked instance
-      const { authAPI: mockedAuthAPI } = await import('./api');
+      const email = 'test@example.com';
+      const password = 'password';
       
-      const result = await mockedAuthAPI.login('test@example.com', 'password');
-
-      expect(result.access_token).toBe('test-token');
-      expect(localStorageMock.getItem('access_token')).toBe('test-token');
+      const response = await authAPI.login(email, password);
+      
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+        '/auth/token',
+        expect.any(FormData),
+        expect.objectContaining({
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        })
+      );
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('access_token', 'test-token');
+      expect(response).toEqual(mockAuthResponse.data);
     });
 
     it('register creates new user', async () => {
-      const mockUser = {
-        id: '1',
-        email: 'new@example.com',
-        username: 'newuser',
+      const userData = {
+        email: 'test@example.com',
+        username: 'testuser',
+        password: 'password'
       };
-
-      const mockAxios = vi.mocked(axios);
-      mockAxios.create = vi.fn().mockReturnValue({
-        post: vi.fn().mockResolvedValue({ data: mockUser }),
-        get: vi.fn(),
-        put: vi.fn(),
-        delete: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      } as any);
-
-      const { authAPI: mockedAuthAPI } = await import('./api');
       
-      const result = await mockedAuthAPI.register('new@example.com', 'newuser', 'password');
-
-      expect(result).toEqual(mockUser);
+      mockAxiosInstance.post.mockResolvedValueOnce(mockUser);
+      
+      const response = await authAPI.register(
+        userData.email,
+        userData.username,
+        userData.password
+      );
+      
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith(
+        '/auth/register',
+        userData
+      );
+      expect(response).toEqual(mockUser.data);
     });
 
     it('logout removes token from localStorage', () => {
@@ -101,135 +167,95 @@ describe('API Services', () => {
     });
 
     it('getCurrentUser fetches user data', async () => {
-      const mockUser = {
-        id: '1',
-        email: 'test@example.com',
-        username: 'testuser',
-      };
-
-      const mockAxios = vi.mocked(axios);
-      mockAxios.create = vi.fn().mockReturnValue({
-        get: vi.fn().mockResolvedValue({ data: mockUser }),
-        post: vi.fn(),
-        put: vi.fn(),
-        delete: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      } as any);
-
-      const { authAPI: mockedAuthAPI } = await import('./api');
+      mockAxiosInstance.get.mockResolvedValueOnce(mockUser);
       
-      const result = await mockedAuthAPI.getCurrentUser();
-
-      expect(result).toEqual(mockUser);
+      const response = await authAPI.getCurrentUser();
+      
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith('/auth/me');
+      expect(response).toEqual(mockUser.data);
     });
   });
 
   describe('buildsAPI', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
     it('list fetches builds with params', async () => {
-      const mockBuilds = [
-        { id: '1', name: 'Build 1', profession: 'Guardian' },
-        { id: '2', name: 'Build 2', profession: 'Warrior' },
-      ];
+      const params = { profession: 'Guardian', game_mode: 'WvW', limit: 10 };
+      mockAxiosInstance.get.mockResolvedValueOnce(mockBuilds);
 
-      const mockAxios = vi.mocked(axios);
-      mockAxios.create = vi.fn().mockReturnValue({
-        get: vi.fn().mockResolvedValue({ data: mockBuilds }),
-        post: vi.fn(),
-        put: vi.fn(),
-        delete: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      } as any);
-
-      const { buildsAPI: mockedBuildsAPI } = await import('./api');
+      const response = await buildsAPI.list(params);
       
-      const result = await mockedBuildsAPI.list({ limit: 10 });
-
-      expect(result).toEqual(mockBuilds);
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
+        '/builds',
+        { params }
+      );
+      expect(response).toEqual(mockBuilds.data);
     });
 
     it('get fetches single build', async () => {
+      const buildId = '1';
       const mockBuild = {
-        id: '1',
-        name: 'Test Build',
-        profession: 'Guardian',
+        data: {
+          id: buildId,
+          name: 'Test Build',
+          profession: 'Guardian',
+          game_mode: 'WvW',
+          role: 'Support',
+          is_public: true,
+          created_at: '2023-01-01T00:00:00Z',
+          updated_at: '2023-01-01T00:00:00Z'
+        }
       };
-
-      const mockAxios = vi.mocked(axios);
-      mockAxios.create = vi.fn().mockReturnValue({
-        get: vi.fn().mockResolvedValue({ data: mockBuild }),
-        post: vi.fn(),
-        put: vi.fn(),
-        delete: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      } as any);
-
-      const { buildsAPI: mockedBuildsAPI } = await import('./api');
       
-      const result = await mockedBuildsAPI.get('1');
+      mockAxiosInstance.get.mockResolvedValueOnce(mockBuild);
 
-      expect(result).toEqual(mockBuild);
+      const response = await buildsAPI.get(buildId);
+      
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(`/builds/${buildId}`);
+      expect(response).toEqual(mockBuild.data);
     });
   });
 
   describe('teamsAPI', () => {
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
     it('list fetches teams with params', async () => {
-      const mockTeams = [
-        { id: '1', name: 'Team 1', game_mode: 'zerg' },
-        { id: '2', name: 'Team 2', game_mode: 'raid' },
-      ];
+      const params = { game_mode: 'WvW', limit: 10 };
+      mockAxiosInstance.get.mockResolvedValueOnce(mockTeams);
 
-      const mockAxios = vi.mocked(axios);
-      mockAxios.create = vi.fn().mockReturnValue({
-        get: vi.fn().mockResolvedValue({ data: mockTeams }),
-        post: vi.fn(),
-        put: vi.fn(),
-        delete: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      } as any);
-
-      const { teamsAPI: mockedTeamsAPI } = await import('./api');
+      const response = await teamsAPI.list(params);
       
-      const result = await mockedTeamsAPI.list({ limit: 5 });
-
-      expect(result).toEqual(mockTeams);
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
+        '/api/teams/',
+        { params }
+      );
+      expect(response).toEqual(mockTeams.data);
     });
 
     it('get fetches single team', async () => {
+      const teamId = '1';
       const mockTeam = {
-        id: '1',
-        name: 'Test Team',
-        game_mode: 'zerg',
+        data: {
+          id: teamId,
+          name: 'Test Team',
+          game_mode: 'WvW',
+          is_public: true,
+          created_at: '2023-01-01T00:00:00Z',
+          updated_at: '2023-01-01T00:00:00Z',
+          builds: []
+        }
       };
-
-      const mockAxios = vi.mocked(axios);
-      mockAxios.create = vi.fn().mockReturnValue({
-        get: vi.fn().mockResolvedValue({ data: mockTeam }),
-        post: vi.fn(),
-        put: vi.fn(),
-        delete: vi.fn(),
-        interceptors: {
-          request: { use: vi.fn() },
-          response: { use: vi.fn() },
-        },
-      } as any);
-
-      const { teamsAPI: mockedTeamsAPI } = await import('./api');
       
-      const result = await mockedTeamsAPI.get('1');
+      mockAxiosInstance.get.mockResolvedValueOnce(mockTeam);
 
-      expect(result).toEqual(mockTeam);
+      const response = await teamsAPI.get(teamId);
+      
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(`/api/teams/${teamId}`);
+      expect(response).toEqual(mockTeam.data);
     });
   });
 });

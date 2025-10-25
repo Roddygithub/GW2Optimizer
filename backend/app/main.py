@@ -103,7 +103,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     try:
         from app.services.scheduler import scheduler
 
-        scheduler.shutdown()
+        scheduler.stop()
     except Exception as e:
         logger.error(f"❌ Error shutting down scheduler: {str(e)}")
 
@@ -121,7 +121,7 @@ def create_application() -> FastAPI:
         version=settings.API_VERSION,
         docs_url="/docs" if settings.DEBUG else None,
         redoc_url="/redoc" if settings.DEBUG else None,
-        openapi_url=f"{settings.API_V1_STR}/openapi.json" if settings.DEBUG else None,
+        openapi_url="/openapi.json" if settings.DEBUG else None,
         lifespan=lifespan,
     )
 
@@ -176,12 +176,15 @@ def create_application() -> FastAPI:
 
 def configure_cors(app: FastAPI) -> None:
     """Configure CORS middleware."""
-    if hasattr(settings, "BACKEND_CORS_ORIGINS") and settings.BACKEND_CORS_ORIGINS:
-        origins = [str(origin).strip("/") for origin in settings.BACKEND_CORS_ORIGINS]
-    elif settings.CORS_ORIGINS:
-        origins = [str(origin).strip("/") for origin in settings.CORS_ORIGINS]
-    else:
-        origins = ["*"]
+    # En développement, on autorise toutes les origines
+    origins = ["*"]
+    
+    # En production, on utilise les origines spécifiées dans les variables d'environnement
+    if settings.ENVIRONMENT == "production":
+        if hasattr(settings, "BACKEND_CORS_ORIGINS") and settings.BACKEND_CORS_ORIGINS:
+            origins = [str(origin).strip("/") for origin in settings.BACKEND_CORS_ORIGINS]
+        elif hasattr(settings, "CORS_ORIGINS") and settings.CORS_ORIGINS:
+            origins = [str(origin).strip("/") for origin in settings.CORS_ORIGINS]
 
     app.add_middleware(
         CORSMiddleware,
@@ -189,42 +192,54 @@ def configure_cors(app: FastAPI) -> None:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=["X-Request-ID", "X-Process-Time"],
+        expose_headers=["*"],
+        max_age=600,  # Cache des pré-requêtes CORS pendant 10 minutes
     )
     logger.info(f"🌐 CORS configured for origins: {', '.join(origins) if origins else 'all'}")
+    
+    # Ajout d'un middleware pour logger les requêtes
+    @app.middleware("http")
+    async def log_requests(request: Request, call_next):
+        logger.info(f"Incoming request: {request.method} {request.url}")
+        response = await call_next(request)
+        return response
 
 
 def include_routers(app: FastAPI) -> None:
-    """Include all API routers."""
-    # Authentication routes
-    app.include_router(
-        auth.router,
-        prefix=f"{settings.API_V1_STR}/auth",
-        tags=["Authentication"],  # This tag is now defined in auth.py
-    )
-
+    """Include all API routers with proper prefixes."""
+    # Health check is available without authentication
+    health_router = APIRouter()
+    health_router.include_router(health.router, prefix="", tags=["Health"])
+    app.include_router(health_router, prefix="")
+    
     # API v1 routes
     api_router = APIRouter(prefix=settings.API_V1_STR)
-    api_router.include_router(ai.router, prefix="/ai", tags=["AI"])
-    api_router.include_router(ai_optimizer.router, prefix="/ai", tags=["AI Optimizer"])
-    api_router.include_router(health.router, tags=["Health"])
-    # api_router.include_router(builds.router, tags=["Builds"])  # Replaced by builds_db
-    api_router.include_router(chat.router, tags=["Chat"])
-    api_router.include_router(export.router, tags=["Export"])
-    api_router.include_router(learning.router, tags=["Learning"])
-    api_router.include_router(meta.router, tags=["Meta"])
-    api_router.include_router(scraper.router, tags=["Scraper"])
-    # api_router.include_router(teams.router, tags=["Teams"])  # Replaced by teams_db
-    api_router.include_router(builds_db.router, tags=["Builds"])
-    api_router.include_router(teams_db.router, tags=["Teams"])
-    api_router.include_router(websocket_mcm.router, tags=["WebSocket McM"])
     
-    # Sentry debug endpoint (development/testing only)
-    if settings.DEBUG or settings.ENVIRONMENT == "development":
-        api_router.include_router(sentry_debug.router, tags=["Debug"])
+    # Authentication routes (public)
+    api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+    
+    # Protected routes (require authentication)
+    api_router.include_router(ai.router, prefix="/ai", tags=["AI"])
+    api_router.include_router(ai_optimizer.router, prefix="/ai-optimizer", tags=["AI Optimizer"])
+    api_router.include_router(builds.router, prefix="", tags=["Builds"])  # Empty prefix as it's already in the router
+    api_router.include_router(teams.router, prefix="/teams", tags=["Teams"])
+    api_router.include_router(chat.router, prefix="/chat", tags=["Chat"])
+    api_router.include_router(export.router, prefix="/export", tags=["Export"])
+    api_router.include_router(learning.router, prefix="/learning", tags=["Learning"])
+    api_router.include_router(meta.router, prefix="/meta", tags=["Meta"])
+    api_router.include_router(scraper.router, prefix="/scraper", tags=["Scraper"])
+    api_router.include_router(builds_db.router, prefix="/db/builds", tags=["Builds DB"])
+    api_router.include_router(teams_db.router, prefix="/db/teams", tags=["Teams DB"])
+    api_router.include_router(websocket_mcm.router, prefix="/mcm", tags=["WebSocket MCM"])
+    
+    # Include the API router with the prefix
+    app.include_router(api_router)
+    
+    # Debug routes (only in development)
+    if settings.DEBUG:
+        app.include_router(sentry_debug.router, prefix="/debug/sentry", tags=["Debug"])
         logger.info("🐛 Sentry debug endpoint enabled at /api/v1/sentry-debug")
 
-    app.include_router(api_router)
     logger.info("🔄 API routers included")
 
 

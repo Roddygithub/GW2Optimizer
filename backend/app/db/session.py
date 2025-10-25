@@ -6,10 +6,12 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 from app.core.config import settings
 
 # Create async engine
+# Remove pool settings for SQLite as they are not compatible
 engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
     future=True,
+    connect_args={"check_same_thread": False}  # Required for SQLite
 )
 
 # Create async session factory
