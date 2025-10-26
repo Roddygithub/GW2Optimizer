@@ -6,7 +6,7 @@ from fastapi import HTTPException
 
 from app.models.chat import ChatRequest, MessageRole, ChatMessage
 from app.services.ai.chat_service import ChatService
-from app.core.circuit_breaker import CircuitBreakerError
+# Removed unused CircuitBreakerError import
 
 
 class TestChatServiceIntegration:
@@ -78,7 +78,7 @@ class TestChatServiceIntegration:
         # After multiple failures, the circuit should open
         # We need to use a new chat service with a lower failure threshold
         from app.services.ai.chat_service import ChatService
-        from app.core.circuit_breaker import CircuitBreaker, CircuitBreakerError, chat_service_circuit_breaker
+        from app.core.circuit_breaker import CircuitBreaker
 
         # Create a new service with a circuit breaker that opens after 2 failures
         test_service = ChatService()
