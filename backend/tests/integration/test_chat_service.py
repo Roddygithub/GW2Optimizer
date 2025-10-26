@@ -88,6 +88,7 @@ class TestChatServiceIntegration:
         
         # Replace the module-level breaker temporarily
         test_breaker = CircuitBreaker(failure_threshold=2, recovery_timeout=1)
+        test_service.breaker = test_breaker
         test_service.circuit_breaker = test_breaker
 
         try:

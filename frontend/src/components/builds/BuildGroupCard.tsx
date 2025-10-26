@@ -53,8 +53,13 @@ export interface BuildGroupCardProps {
 export const BuildGroupCard = ({ build, playerCount, className }: BuildGroupCardProps) => {
   const professionColor = professionColors[build.profession.toLowerCase()] || 'text-foreground border-border';
 
+  const buildTestId = `build-card-${build.name.toLowerCase().replace(/\s+/g, '-')}`;
+
   return (
-    <Card className={cn('hover:shadow-glow transition-shadow', professionColor, className)}>
+    <Card
+      className={cn('hover:shadow-glow transition-shadow', professionColor, className)}
+      data-testid={buildTestId}
+    >
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">

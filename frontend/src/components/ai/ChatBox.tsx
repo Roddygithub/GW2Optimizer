@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, X, Bot, User, Loader2, ChevronUp, ChevronDown, ChevronRight, Sword } from 'lucide-react';
+import { Send, X, Bot, ChevronDown, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../utils/cn';
 import { chatAPI } from '../../services/api';
-import type { ChatResponse } from '../../types';
-import BuildGroupCard from '../builds/BuildGroupCard';
+import ChatMessage, { Message } from './ChatMessage';
+import { useAppVersion } from '../../hooks/useAppVersion';
+
+export type { Message };
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(
   ({ className, ...props }, ref) => {
@@ -22,49 +24,18 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttribu
   }
 );
 Textarea.displayName = 'Textarea';
-import { useAppVersion } from '../../hooks/useAppVersion';
-
-interface BuildSuggestion {
-  id?: string;
-  name?: string;
-  profession?: string;
-  role?: string;
-  weapons?: {
-    mainHand?: string;
-    offHand?: string;
-    twoHanded?: string;
-  };
-  traits?: string[];
-  skills?: string[];
-  stats?: {
-    power?: number;
-    precision?: number;
-    toughness?: number;
-    vitality?: number;
-    condition?: number;
-    healing?: number;
-  };
-  playerCount?: number;
-}
-
-interface Message {
-  id: string;
-  content: string;
-  role: 'user' | 'assistant';
-  timestamp: Date;
-  builds?: BuildSuggestion[];
-  suggestions?: string[];
-}
-
 export interface ChatBoxProps {
   defaultOpen?: boolean;
   className?: string;
 }
 
 export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
+  const getIsDesktop = () => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
+  const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(getIsDesktop);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -75,7 +46,9 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
         'Crée-moi une composition pour un raid',
         'Quel est le meilleur build pour un Gardien ?',
         'Comment optimiser mon DPS en tant qu\'Élémentariste ?'
-      ]
+      ],
+      // Assurer que les builds sont correctement typés
+      builds: []
     },
   ]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -98,12 +71,21 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+    const handleResize = () => setIsDesktop(getIsDesktop());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: generateId(),
       content: input,
       role: 'user',
       timestamp: new Date(),
@@ -118,7 +100,7 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
       const response = await chatAPI.sendMessage(input, version);
       
       const assistantMessage: Message = {
-        id: Date.now().toString(),
+        id: generateId(),
         content: response.response || 'Je n\'ai pas pu traiter votre demande.',
         role: 'assistant',
         timestamp: new Date(),
@@ -151,7 +133,7 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
   };
 
   // Vérifie si le message contient des builds
-  const hasBuilds = (message: Message): message is Message & { builds: BuildSuggestion[] } => {
+  const hasBuilds = (message: Message): message is Message & { builds: NonNullable<Message['builds']> } => {
     return Array.isArray(message.builds) && message.builds.length > 0;
   };
 
@@ -160,14 +142,12 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
     return Array.isArray(message.suggestions) && message.suggestions.length > 0;
   };
 
-  // Formate le contenu du message pour afficher les sauts de ligne
-  const formatMessageContent = (content: string) => {
-    return content.split('\n').map((line, i) => (
-      <React.Fragment key={i}>
-        {line}
-        <br />
-      </React.Fragment>
-    ));
+  const handleSuggestionClick = (suggestion: string) => {
+    setInput(suggestion);
+    // Focus on the input after setting the suggestion
+    setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 0);
   };
 
   return (
@@ -207,6 +187,7 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
                   size="icon"
                   onClick={toggleChat}
                   className="h-8 w-8"
+                  aria-label="Fermer le chat"
                 >
                   <ChevronDown className="h-4 w-4" />
                 </Button>
@@ -222,115 +203,17 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
                     </p>
                   </div>
                 ) : (
-                  messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={cn(
-                        'flex gap-3 max-w-[90%]',
-                        message.role === 'user' ? 'ml-auto' : 'mr-auto'
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          'flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center',
-                          message.role === 'user'
-                            ? 'bg-gw2-gold/10 text-gw2-gold'
-                            : 'bg-gw2-blue/10 text-gw2-blue'
-                        )}
-                      >
-                        {message.role === 'user' ? (
-                          <User className="h-4 w-4" />
-                        ) : (
-                          <Bot className="h-4 w-4" />
-                        )}
-                      </div>
-                      <div
-                        className={cn(
-                          'p-3 rounded-2xl text-sm',
-                          message.role === 'user'
-                            ? 'bg-gw2-gold/10 text-foreground rounded-tr-none'
-                            : 'bg-muted text-foreground rounded-tl-none',
-                          'relative group w-full max-w-[90%] md:max-w-[80%]'
-                        )}
-                      >
-                        <div className="whitespace-pre-wrap">{message.content}</div>
-                        
-                        {/* Affichage des builds suggérés */}
-                        {hasBuilds(message) && (
-                          <div className="mt-4 space-y-3">
-                            <div className="text-sm font-semibold text-foreground flex items-center border-b border-border pb-1 mb-2">
-                              <Sword className="h-4 w-4 mr-2 text-gw2-gold" />
-                              Builds suggérés
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {message.builds.map((build, idx) => {
-                                // Vérifier que le build a les propriétés minimales requises
-                                if (!build.profession) {
-                                  console.warn('Build sans profession, ignoré:', build);
-                                  return null;
-                                }
-                                
-                                const buildId = build.id || `build-${idx}`;
-                                const buildName = build.name || `Build ${build.profession} ${idx + 1}`;
-                                const buildRole = build.role || 'DPS';
-                                const buildWeapons = build.weapons || {};
-                                const buildTraits = build.traits || [];
-                                const buildSkills = build.skills || [];
-                                const buildStats = build.stats || {};
-                                const buildPlayerCount = build.playerCount || 1;
-                                
-                                return (
-                                  <BuildGroupCard 
-                                    key={buildId}
-                                    build={{
-                                      id: buildId,
-                                      name: buildName,
-                                      profession: build.profession, // Utilisation directe de build.profession qui a été validé
-                                      role: buildRole,
-                                      weapons: buildWeapons,
-                                      traits: buildTraits,
-                                      skills: buildSkills,
-                                      stats: buildStats,
-                                    }}
-                                    playerCount={buildPlayerCount}
-                                    className="w-full h-full"
-                                  />
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {/* Suggestions de suivi */}
-                        {hasSuggestions(message) && (
-                          <div className="mt-4 pt-3 border-t border-border">
-                            <div className="text-xs font-medium text-muted-foreground mb-2">
-                              Suggestions de suivi :
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {message.suggestions.map((suggestion, idx) => (
-                                <Button
-                                  key={idx}
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-xs h-8"
-                                  onClick={() => setInput(suggestion)}
-                                >
-                                  {suggestion}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        
-                        <span className="text-xs opacity-50 mt-2 block text-right">
-                          {formatTime(message.timestamp)}
-                        </span>
-                      </div>
-                    </div>
-                  ))
+                  <>
+                    {messages.map((message) => (
+                      <ChatMessage
+                        key={message.id}
+                        message={message}
+                        onSuggestionClick={handleSuggestionClick}
+                      />
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </>
                 )}
-                <div ref={messagesEndRef} />
               </div>
 
               <form onSubmit={handleSubmit} className="p-4 border-t border-border">
@@ -378,6 +261,7 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
               <Button
                 onClick={toggleChat}
                 className="rounded-full h-14 w-14 p-0 bg-gw2-gold hover:bg-gw2-gold/90 text-white shadow-lg shadow-gw2-gold/30"
+                aria-label={isOpen ? 'Fermer le chat' : 'Ouvrir le chat'}
               >
                 <Bot className="h-6 w-6" />
               </Button>
@@ -408,6 +292,7 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
                   size="icon"
                   onClick={toggleChat}
                   className="h-8 w-8"
+                  aria-label="Fermer le chat"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -440,42 +325,18 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
                     </div>
                   </div>
                 ) : (
-                  messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={cn(
-                        'flex gap-3',
-                        message.role === 'user' ? 'justify-end' : 'justify-start'
-                      )}
-                    >
-                      {message.role === 'assistant' && (
-                        <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gw2-blue/10 text-gw2-blue flex items-center justify-center">
-                          <Bot className="h-4 w-4" />
-                        </div>
-                      )}
-                      <div
-                        className={cn(
-                          'p-3 rounded-2xl max-w-[80%]',
-                          message.role === 'user'
-                            ? 'bg-gw2-gold/10 text-foreground rounded-tr-none'
-                            : 'bg-muted text-foreground rounded-tl-none',
-                          'relative group'
-                        )}
-                      >
-                        <div className="whitespace-pre-wrap">{message.content}</div>
-                        <span className="text-xs opacity-50 mt-1 block text-right">
-                          {formatTime(message.timestamp)}
-                        </span>
-                      </div>
-                      {message.role === 'user' && (
-                        <div className="flex-shrink-0 h-8 w-8 rounded-full bg-gw2-gold/10 text-gw2-gold flex items-center justify-center">
-                          <User className="h-4 w-4" />
-                        </div>
-                      )}
-                    </div>
-                  ))
+                  <div className="space-y-4">
+                    {messages.map((message) => (
+                      <ChatMessage
+                        key={message.id}
+                        message={message}
+                        onSuggestionClick={handleSuggestionClick}
+                        className={message.role === 'user' ? 'ml-auto' : 'mr-auto'}
+                      />
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
                 )}
-                <div ref={messagesEndRef} />
               </div>
 
               <form onSubmit={handleSubmit} className="p-4 border-t border-border">
@@ -525,6 +386,7 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
               <Button
                 onClick={toggleChat}
                 className="rounded-full h-16 w-16 p-0 bg-gw2-gold hover:bg-gw2-gold/90 text-white shadow-lg shadow-gw2-gold/30"
+                aria-label={isOpen ? 'Fermer le chat' : 'Ouvrir le chat'}
               >
                 <Bot className="h-7 w-7" />
               </Button>

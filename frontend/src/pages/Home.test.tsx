@@ -16,17 +16,16 @@ describe('Home Page', () => {
     expect(screen.getByText(/Assistant IA pour Compositions WvW/i)).toBeInTheDocument();
   });
 
-  it('renders chat box', () => {
+  it('renders chat box', async () => {
     render(
       <BrowserRouter>
         <Home />
       </BrowserRouter>
     );
     
-    // Vérifie que la chatbox est présente en cherchant un élément plus spécifique
-    const chatBoxTitles = screen.getAllByText(/Comment puis-je vous aider \?/i);
+    // Vérifie que la chatbox est présente en tenant compte des duplications responsive
+    const chatBoxTitles = await screen.findAllByText(/Assistant GW2 Optimizer/i);
     expect(chatBoxTitles.length).toBeGreaterThan(0);
-    expect(chatBoxTitles[0]).toBeInTheDocument();
   });
 
   it('renders version info', () => {

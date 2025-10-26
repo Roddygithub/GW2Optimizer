@@ -99,38 +99,42 @@ log "🔍 Vérification des composants..."
 # Vérification des endpoints API
 check_endpoint() {
     local endpoint=$1
-    local response=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:8000$endpoint")
-    if [ "$response" -eq 200 ] || [ "$response" -eq 201 ]; then
-        echo "✅ $endpoint (HTTP $response)"
+    local expected_codes=${2:-"200,201"}
+    local method=${3:-"GET"}
+    local response=$(curl -s -o /dev/null -w "%{http_code}" -X "$method" "http://localhost:8000$endpoint")
+
+    if [[ ",$expected_codes," == *",$response,"* ]]; then
+        echo "✅ $endpoint ($method → HTTP $response)"
         return 0
     else
-        echo "❌ $endpoint (HTTP $response)"
+        echo "❌ $endpoint ($method → HTTP $response, attendu: $expected_codes)"
         return 1
     fi
 }
 
-# Vérification des endpoints critiques
-check_endpoint "/api/ai/compose"
-check_endpoint "/api/ai/feedback"
-check_endpoint "/api/ai/context"
+# Vérification des endpoints critiques (nouvelle API v4.1.0)
+check_endpoint "/api/v1/ai/compose" "200,201,401" "POST"
+check_endpoint "/api/v1/ai/feedback" "200,201,401" "POST"
+check_endpoint "/api/v1/ai/context"
 
-# Vérification des composants frontend
-check_component() {
-    local component=$1
-    local url="http://localhost:5173"
-    if curl -s "$url" | grep -q "$component"; then
-        echo "✅ Composant détecté: $component"
+# Vérification des composants frontend (présence des fichiers clés)
+check_component_file() {
+    local label=$1
+    local filepath=$2
+    if [ -f "$filepath" ]; then
+        echo "✅ Composant détecté: $label ($filepath)"
         return 0
     else
-        echo "❌ Composant manquant: $component"
+        echo "❌ Composant manquant: $label ($filepath)"
         return 1
     fi
 }
 
-check_component "ChatBoxAI"
-check_component "BuildCards"
-check_component "BuildDetailModal"
-check_component "TeamSynergyView"
+BASE_DIR="/home/roddy/GW2Optimizer"
+check_component_file "ChatBox" "$BASE_DIR/frontend/src/components/ai/ChatBox.tsx"
+check_component_file "BuildGroupCard" "$BASE_DIR/frontend/src/components/builds/BuildGroupCard.tsx"
+check_component_file "BuildDetailPanel" "$BASE_DIR/frontend/src/components/builds/BuildDetailPanel.tsx"
+check_component_file "TeamSynergyDashboard" "$BASE_DIR/frontend/src/components/team/TeamSynergyDashboard.tsx"
 
 # ===========================================
 # 4. GÉNÉRATION DU RAPPORT

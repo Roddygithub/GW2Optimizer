@@ -33,7 +33,10 @@ class ChatService:
         the AI's behavior and expertise.
         """
         self.ollama = client or OllamaService()
-        self.breaker = breaker or chat_service_circuit_breaker
+        selected_breaker = breaker or chat_service_circuit_breaker
+        # Maintain backward compatibility with tests expecting either attribute name
+        self.breaker = selected_breaker
+        self.circuit_breaker = selected_breaker
         self.system_prompt = """You are an expert Guild Wars 2 WvW (World vs World) strategist and build optimizer.
 
 Your expertise includes:
@@ -134,7 +137,7 @@ Be concise, practical, and always meta-aware."""
     async def _call_model(self, messages: List[Dict[str, str]]) -> str:
         """Execute the model call with circuit breaker protection."""
         return await asyncio.wait_for(
-            self.ollama.chat(messages, temperature=DEFAULT_TEMPERATURE),
+            self.ollama.chat(messages=messages, temperature=DEFAULT_TEMPERATURE),
             timeout=30
         )
 
@@ -224,10 +227,19 @@ Be concise, practical, and always meta-aware."""
         for url in urls:
             # Remove any trailing punctuation that might have been included
             clean_url = re.sub(r'[^\w\-~.:/#?&;=%]+$', '', url)
-            if clean_url not in seen:
-                seen.add(clean_url)
-                normalized_urls.append(clean_url)
-                
+            normalized = clean_url
+            # Ensure URLs include schema to satisfy validation
+            if normalized.startswith("gw2skills.net"):
+                normalized = f"https://{normalized}"
+            elif normalized.startswith("//gw2skills.net"):
+                normalized = f"https:{normalized}"
+            elif normalized.startswith("http://"):
+                normalized = normalized.replace("http://", "https://", 1)
+
+            if normalized not in seen:
+                seen.add(normalized)
+                normalized_urls.append(normalized)
+
         return normalized_urls
 
     def _extract_suggestions(self, text: str, max_length: int = 100) -> List[str]:

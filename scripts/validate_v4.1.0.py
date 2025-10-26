@@ -308,10 +308,10 @@ def test_file_structure():
         "backend/app/learning/data/external.py",
         "backend/app/api/ai.py",
         "frontend/src/services/aiService.ts",
-        "frontend/src/components/ai/ChatBoxAI.tsx",
-        "frontend/src/components/builds/BuildCard.tsx",
-        "frontend/src/components/builds/BuildDetailModal.tsx",
-        "frontend/src/components/team/TeamSynergyView.tsx",
+        "frontend/src/components/ai/ChatBox.tsx",
+        "frontend/src/components/builds/BuildGroupCard.tsx",
+        "frontend/src/components/builds/BuildDetailPanel.tsx",
+        "frontend/src/components/team/TeamSynergyDashboard.tsx",
     ]
     
     for file_path in required_files:
