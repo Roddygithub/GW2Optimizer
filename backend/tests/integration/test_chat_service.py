@@ -6,6 +6,7 @@ from fastapi import HTTPException
 
 from app.models.chat import ChatRequest, MessageRole, ChatMessage
 from app.services.ai.chat_service import ChatService
+
 # Removed unused CircuitBreakerError import
 
 
