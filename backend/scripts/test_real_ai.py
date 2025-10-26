@@ -35,28 +35,28 @@ def log(message, color=Colors.NC):
 
 async def test_real_ai_optimization():
     """Execute real AI team optimization test"""
-    
+
     log("=" * 80, Colors.BLUE)
     log(" 🔥 TEST RÉEL - MISTRAL AI + GW2 API", Colors.BLUE)
     log("=" * 80, Colors.BLUE)
     log("", Colors.NC)
-    
+
     log("📋 Test Configuration:", Colors.YELLOW)
     log("  - Team Size: 50 players", Colors.NC)
     log("  - Game Mode: Zerg (WvW)", Colors.NC)
     log("  - Data Source: Live GW2 API + Mistral AI", Colors.NC)
     log("  - Focus: Balanced composition", Colors.NC)
     log("", Colors.NC)
-    
+
     start_time = datetime.utcnow()
-    
+
     # Step 1: Fetch live WvW data
     log("📡 Step 1: Fetching live WvW data from GW2 API...", Colors.BLUE)
     gw2_service = get_gw2_api_service()
-    
+
     try:
         wvw_data = await gw2_service.fetch_live_wvw_data()
-        
+
         if wvw_data.get("status") == "success":
             log(f"  ✅ WvW data fetched successfully", Colors.GREEN)
             log(f"  - Matches: {len(wvw_data.get('matches', []))}", Colors.NC)
@@ -69,20 +69,16 @@ async def test_real_ai_optimization():
         wvw_data = {}
     finally:
         await gw2_service.close()
-    
+
     log("", Colors.NC)
-    
+
     # Step 2: Generate team composition with Mistral AI
     log("🤖 Step 2: Generating team composition with Mistral AI...", Colors.BLUE)
     mistral_service = get_mistral_service()
-    
+
     try:
-        composition = await mistral_service.generate_team_composition(
-            wvw_data=wvw_data,
-            team_size=50,
-            game_mode="zerg"
-        )
-        
+        composition = await mistral_service.generate_team_composition(wvw_data=wvw_data, team_size=50, game_mode="zerg")
+
         log(f"  ✅ Team composition generated", Colors.GREEN)
         log(f"  - Name: {composition.get('name', 'Unknown')}", Colors.NC)
         log(f"  - Size: {composition.get('size', 0)} players", Colors.NC)
@@ -93,40 +89,40 @@ async def test_real_ai_optimization():
         return 1
     finally:
         await mistral_service.close()
-    
+
     log("", Colors.NC)
-    
+
     # Step 3: Validate composition
     log("✅ Step 3: Validating composition coherence...", Colors.BLUE)
     validation = validate_composition(composition, 50)
-    
+
     if validation["valid"]:
         log(f"  ✅ Composition is valid", Colors.GREEN)
     else:
         log(f"  ⚠️ Composition has issues", Colors.YELLOW)
-    
+
     if validation["errors"]:
         log(f"  ❌ Errors:", Colors.RED)
         for error in validation["errors"]:
             log(f"    - {error}", Colors.RED)
-    
+
     if validation["warnings"]:
         log(f"  ⚠️ Warnings:", Colors.YELLOW)
         for warning in validation["warnings"]:
             log(f"    - {warning}", Colors.YELLOW)
-    
+
     log("", Colors.NC)
-    
+
     # Step 4: Display composition
     log("📊 Step 4: Team Composition Details:", Colors.BLUE)
     log("", Colors.NC)
-    
+
     builds = composition.get("builds", [])
     total_count = sum(build.get("count", 0) for build in builds)
-    
+
     log(f"  Total Players: {total_count}/50", Colors.NC)
     log("", Colors.NC)
-    
+
     log("  Builds:", Colors.YELLOW)
     for build in builds:
         profession = build.get("profession", "Unknown")
@@ -134,62 +130,58 @@ async def test_real_ai_optimization():
         count = build.get("count", 0)
         priority = build.get("priority", "Unknown")
         description = build.get("description", "")
-        
+
         log(f"    • {profession} ({role}): {count} players - {priority} priority", Colors.NC)
         if description:
             log(f"      → {description}", Colors.NC)
-    
+
     log("", Colors.NC)
-    
+
     # Display strategy
     if "strategy" in composition:
         log(f"  Strategy:", Colors.YELLOW)
         log(f"    {composition['strategy']}", Colors.NC)
         log("", Colors.NC)
-    
+
     # Display strengths/weaknesses
     if "strengths" in composition:
         log(f"  Strengths:", Colors.GREEN)
         for strength in composition["strengths"]:
             log(f"    ✓ {strength}", Colors.GREEN)
         log("", Colors.NC)
-    
+
     if "weaknesses" in composition:
         log(f"  Weaknesses:", Colors.RED)
         for weakness in composition["weaknesses"]:
             log(f"    ✗ {weakness}", Colors.RED)
         log("", Colors.NC)
-    
+
     # Step 5: Calculate metrics
     end_time = datetime.utcnow()
     duration = (end_time - start_time).total_seconds()
-    
+
     log("⏱️ Step 5: Performance Metrics:", Colors.BLUE)
     log(f"  - Total Duration: {duration:.2f}s", Colors.NC)
     log(f"  - GW2 API: {'Success' if wvw_data else 'Fallback'}", Colors.NC)
     log(f"  - Mistral AI: {composition.get('source', 'Unknown')}", Colors.NC)
     log(f"  - Validation: {'✅ Valid' if validation['valid'] else '⚠️ Issues'}", Colors.NC)
     log("", Colors.NC)
-    
+
     # Step 6: Save report
     log("💾 Step 6: Saving report...", Colors.BLUE)
-    
+
     report_dir = BACKEND_DIR.parent / "reports"
     report_dir.mkdir(exist_ok=True)
-    
+
     report_data = {
         "timestamp": start_time.isoformat(),
         "test_type": "Real AI Team Optimization",
         "duration_seconds": duration,
-        "configuration": {
-            "team_size": 50,
-            "game_mode": "zerg",
-            "focus": "balanced"
-        },
+        "configuration": {"team_size": 50, "game_mode": "zerg", "focus": "balanced"},
         "wvw_data": {
             "status": wvw_data.get("status", "unavailable"),
             "matches_count": len(wvw_data.get("matches", [])),
-            "objectives_count": len(wvw_data.get("objectives", []))
+            "objectives_count": len(wvw_data.get("objectives", [])),
         },
         "composition": composition,
         "validation": validation,
@@ -197,44 +189,44 @@ async def test_real_ai_optimization():
             "total_duration": duration,
             "gw2_api_success": bool(wvw_data),
             "mistral_source": composition.get("source", "unknown"),
-            "validation_valid": validation["valid"]
-        }
+            "validation_valid": validation["valid"],
+        },
     }
-    
+
     # Save JSON
     json_path = report_dir / "REAL_AI_TEAM_TEST.json"
     with open(json_path, "w") as f:
         json.dump(report_data, f, indent=2)
-    
+
     log(f"  ✅ JSON report saved: {json_path}", Colors.GREEN)
-    
+
     # Save Markdown
     md_path = report_dir / "REAL_AI_TEAM_TEST.md"
     with open(md_path, "w") as f:
         f.write(generate_markdown_report(report_data))
-    
+
     log(f"  ✅ Markdown report saved: {md_path}", Colors.GREEN)
     log("", Colors.NC)
-    
+
     # Final summary
     log("=" * 80, Colors.BLUE)
     log(" 🎉 TEST COMPLETE", Colors.GREEN)
     log("=" * 80, Colors.BLUE)
     log("", Colors.NC)
-    
+
     log(f"✅ Team composition generated successfully", Colors.GREEN)
     log(f"✅ Reports saved to {report_dir}", Colors.GREEN)
     log(f"✅ Duration: {duration:.2f}s", Colors.GREEN)
-    
+
     return 0
 
 
 def generate_markdown_report(data: dict) -> str:
     """Generate markdown report"""
-    
+
     composition = data["composition"]
     validation = data["validation"]
-    
+
     md = f"""# 🔥 TEST RÉEL - MISTRAL AI + GW2 API
 
 **Date**: {data['timestamp']}  
@@ -271,7 +263,7 @@ def generate_markdown_report(data: dict) -> str:
 ### Builds
 
 """
-    
+
     builds = composition.get("builds", [])
     for build in builds:
         md += f"""
@@ -281,7 +273,7 @@ def generate_markdown_report(data: dict) -> str:
 - **Priority**: {build.get('priority', 'Unknown')}
 - **Description**: {build.get('description', 'N/A')}
 """
-    
+
     md += f"""
 ---
 
@@ -292,15 +284,15 @@ def generate_markdown_report(data: dict) -> str:
 ### Strengths
 
 """
-    
-    for strength in composition.get('strengths', []):
+
+    for strength in composition.get("strengths", []):
         md += f"- ✅ {strength}\n"
-    
+
     md += "\n### Weaknesses\n\n"
-    
-    for weakness in composition.get('weaknesses', []):
+
+    for weakness in composition.get("weaknesses", []):
         md += f"- ⚠️ {weakness}\n"
-    
+
     md += f"""
 ---
 
@@ -313,23 +305,23 @@ def generate_markdown_report(data: dict) -> str:
 ### Checks
 
 """
-    
-    for check_name, check_data in validation.get('checks', {}).items():
+
+    for check_name, check_data in validation.get("checks", {}).items():
         md += f"#### {check_name}\n\n"
         md += f"```json\n{json.dumps(check_data, indent=2)}\n```\n\n"
-    
-    if validation['errors']:
+
+    if validation["errors"]:
         md += "### Errors\n\n"
-        for error in validation['errors']:
+        for error in validation["errors"]:
             md += f"- ❌ {error}\n"
         md += "\n"
-    
-    if validation['warnings']:
+
+    if validation["warnings"]:
         md += "### Warnings\n\n"
-        for warning in validation['warnings']:
+        for warning in validation["warnings"]:
             md += f"- ⚠️ {warning}\n"
         md += "\n"
-    
+
     md += f"""
 ---
 
@@ -354,7 +346,7 @@ def generate_markdown_report(data: dict) -> str:
 **Test Type**: Real AI Team Optimization  
 **Version**: v3.0.0
 """
-    
+
     return md
 
 
@@ -368,5 +360,6 @@ if __name__ == "__main__":
     except Exception as e:
         log(f"\n\n❌ Fatal error: {e}", Colors.RED)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

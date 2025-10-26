@@ -218,7 +218,7 @@ def test_score_profession_diversity(analyzer, sample_team):
 def test_empty_team(analyzer):
     """Test analysis with empty team."""
     from tests.factories import create_test_team_composition
-    
+
     empty_team = create_test_team_composition(
         name="Empty Team",
         game_mode=GameMode.ZERG,

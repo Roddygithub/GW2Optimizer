@@ -62,7 +62,9 @@ def test_remove_duplicates(scraper):
     from tests.factories import create_test_build
 
     builds = [
-        create_test_build(name="Guardian Build", profession=Profession.GUARDIAN, game_mode=GameMode.ZERG, role=Role.SUPPORT),
+        create_test_build(
+            name="Guardian Build", profession=Profession.GUARDIAN, game_mode=GameMode.ZERG, role=Role.SUPPORT
+        ),
         create_test_build(
             name="Guardian Build", profession=Profession.GUARDIAN, game_mode=GameMode.ZERG, role=Role.SUPPORT
         ),  # Duplicate

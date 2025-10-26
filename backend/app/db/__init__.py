@@ -24,12 +24,4 @@ def get_session_local():
     return SessionLocal
 
 
-__all__ = [
-    "Base", 
-    "get_db", 
-    "init_db", 
-    "get_engine", 
-    "get_session_local",
-    "UserDB",
-    "LoginHistory"
-]
+__all__ = ["Base", "get_db", "init_db", "get_engine", "get_session_local", "UserDB", "LoginHistory"]

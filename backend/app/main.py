@@ -25,6 +25,7 @@ from app.exceptions import add_exception_handlers
 # Monitoring imports
 try:
     from prometheus_fastapi_instrumentator import Instrumentator
+
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
@@ -32,6 +33,7 @@ except ImportError:
 
 try:
     import sentry_sdk
+
     SENTRY_AVAILABLE = True
 except ImportError:
     SENTRY_AVAILABLE = False
@@ -149,7 +151,7 @@ def create_application() -> FastAPI:
     add_health_check(app)
 
     # Initialize Sentry (production only)
-    if SENTRY_AVAILABLE and not settings.TESTING and hasattr(settings, 'SENTRY_DSN') and settings.SENTRY_DSN:
+    if SENTRY_AVAILABLE and not settings.TESTING and hasattr(settings, "SENTRY_DSN") and settings.SENTRY_DSN:
         sentry_sdk.init(
             dsn=settings.SENTRY_DSN,
             # Performance monitoring
@@ -178,7 +180,7 @@ def configure_cors(app: FastAPI) -> None:
     """Configure CORS middleware."""
     # En développement, on autorise toutes les origines
     origins = ["*"]
-    
+
     # En production, on utilise les origines spécifiées dans les variables d'environnement
     if settings.ENVIRONMENT == "production":
         if hasattr(settings, "BACKEND_CORS_ORIGINS") and settings.BACKEND_CORS_ORIGINS:
@@ -196,7 +198,7 @@ def configure_cors(app: FastAPI) -> None:
         max_age=600,  # Cache des pré-requêtes CORS pendant 10 minutes
     )
     logger.info(f"🌐 CORS configured for origins: {', '.join(origins) if origins else 'all'}")
-    
+
     # Ajout d'un middleware pour logger les requêtes
     @app.middleware("http")
     async def log_requests(request: Request, call_next):
@@ -211,13 +213,13 @@ def include_routers(app: FastAPI) -> None:
     health_router = APIRouter()
     health_router.include_router(health.router, prefix="", tags=["Health"])
     app.include_router(health_router, prefix="")
-    
+
     # API v1 routes
     api_router = APIRouter(prefix=settings.API_V1_STR)
-    
+
     # Authentication routes (public)
     api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-    
+
     # Protected routes (require authentication)
     api_router.include_router(ai.router, prefix="/ai", tags=["AI"])
     api_router.include_router(ai_optimizer.router, prefix="/ai-optimizer", tags=["AI Optimizer"])
@@ -231,10 +233,10 @@ def include_routers(app: FastAPI) -> None:
     api_router.include_router(builds_db.router, prefix="/db/builds", tags=["Builds DB"])
     api_router.include_router(teams_db.router, prefix="/db/teams", tags=["Teams DB"])
     api_router.include_router(websocket_mcm.router, prefix="/mcm", tags=["WebSocket MCM"])
-    
+
     # Include the API router with the prefix
     app.include_router(api_router)
-    
+
     # Debug routes (only in development)
     if settings.DEBUG:
         app.include_router(sentry_debug.router, prefix="/debug/sentry", tags=["Debug"])

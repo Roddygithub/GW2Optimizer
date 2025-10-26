@@ -149,9 +149,9 @@ class OllamaService:
 
             logger.info(f"Sending request to Ollama with model: {self.model}")
             logger.debug(f"Request payload: {json.dumps(payload, indent=2)}")
-            
+
             start_time = time.time()
-            
+
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 try:
                     response = await client.post(
@@ -159,16 +159,16 @@ class OllamaService:
                         json=payload,
                     )
                     response.raise_for_status()
-                    
+
                     elapsed = time.time() - start_time
                     logger.info(f"Ollama response received in {elapsed:.2f} seconds")
-                    
+
                     data = response.json()
                     logger.debug(f"Ollama response: {json.dumps(data, indent=2)}")
-                    
+
                     content = data.get("message", {}).get("content", "")
                     logger.info(f"Extracted content length: {len(content)} characters")
-                    
+
                     return content
                 except httpx.HTTPStatusError as e:
                     logger.error(f"Ollama API error: {e.response.status_code} - {e.response.text}")

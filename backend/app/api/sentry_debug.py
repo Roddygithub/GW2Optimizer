@@ -12,10 +12,10 @@ router = APIRouter()
 async def trigger_error():
     """
     Trigger a test error for Sentry verification.
-    
+
     This endpoint intentionally causes a division by zero error
     to test Sentry error tracking and performance monitoring.
-    
+
     **WARNING**: Only use this in development/testing environments.
     """
     division_by_zero = 1 / 0

@@ -11,7 +11,7 @@ engine = create_async_engine(
     settings.DATABASE_URL,
     echo=settings.DEBUG,
     future=True,
-    connect_args={"check_same_thread": False}  # Required for SQLite
+    connect_args={"check_same_thread": False},  # Required for SQLite
 )
 
 # Create async session factory

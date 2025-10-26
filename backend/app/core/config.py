@@ -51,10 +51,10 @@ class Settings(BaseSettings):
     AI_MODEL_NAME: str = "gpt-4"
     AI_TEMPERATURE: float = 0.7
     AI_MAX_TOKENS: int = 2048
-    
+
     # Frontend URL
     FRONTEND_URL: str = "http://localhost:5173"
-    
+
     # Scraping Configuration
     SCRAPER_UPDATE_INTERVAL: int = 604800  # 7 days in seconds
     SCRAPER_USER_AGENT: str = "GW2Optimizer/1.0"

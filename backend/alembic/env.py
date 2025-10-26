@@ -18,7 +18,7 @@ from app.core.config import settings
 config = context.config
 
 # Override the SQLAlchemy URL from settings
-config.set_main_option('sqlalchemy.url', str(settings.DATABASE_URL))
+config.set_main_option("sqlalchemy.url", str(settings.DATABASE_URL))
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -72,7 +72,7 @@ def run_migrations_online() -> None:
     """
     # Use the URL from settings
     url = str(settings.DATABASE_URL)
-    
+
     # Configure the engine
     connectable = engine_from_config(
         {"sqlalchemy.url": url},
@@ -82,7 +82,7 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, 
+            connection=connection,
             target_metadata=target_metadata,
             compare_type=True,
             compare_server_default=True,

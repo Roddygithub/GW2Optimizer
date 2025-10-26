@@ -15,10 +15,7 @@ build_service = BuildService()
 
 
 @router.post("/", response_model=BuildResponse)
-async def create_build(
-    request: BuildCreate,
-    current_user: User = Depends(get_current_active_user)
-) -> BuildResponse:
+async def create_build(request: BuildCreate, current_user: User = Depends(get_current_active_user)) -> BuildResponse:
     """
     Create a new build.
 
@@ -36,10 +33,7 @@ async def create_build(
 
 
 @router.get("/{build_id}", response_model=Build)
-async def get_build(
-    build_id: str,
-    current_user: User = Depends(get_current_active_user)
-) -> Build:
+async def get_build(build_id: str, current_user: User = Depends(get_current_active_user)) -> Build:
     """Get a specific build by ID."""
     try:
         build = await build_service.get_build(build_id)
@@ -59,7 +53,7 @@ async def list_builds(
     game_mode: Optional[GameMode] = Query(None),
     role: Optional[Role] = Query(None),
     limit: int = Query(20, ge=1, le=100),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ) -> List[Build]:
     """
     List builds with optional filters.
@@ -78,10 +72,7 @@ async def list_builds(
 
 
 @router.post("/parse")
-async def parse_gw2skill_url(
-    url: str,
-    current_user: User = Depends(get_current_active_user)
-) -> BuildResponse:
+async def parse_gw2skill_url(url: str, current_user: User = Depends(get_current_active_user)) -> BuildResponse:
     """
     Parse a GW2Skill URL and extract build information.
     """

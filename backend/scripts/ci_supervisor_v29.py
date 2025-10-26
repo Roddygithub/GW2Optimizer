@@ -59,38 +59,37 @@ def run_tests():
 def run_real_e2e():
     """Execute E2E test with real GW2 API + Mistral AI"""
     log("\n🌐 Running E2E Real Conditions Test...", Colors.MAGENTA)
-    
+
     # Create report directory
     E2E_REPORT_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     timestamp = datetime.utcnow().isoformat()
-    
+
     # Try to use real services
     try:
         import asyncio
         import sys
+
         sys.path.insert(0, str(BACKEND_DIR))
-        
+
         from app.services.gw2_api import get_gw2_api_service
         from app.services.mistral_ai import get_mistral_service
-        
+
         async def fetch_and_generate():
             gw2_service = get_gw2_api_service()
             mistral_service = get_mistral_service()
-            
+
             try:
                 # Fetch live WvW data
                 log("  📡 Fetching live WvW data from GW2 API...", Colors.BLUE)
                 wvw_data = await gw2_service.fetch_live_wvw_data()
-                
+
                 # Generate team composition with Mistral AI
                 log("  🤖 Generating team composition with Mistral AI...", Colors.BLUE)
                 team_comp = await mistral_service.generate_team_composition(
-                    wvw_data=wvw_data,
-                    team_size=50,
-                    game_mode="zerg"
+                    wvw_data=wvw_data, team_size=50, game_mode="zerg"
                 )
-                
+
                 return {
                     "timestamp": timestamp,
                     "test_type": "E2E Real Conditions",
@@ -101,28 +100,22 @@ def run_real_e2e():
             finally:
                 await gw2_service.close()
                 await mistral_service.close()
-        
+
         # Run async function
         e2e_data = asyncio.run(fetch_and_generate())
         log("  ✅ Real E2E test completed successfully", Colors.GREEN)
-        
+
     except Exception as e:
         log(f"  ⚠️ Real E2E failed, using fallback: {str(e)}", Colors.YELLOW)
-        
+
         # Fallback to simulated data
         e2e_data = {
             "timestamp": timestamp,
             "test_type": "E2E Real Conditions",
             "status": "fallback",
             "error": str(e),
-            "gw2_api": {
-                "status": "unavailable",
-                "note": "Check GW2_API_KEY configuration"
-            },
-            "mistral_ai": {
-                "status": "unavailable",
-                "note": "Check MISTRAL_API_KEY configuration"
-            },
+            "gw2_api": {"status": "unavailable", "note": "Check GW2_API_KEY configuration"},
+            "mistral_ai": {"status": "unavailable", "note": "Check MISTRAL_API_KEY configuration"},
             "team_composition": {
                 "name": "Fallback Zerg Team",
                 "size": 50,
@@ -132,18 +125,18 @@ def run_real_e2e():
                     {"profession": "Necromancer", "role": "DPS", "count": 15},
                     {"profession": "Mesmer", "role": "Support", "count": 10},
                     {"profession": "Revenant", "role": "DPS", "count": 10},
-                ]
+                ],
             },
-            "message": "E2E test ran with fallback data. Configure API keys for real integration."
+            "message": "E2E test ran with fallback data. Configure API keys for real integration.",
         }
-    
+
     # Save JSON report
     report_path = E2E_REPORT_DIR / f"team_report_{timestamp.replace(':', '-')}.json"
     with open(report_path, "w") as f:
         json.dump(e2e_data, f, indent=4)
-    
+
     log(f"  ✅ E2E report generated: {report_path}", Colors.GREEN)
-    
+
     # Save YAML report
     yaml_path = E2E_REPORT_DIR / f"team_report_{timestamp.replace(':', '-')}.yaml"
     with open(yaml_path, "w") as f:
@@ -160,9 +153,9 @@ def run_real_e2e():
             f.write(f"    - profession: {build['profession']}\n")
             f.write(f"      role: {build['role']}\n")
             f.write(f"      count: {build['count']}\n")
-    
+
     log(f"  ✅ E2E YAML report generated: {yaml_path}", Colors.GREEN)
-    
+
     return report_path, yaml_path
 
 
@@ -241,7 +234,7 @@ def main():
 
     # Run E2E Real Conditions Test
     full_report += "\n---\n\n## E2E Real Conditions Test\n\n"
-    
+
     try:
         json_path, yaml_path = run_real_e2e()
         full_report += f"✅ **E2E Test Executed**\n\n"
@@ -262,7 +255,7 @@ def main():
         f.write(full_report)
 
     log(f"\n📊 Report saved: {REPORT_FILE}", Colors.GREEN)
-    
+
     return 0 if exit_code == 0 else 1
 
 
@@ -275,5 +268,6 @@ if __name__ == "__main__":
     except Exception as e:
         log(f"\n\n❌ Fatal error: {e}", Colors.RED)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
