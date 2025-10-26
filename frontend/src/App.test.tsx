@@ -18,7 +18,7 @@ vi.mock('./services/api', () => ({
 
 describe('App', () => {
   it('renders without crashing', () => {
-    vi.mocked(authAPI.getCurrentUser).mockResolvedValue(null as any);
+    vi.mocked(authAPI.getCurrentUser).mockResolvedValue(null as never);
     
     render(<App />);
     
@@ -27,13 +27,13 @@ describe('App', () => {
   });
 
   it('renders home page by default', async () => {
-    vi.mocked(authAPI.getCurrentUser).mockResolvedValue(null as any);
+    vi.mocked(authAPI.getCurrentUser).mockResolvedValue(null as never);
     
     render(<App />);
     
     // Vérifie que le titre de l'application est affiché dans la barre de navigation
     const titleElement = await screen.findByRole('link', { name: /GW2 Optimizer/i });
-    expect(titleElement).toBeInTheDocument();
+    expect(!!titleElement).toBe(true);
     
     // Vérifie que le sous-titre est présent dans la barre de navigation
     const navSubtitles = screen.getAllByText(/WvW McM Dashboard/i);
@@ -45,7 +45,7 @@ describe('App', () => {
   });
 
   it('wraps app with AuthProvider', () => {
-    vi.mocked(authAPI.getCurrentUser).mockResolvedValue(null as any);
+    vi.mocked(authAPI.getCurrentUser).mockResolvedValue(null as never);
     
     render(<App />);
     
@@ -54,7 +54,7 @@ describe('App', () => {
   });
 
   it('sets up routing', () => {
-    vi.mocked(authAPI.getCurrentUser).mockResolvedValue(null as any);
+    vi.mocked(authAPI.getCurrentUser).mockResolvedValue(null as never);
     
     render(<App />);
     

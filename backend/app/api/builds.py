@@ -14,7 +14,7 @@ router = APIRouter(prefix="/builds", tags=["Builds"])
 build_service = BuildService()
 
 
-@router.post("/", response_model=BuildResponse)
+@router.post("", response_model=BuildResponse)
 async def create_build(request: BuildCreate, current_user: User = Depends(get_current_active_user)) -> BuildResponse:
     """
     Create a new build.
@@ -47,7 +47,7 @@ async def get_build(build_id: str, current_user: User = Depends(get_current_acti
         raise HTTPException(status_code=500, detail=f"Error fetching build: {str(e)}")
 
 
-@router.get("/", response_model=List[Build])
+@router.get("", response_model=List[Build])
 async def list_builds(
     profession: Optional[Profession] = Query(None),
     game_mode: Optional[GameMode] = Query(None),

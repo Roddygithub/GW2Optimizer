@@ -5,29 +5,10 @@ import { BuildGroupCard, Build } from '../components/builds/BuildGroupCard';
 import { APP_NAME, APP_VERSION, APP_FULL_TITLE } from '../config/version';
 
 export const Home = () => {
-  // État pour stocker les builds générés par l'IA
-  const [generatedBuilds, setGeneratedBuilds] = useState<Array<{ build: Build; count: number }>>([]);
+  // État pour stocker les builds générés par l'IA (setter inutilisé pour l'instant)
+  const [generatedBuilds] = useState<Array<{ build: Build; count: number }>>([]);
 
-  // Fonction pour regrouper les builds identiques
-  const groupBuilds = (builds: Build[]) => {
-    const grouped = new Map<string, { build: Build; count: number }>();
-    
-    builds.forEach((build) => {
-      const key = `${build.profession}-${build.name}-${build.role}`;
-      const existing = grouped.get(key);
-      
-      if (existing) {
-        existing.count++;
-      } else {
-        grouped.set(key, { build, count: 1 });
-      }
-    });
-    
-    return Array.from(grouped.values());
-  };
-
-  // Fonction appelée quand l'IA génère des builds
-  // (handled by ChatBox consumer when wired)
+  // Fonction appelée quand l'IA génère des builds (gérée ailleurs lorsque connecté)
 
   return (
     <div className="space-y-8 relative min-h-screen">
