@@ -94,8 +94,12 @@ export const useAppVersion = (options: { logOnMount?: boolean } = {}) => {
  */
 export const exposeVersionToWindow = (): void => {
   if (typeof window !== 'undefined') {
-    (window as any).showAppVersion = showAppVersion;
-    (window as any).getAppVersion = getAppVersion;
+    const w = window as unknown as {
+      showAppVersion?: () => void;
+      getAppVersion?: () => AppVersionInfo;
+    };
+    w.showAppVersion = showAppVersion;
+    w.getAppVersion = getAppVersion;
     
     // Affiche un message de bienvenue avec la version
     console.log(

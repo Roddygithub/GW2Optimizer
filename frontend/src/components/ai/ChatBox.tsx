@@ -35,7 +35,6 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(getIsDesktop);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -71,14 +70,7 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return undefined;
-    }
-    const handleResize = () => setIsDesktop(getIsDesktop());
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // Responsive handling is CSS-driven; no need for window resize listeners here
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,20 +119,7 @@ export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
     setIsOpen(!isOpen);
   };
 
-  // Format timestamp
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  // Vérifie si le message contient des builds
-  const hasBuilds = (message: Message): message is Message & { builds: NonNullable<Message['builds']> } => {
-    return Array.isArray(message.builds) && message.builds.length > 0;
-  };
-
-  // Vérifie si le message contient des suggestions
-  const hasSuggestions = (message: Message): message is Message & { suggestions: string[] } => {
-    return Array.isArray(message.suggestions) && message.suggestions.length > 0;
-  };
+  // Timestamp formatting, build/suggestion guards are handled in ChatMessage component
 
   const handleSuggestionClick = (suggestion: string) => {
     setInput(suggestion);

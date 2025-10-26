@@ -36,7 +36,7 @@ export interface TeamComposition {
     source: string;
     model?: string;
     request_id: string;
-    preferences?: Record<string, any>;
+    preferences?: Record<string, unknown>;
   };
   timestamp: string;
   user_id?: string;
@@ -46,7 +46,7 @@ export interface TeamComposition {
 export interface ComposeRequest {
   game_mode: string;
   team_size?: number | null;
-  preferences?: Record<string, any>;
+  preferences?: Record<string, unknown>;
 }
 
 export interface FeedbackRequest {
@@ -61,8 +61,8 @@ export interface MetaContext {
     source: string;
     trending_professions: string[];
   };
-  trending_builds: any[];
-  recent_changes: any[];
+  trending_builds: unknown[];
+  recent_changes: unknown[];
   note?: string;
 }
 
@@ -70,7 +70,7 @@ export class AIServiceError extends Error {
   constructor(
     message: string,
     public statusCode?: number,
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = 'AIServiceError';
@@ -147,12 +147,11 @@ class AIService {
       }
 
       return await response.json();
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof AIServiceError) {
         throw error;
       }
-
-      // Network error
+      // Network error or unknown failure
       throw new AIServiceError(
         'Erreur réseau: Impossible de contacter le serveur AI',
         0,

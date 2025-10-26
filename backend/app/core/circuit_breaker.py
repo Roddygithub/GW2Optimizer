@@ -187,6 +187,15 @@ class CircuitBreaker:
             self._state = "CLOSED"
         self._failures = 0
     
+    # --- Public helpers expected by tests (wrappers) ---
+    def record_failure(self) -> None:
+        """Public wrapper to record a failure (used by tests)."""
+        self._record_failure()
+    
+    def record_success(self) -> None:
+        """Public wrapper to record a success (used by tests)."""
+        self._record_success()
+    
     def reset(self) -> None:
         """Manually reset the circuit breaker to CLOSED state."""
         self._state = "CLOSED"

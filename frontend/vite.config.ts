@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import type { MinifyOptions } from 'terser';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'url';
 import { visualizer } from 'rollup-plugin-visualizer';
@@ -62,7 +63,7 @@ export default defineConfig(({ mode }) => ({
       compress: {
         drop_console: mode === 'production', // Supprime les console.log en production
       },
-    } as any,
+    } satisfies MinifyOptions,
     // Activation du chunking dynamique pour les imports asynchrones
     target: 'esnext',
     modulePreload: {
