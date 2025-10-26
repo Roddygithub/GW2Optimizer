@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import axios from 'axios';
 import { authAPI, buildsAPI, teamsAPI } from './api';
 
 // Mock axios
@@ -83,17 +82,15 @@ const mockTeams = {
 // Mock localStorage
 const localStorageMock = {
   store: {} as Record<string, string>,
-  getItem: vi.fn(function (key: string) {
-    return this.store[key] || null;
+  getItem: vi.fn((key: string) => localStorageMock.store[key] ?? null),
+  setItem: vi.fn((key: string, value: string) => {
+    localStorageMock.store[key] = value;
   }),
-  setItem: vi.fn(function (key: string, value: string) {
-    this.store[key] = value;
+  removeItem: vi.fn((key: string) => {
+    delete localStorageMock.store[key];
   }),
-  removeItem: vi.fn(function (key: string) {
-    delete this.store[key];
-  }),
-  clear: vi.fn(function () {
-    this.store = {};
+  clear: vi.fn(() => {
+    localStorageMock.store = {};
   })
 };
 

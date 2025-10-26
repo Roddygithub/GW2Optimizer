@@ -30,7 +30,6 @@ export interface ChatBoxProps {
 }
 
 export const ChatBox = ({ defaultOpen = true, className }: ChatBoxProps) => {
-  const getIsDesktop = () => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
   const generateId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [input, setInput] = useState('');

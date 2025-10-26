@@ -27,10 +27,7 @@ export const Home = () => {
   };
 
   // Fonction appelée quand l'IA génère des builds
-  const handleBuildsGenerated = (builds: Build[]) => {
-    const grouped = groupBuilds(builds);
-    setGeneratedBuilds(grouped);
-  };
+  // (handled by ChatBox consumer when wired)
 
   return (
     <div className="space-y-8 relative min-h-screen">
