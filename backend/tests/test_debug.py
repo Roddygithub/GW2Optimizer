@@ -23,16 +23,31 @@ async def test_metadata():
 
 async def test_database_tables(db_session: AsyncSession):
     """Test that database tables are created."""
-    # Check that we can query the database
-    from sqlalchemy import text
+    from sqlalchemy import inspect, text
+    from sqlalchemy.engine import Engine
+    from sqlalchemy.ext.asyncio import AsyncEngine
 
-    # Get table names
-    result = await db_session.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
-    tables = [row[0] for row in result]
+    # Get the underlying engine
+    engine = db_session.bind
+    if isinstance(engine, AsyncEngine):
+        engine = engine.sync_engine
+
+    # Check database type
+    if engine.dialect.name == 'sqlite':
+        # SQLite specific query
+        result = await db_session.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
+        tables = [row[0] for row in result]
+    else:
+        # PostgreSQL/other databases
+        inspector = inspect(engine)
+        tables = inspector.get_table_names()
+
     print(f"\nTables in database: {tables}")
     print(f"Base.metadata.tables: {list(Base.metadata.tables.keys())}")
 
-    assert "users" in tables, f"users table not found. Available tables: {tables}"
+    # Check for users table (case-insensitive check)
+    tables_lower = [t.lower() for t in tables]
+    assert "users" in tables_lower, f"users table not found. Available tables: {tables}"
 
 
 async def test_create_user(db_session: AsyncSession):

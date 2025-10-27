@@ -16,7 +16,11 @@ import json
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime
-import numpy as np
+
+try:
+    import numpy as np
+except ImportError:  # pragma: no cover - optional dependency for docs builds
+    np = None
 
 from app.core.logging import logger
 from app.core.config import settings
@@ -74,6 +78,10 @@ class AITrainer:
 
         logger.info("AITrainer initialized")
 
+    def _ensure_numpy(self) -> None:
+        if np is None:
+            raise ImportError("numpy is required for AITrainer operations. Please install numpy to use this feature.")
+
     def train_batch(
         self, min_rating: float = 5.0, max_samples: Optional[int] = None, save_checkpoint: bool = True
     ) -> Dict[str, Any]:
@@ -88,6 +96,7 @@ class AITrainer:
         Returns:
             Training metrics
         """
+        self._ensure_numpy()
         logger.info("Starting batch training", extra={"min_rating": min_rating, "max_samples": max_samples})
 
         start_time = datetime.utcnow()
@@ -182,6 +191,7 @@ class AITrainer:
         Returns:
             Validation metrics
         """
+        self._ensure_numpy()
         # Si pas de validation data, split training data
         if validation_data is None:
             all_data = self.feedback_handler.get_training_data(min_rating=0.0)
@@ -312,6 +322,7 @@ class AITrainer:
         Returns:
             R² score
         """
+        self._ensure_numpy()
         if not data:
             return 0.0
 

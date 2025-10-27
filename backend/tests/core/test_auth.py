@@ -122,8 +122,11 @@ async def test_logout(client: AsyncClient, auth_headers: dict):
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-async def test_account_lockout(client: AsyncClient, test_user: TestUser):
+async def test_account_lockout(client: AsyncClient, test_user: TestUser, monkeypatch):
     """Test that an account is locked after too many failed login attempts."""
+    # Ensure testing mode is disabled for this test
+    monkeypatch.delenv("TESTING", raising=False)
+    
     for i in range(5):
         response = await client.post(
             "/api/v1/auth/token",
