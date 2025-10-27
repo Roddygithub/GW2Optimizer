@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install mkdocs mkdocs-material mkdocstrings[python] pdoc3 numpy
+          pip install 'mkdocs>=1.5.3' 'mkdocs-material>=9.4.0' 'mkdocstrings[python]>=0.24' pdoc3 numpy
           cd backend
           pip install -r requirements.txt
           pip install -r requirements-dev.txt || true
