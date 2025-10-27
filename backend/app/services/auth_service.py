@@ -10,7 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.logging import logger
-from app.models.user import Token, TokenData, UserCreate, UserDB, UserLogin, UserResponse
+from app.models.token import Token, TokenData
+from app.models.user import UserCreate, UserDB, UserLogin
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
