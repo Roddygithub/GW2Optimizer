@@ -32,7 +32,11 @@ import json
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
-import pandas as pd
+
+try:
+    import pandas as pd
+except ImportError:  # pragma: no cover - optional dependency for docs builds
+    pd = None
 
 from app.core.logging import logger
 from app.core.config import settings
@@ -143,13 +147,15 @@ class ExternalDataStore:
         with open(self.current_file, "r") as f:
             return json.load(f)
 
-    def get_features_for_ml(self) -> pd.DataFrame:
+    def get_features_for_ml(self) -> "pd.DataFrame":
         """
         Extrait les features pour ML depuis la méta actuelle.
 
         Returns:
             DataFrame avec features
         """
+        if pd is None:
+            raise ImportError("pandas is required to compute ML features. Please install pandas to use this method.")
         meta = self.load()
 
         if not meta:

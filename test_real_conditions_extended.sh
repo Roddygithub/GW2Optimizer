@@ -8,6 +8,7 @@ NC='\033[0m'
 
 BACKEND_URL="http://localhost:8000"
 TEST_REPORT="test_report.txt"
+PASSWORD="TestPass1234!"
 TESTS_PASSED=0
 TESTS_FAILED=0
 
@@ -34,7 +35,7 @@ fi
 TIMESTAMP=$(date +%s)
 REGISTER=$(curl -s -X POST "$BACKEND_URL/api/v1/auth/register" \
     -H "Content-Type: application/json" \
-    -d "{\"email\":\"e2e$TIMESTAMP@test.com\",\"username\":\"e2e$TIMESTAMP\",\"password\":\"Test123!\"}")
+    -d "{\"email\":\"e2e$TIMESTAMP@test.com\",\"username\":\"e2e$TIMESTAMP\",\"password\":\"$PASSWORD\"}")
 
 if echo "$REGISTER" | grep -q '"id"'; then
     log_success "User registration"
@@ -47,7 +48,7 @@ fi
 if [ ! -z "$EMAIL" ]; then
     LOGIN=$(curl -s -X POST "$BACKEND_URL/api/v1/auth/login" \
         -H "Content-Type: application/x-www-form-urlencoded" \
-        -d "username=$EMAIL&password=Test123!")
+        -d "username=$EMAIL&password=$PASSWORD")
     
     if echo "$LOGIN" | grep -q '"access_token"'; then
         log_success "User login"
