@@ -12,6 +12,7 @@ To run:
 try:
     from locust import HttpUser, task, between
 except ImportError:  # pragma: no cover - optional dependency for load testing
+
     class HttpUser:  # type: ignore[override]
         """Fallback HttpUser to allow documentation builds without locust."""
 
@@ -30,9 +31,11 @@ except ImportError:  # pragma: no cover - optional dependency for load testing
 
         return _wait_time
 
+
 try:
     from faker import Faker
 except ImportError:  # pragma: no cover - optional dependency for docs builds
+
     class Faker:  # type: ignore[override]
         """Minimal Faker replacement for documentation builds."""
 
@@ -41,6 +44,7 @@ except ImportError:  # pragma: no cover - optional dependency for docs builds
 
         def email(self) -> str:  # type: ignore[override]
             return "test@example.com"
+
 
 fake = Faker()
 
