@@ -236,17 +236,11 @@ def test_empty_team(analyzer):
         skills=[],
         equipment=[],
         synergies=[],
-        counters=[]
+        counters=[],
     )
 
     # Create a TeamSlot with the build
-    slot = TeamSlot(
-        id=str(uuid4()),
-        slot_number=1,
-        build=build,
-        player_name=None,
-        priority=1
-    )
+    slot = TeamSlot(id=str(uuid4()), slot_number=1, build=build, player_name=None, priority=1)
 
     # Create a TeamComposition with the slot
     empty_team = TeamComposition(
@@ -263,7 +257,7 @@ def test_empty_team(analyzer):
         weaknesses=[],
         overall_rating=0.0,
         description="Test team",
-        is_public=False
+        is_public=False,
     )
 
     # Now test with an empty slots list

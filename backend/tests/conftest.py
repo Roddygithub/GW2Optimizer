@@ -97,7 +97,7 @@ async def client(
     """Yield an HTTP client for the API, with overridden dependencies (unit/API tests)."""
     # Ensure the API router is included
     include_routers(app)
-    
+
     # Create a test client with the app and base URL
     async with AsyncClient(
         app=app,
@@ -106,13 +106,13 @@ async def client(
         # Override dependencies
         app.dependency_overrides[get_db] = lambda: db_session
         app.dependency_overrides[get_redis_client] = lambda: redis_client
-        
+
         # Create tables if they don't exist
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        
+
         yield client
-        
+
         # Clean up
         app.dependency_overrides.clear()
 
@@ -224,23 +224,21 @@ async def integration_client(
 
 class TestUser(UserOut):
     """Test user model that includes the password field for testing."""
+
     password: str
 
     class Config:
         arbitrary_types_allowed = True
+
 
 @pytest_asyncio.fixture
 async def test_user(db_session: AsyncSession) -> TestUser:
     """Create and return a test user model instance with password."""
     from app.db.models import UserDB
     from app.models.user import UserCreate
-    
-    user_data = UserCreate(
-        email="test@example.com",
-        username="testuser",
-        password="TestPassword123!"
-    )
-    
+
+    user_data = UserCreate(email="test@example.com", username="testuser", password="TestPassword123!")
+
     # Create user in database
     hashed_password = get_password_hash(user_data.password)
     db_user = UserDB(
@@ -253,7 +251,7 @@ async def test_user(db_session: AsyncSession) -> TestUser:
     db_session.add(db_user)
     await db_session.commit()
     await db_session.refresh(db_user)
-    
+
     # Create a test user with the password field
     user_dict = {
         "id": db_user.id,
@@ -266,7 +264,7 @@ async def test_user(db_session: AsyncSession) -> TestUser:
         "created_at": db_user.created_at,
         "password": user_data.password,  # Include the plain password for testing
     }
-    
+
     # Create a TestUser instance with the password field
     return TestUser(**user_dict)
 

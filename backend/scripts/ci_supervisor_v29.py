@@ -196,7 +196,7 @@ def main():
 
     full_report = f"""# CI Supervisor Report - v2.9.0
 
-**Mission**: Production-Ready + E2E Real Conditions  
+**Mission**: Production-Ready + E2E Real Conditions
 **Start**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 ---

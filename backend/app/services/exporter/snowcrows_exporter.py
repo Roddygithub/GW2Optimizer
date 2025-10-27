@@ -22,10 +22,10 @@ class SnowcrowsExporter:
             Dictionary in Snowcrows format
         """
         # Handle profession and role which might be enums or strings
-        profession = build.profession.value if hasattr(build.profession, 'value') else build.profession
-        game_mode = build.game_mode.value if hasattr(build.game_mode, 'value') else build.game_mode
-        role = build.role.value if hasattr(build.role, 'value') else build.role
-        
+        profession = build.profession.value if hasattr(build.profession, "value") else build.profession
+        game_mode = build.game_mode.value if hasattr(build.game_mode, "value") else build.game_mode
+        role = build.role.value if hasattr(build.role, "value") else build.role
+
         return {
             "name": build.name,
             "profession": profession,
@@ -59,10 +59,10 @@ class SnowcrowsExporter:
             HTML string
         """
         # Handle enums which might be strings or enums
-        profession = build.profession.value if hasattr(build.profession, 'value') else build.profession
-        role = build.role.value if hasattr(build.role, 'value') else build.role
-        game_mode = build.game_mode.value if hasattr(build.game_mode, 'value') else build.game_mode
-        
+        profession = build.profession.value if hasattr(build.profession, "value") else build.profession
+        role = build.role.value if hasattr(build.role, "value") else build.role
+        game_mode = build.game_mode.value if hasattr(build.game_mode, "value") else build.game_mode
+
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -128,14 +128,14 @@ class SnowcrowsExporter:
             Dictionary with team data
         """
         # Handle game_mode which might be an enum or string
-        game_mode = team.game_mode.value if hasattr(team.game_mode, 'value') else team.game_mode
-        
+        game_mode = team.game_mode.value if hasattr(team.game_mode, "value") else team.game_mode
+
         # Process slots, handling cases where build might be None
         slots = []
         for slot in team.slots:
-            if not hasattr(slot, 'build') or slot.build is None:
+            if not hasattr(slot, "build") or slot.build is None:
                 continue
-                
+
             slot_data = {
                 "slot_number": slot.slot_number,
                 "player_name": slot.player_name or "",
@@ -143,21 +143,21 @@ class SnowcrowsExporter:
                 "build": self.export_build_json(slot.build),
             }
             slots.append(slot_data)
-        
+
         # Process synergies, ensuring all required fields exist
         synergies = []
         for syn in team.synergies:
-            if not hasattr(syn, 'synergy_type') or not hasattr(syn, 'description'):
+            if not hasattr(syn, "synergy_type") or not hasattr(syn, "description"):
                 continue
-                
+
             synergy_data = {
                 "type": syn.synergy_type,
                 "description": syn.description,
-                "involved_slots": getattr(syn, 'involved_slots', []),
-                "strength": getattr(syn, 'strength', 0.0),
+                "involved_slots": getattr(syn, "involved_slots", []),
+                "strength": getattr(syn, "strength", 0.0),
             }
             synergies.append(synergy_data)
-        
+
         return {
             "name": team.name,
             "game_mode": game_mode,
@@ -168,7 +168,7 @@ class SnowcrowsExporter:
             "weaknesses": team.weaknesses or [],
             "overall_rating": team.overall_rating,
             "metadata": {
-                "created_by": getattr(team, 'created_by', ''),
+                "created_by": getattr(team, "created_by", ""),
                 "exported_at": datetime.utcnow().isoformat(),
             },
         }

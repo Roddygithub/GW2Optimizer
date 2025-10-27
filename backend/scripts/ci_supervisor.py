@@ -113,7 +113,7 @@ def generate_report(cycle, metrics, fixes, duration):
     report = f"""
 ## Cycle {cycle} - {status}
 
-**Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
+**Date**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 **Duration**: {duration:.2f}s
 
 ### Test Results
@@ -151,7 +151,7 @@ def main():
 
     full_report = f"""# CI Supervisor Report - v2.7.0
 
-**Mission**: 79/79 Backend Tests GREEN  
+**Mission**: 79/79 Backend Tests GREEN
 **Start**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
 ---

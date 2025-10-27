@@ -29,9 +29,9 @@ class TestBuildAPI:
         request_data = sample_build_data.copy()
 
         response = await client.post("/api/v1/builds", json=request_data, headers=auth_headers)
-        assert response.status_code == status.HTTP_201_CREATED, (
-            f"Expected status code 201 but got {response.status_code}. Response: {response.text}"
-        )
+        assert (
+            response.status_code == status.HTTP_201_CREATED
+        ), f"Expected status code 201 but got {response.status_code}. Response: {response.text}"
 
         build_data = response.json()
         assert build_data["name"] == request_data["name"]

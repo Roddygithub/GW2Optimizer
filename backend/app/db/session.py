@@ -25,9 +25,7 @@ def _build_database_url() -> str:
     required_vars = {"POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_HOST", "POSTGRES_DB"}
     missing = sorted(var for var in required_vars if not os.getenv(var))
     if missing:
-        raise RuntimeError(
-            "Missing required Postgres environment variables: " + ", ".join(missing)
-        )
+        raise RuntimeError("Missing required Postgres environment variables: " + ", ".join(missing))
 
     user = os.getenv("POSTGRES_USER")
     password = os.getenv("POSTGRES_PASSWORD")

@@ -221,7 +221,7 @@ def test_export_empty_build(exporter):
         skills=[],
         equipment=[],
         synergies=[],
-        counters=[]
+        counters=[],
     )
 
     result = exporter.export_build_json(minimal_build)

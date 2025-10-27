@@ -42,7 +42,7 @@ async def test_login_success(client: AsyncClient, test_user: TestUser):
     """Test successful login and cookie setting."""
     response = await client.post(
         "/api/v1/auth/token",
-        data={"username": test_user.email, "password": getattr(test_user, 'password', '')},
+        data={"username": test_user.email, "password": getattr(test_user, "password", "")},
     )
     assert response.status_code == status.HTTP_200_OK
     token = response.json()
@@ -66,7 +66,7 @@ async def test_login_wrong_email(client: AsyncClient, test_user: TestUser):
     """Test login with a non-existent email."""
     response = await client.post(
         "/api/v1/auth/token",
-        data={"username": "wrong@example.com", "password": getattr(test_user, 'password', '')},
+        data={"username": "wrong@example.com", "password": getattr(test_user, "password", "")},
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -84,7 +84,7 @@ async def test_get_current_user_with_cookie(client: AsyncClient, test_user: Test
     # Log in to set the cookie
     await client.post(
         "/api/v1/auth/token",
-        data={"username": test_user.email, "password": getattr(test_user, 'password', '')},
+        data={"username": test_user.email, "password": getattr(test_user, "password", "")},
     )
 
     # Make request without Authorization header, relying on the cookie
@@ -141,7 +141,7 @@ async def test_account_lockout(client: AsyncClient, test_user: TestUser):
     # A correct login attempt should now be forbidden
     response = await client.post(
         "/api/v1/auth/token",
-        data={"username": test_user.email, "password": getattr(test_user, 'password', '')},
+        data={"username": test_user.email, "password": getattr(test_user, "password", "")},
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN
     data = response.json()
@@ -356,7 +356,7 @@ async def test_refresh_token_success(client: AsyncClient, test_user: TestUser):
     # 1. Log in to get tokens
     login_response = await client.post(
         "/api/v1/auth/token",
-        data={"username": test_user.email, "password": getattr(test_user, 'password', '')},
+        data={"username": test_user.email, "password": getattr(test_user, "password", "")},
     )
     assert login_response.status_code == status.HTTP_200_OK
     old_tokens = login_response.json()
@@ -436,11 +436,11 @@ async def test_circuit_breaker_flow(mock_redis_client, mock_time, client: AsyncC
     redis_circuit_breaker._failures = 0
     redis_circuit_breaker._state = "CLOSED"
     redis_circuit_breaker._last_failure_time = 0.0
-    
+
     # Set initial time
     current_time = 1000.0
     mock_time.return_value = current_time
-    
+
     # Mock the Redis client to raise ConnectionError
     mock_redis_client.sismember.side_effect = ConnectionError("Redis connection failed")
 
@@ -455,10 +455,12 @@ async def test_circuit_breaker_flow(mock_redis_client, mock_time, client: AsyncC
         except Exception as e:
             print(f"Failure {i+1}/{redis_circuit_breaker.failure_threshold}: {e}")
             print(f"Current state: {redis_circuit_breaker.state}, Failures: {redis_circuit_breaker._failures}")
-    
+
     # Now the circuit should be OPEN
-    print(f"After {redis_circuit_breaker.failure_threshold} failures - State: {redis_circuit_breaker.state}, Failures: {redis_circuit_breaker._failures}")
-    
+    print(
+        f"After {redis_circuit_breaker.failure_threshold} failures - State: {redis_circuit_breaker.state}, Failures: {redis_circuit_breaker._failures}"
+    )
+
     # 2. Now the circuit should be OPEN
     print(f"Final state: {redis_circuit_breaker.state}, Failures: {redis_circuit_breaker._failures}")
     assert redis_circuit_breaker.state == "OPEN", f"Expected state to be OPEN, but got {redis_circuit_breaker.state}"
@@ -469,19 +471,19 @@ async def test_circuit_breaker_flow(mock_redis_client, mock_time, client: AsyncC
         assert False, "Expected CircuitBreakerError"
     except CircuitBreakerError as e:
         print(f"Expected CircuitBreakerError: {e}")
-    
+
     # 4. Simulate waiting for the recovery timeout to enter HALF_OPEN state
     # Set the time to be after the recovery timeout
     mock_time.return_value = current_time + redis_circuit_breaker.recovery_timeout + 1
-    
+
     # 5. The circuit should now be HALF_OPEN
     assert redis_circuit_breaker.state == "HALF_OPEN"
-    
+
     # 6. The next request should be allowed through (HALF_OPEN state)
     # Mock a successful function call
     async def successful_function():
         return "Success"
-    
+
     # This should succeed and close the circuit
     result = await redis_circuit_breaker.call_async(successful_function)
     assert result == "Success"

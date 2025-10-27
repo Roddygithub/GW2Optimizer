@@ -42,9 +42,7 @@ class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
 
 
 oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl=f"{settings.API_V1_STR}/auth/token")
-oauth2_optional_scheme = OAuth2PasswordBearerWithCookie(
-    tokenUrl=f"{settings.API_V1_STR}/auth/token", auto_error=False
-)
+oauth2_optional_scheme = OAuth2PasswordBearerWithCookie(tokenUrl=f"{settings.API_V1_STR}/auth/token", auto_error=False)
 
 
 def create_access_token(subject: str | Any, expires_delta: timedelta = None) -> str:

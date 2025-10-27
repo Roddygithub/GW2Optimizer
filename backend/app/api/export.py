@@ -36,9 +36,7 @@ async def export_build_json(
         if not build_db:
             raise HTTPException(status_code=404, detail="Build not found")
 
-        if not build_db.is_public and (
-            current_user is None or str(build_db.user_id) != str(current_user.id)
-        ):
+        if not build_db.is_public and (current_user is None or str(build_db.user_id) != str(current_user.id)):
             raise HTTPException(status_code=404, detail="Build not found")
 
         build = build_db_to_pydantic(build_db)
@@ -68,9 +66,7 @@ async def export_build_html(
         if not build_db:
             raise HTTPException(status_code=404, detail="Build not found")
 
-        if not build_db.is_public and (
-            current_user is None or str(build_db.user_id) != str(current_user.id)
-        ):
+        if not build_db.is_public and (current_user is None or str(build_db.user_id) != str(current_user.id)):
             raise HTTPException(status_code=404, detail="Build not found")
 
         build = build_db_to_pydantic(build_db)
@@ -100,9 +96,7 @@ async def export_team_json(
         if not team_db:
             raise HTTPException(status_code=404, detail="Team not found")
 
-        if not team_db.is_public and (
-            current_user is None or str(team_db.user_id) != str(current_user.id)
-        ):
+        if not team_db.is_public and (current_user is None or str(team_db.user_id) != str(current_user.id)):
             raise HTTPException(status_code=404, detail="Team not found")
 
         team = team_db_to_pydantic(team_db)

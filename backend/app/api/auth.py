@@ -5,7 +5,6 @@ This module handles user authentication, registration, and token management.
 It provides endpoints for user registration, email verification, login, token refresh, password reset, and user profile management.
 """
 
-
 from collections import defaultdict, deque
 from datetime import timedelta
 from functools import wraps
@@ -138,6 +137,7 @@ def rate_limit(limit: Optional[str]):
         return decorator
 
     return limiter.limit(limit)
+
 
 # Password validation
 

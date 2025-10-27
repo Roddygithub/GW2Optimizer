@@ -229,8 +229,8 @@ def generate_markdown_report(data: dict) -> str:
 
     md = f"""# 🔥 TEST RÉEL - MISTRAL AI + GW2 API
 
-**Date**: {data['timestamp']}  
-**Duration**: {data['duration_seconds']:.2f}s  
+**Date**: {data['timestamp']}
+**Duration**: {data['duration_seconds']:.2f}s
 **Status**: {'✅ SUCCESS' if validation['valid'] else '⚠️ ISSUES'}
 
 ---
@@ -342,8 +342,8 @@ def generate_markdown_report(data: dict) -> str:
 
 ---
 
-**Generated**: {datetime.utcnow().isoformat()}  
-**Test Type**: Real AI Team Optimization  
+**Generated**: {datetime.utcnow().isoformat()}
+**Test Type**: Real AI Team Optimization
 **Version**: v3.0.0
 """
 
