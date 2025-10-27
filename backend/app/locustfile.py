@@ -9,8 +9,38 @@ To run:
 3. Open your browser to http://localhost:8089
 """
 
-from locust import HttpUser, task, between
-from faker import Faker
+try:
+    from locust import HttpUser, task, between
+except ImportError:  # pragma: no cover - optional dependency for load testing
+    class HttpUser:  # type: ignore[override]
+        """Fallback HttpUser to allow documentation builds without locust."""
+
+        wait_time = None
+
+    def task(func):  # type: ignore[misc]
+        """Fallback task decorator when locust is unavailable."""
+
+        return func
+
+    def between(min_wait, max_wait):  # type: ignore[unused-argument]
+        """Fallback wait time factory when locust is unavailable."""
+
+        def _wait_time():
+            return min_wait
+
+        return _wait_time
+
+try:
+    from faker import Faker
+except ImportError:  # pragma: no cover - optional dependency for docs builds
+    class Faker:  # type: ignore[override]
+        """Minimal Faker replacement for documentation builds."""
+
+        def user_name(self) -> str:  # type: ignore[override]
+            return "testuser"
+
+        def email(self) -> str:  # type: ignore[override]
+            return "test@example.com"
 
 fake = Faker()
 
