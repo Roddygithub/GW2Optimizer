@@ -6,6 +6,7 @@ acting as an intermediary between the API endpoints and the database models.
 """
 
 from datetime import datetime, timedelta
+import os
 from typing import Optional, Dict, Any
 
 from fastapi import Request
@@ -27,6 +28,23 @@ def get_password_hash(password: str) -> str:
     """Hash a password."""
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+
+
+def _is_testing_mode() -> bool:
+    """Determine if the application is running under test conditions."""
+    override = os.getenv("GW2OPTIMIZER_TESTING_OVERRIDE")
+    if override is not None:
+        return override.lower() in {"1", "true", "yes"}
+
+    if "TESTING" in os.environ:
+        value = os.getenv("TESTING", "").lower()
+        if value:
+            return value in {"1", "true", "yes"}
+
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        return True
+
+    return bool(getattr(settings, "TESTING", False))
 
 
 class UserService:
@@ -76,7 +94,11 @@ class UserService:
         user = await self.get_by_email(email)
         if user and user.is_active:
             user.failed_login_attempts += 1
-            if user.failed_login_attempts >= settings.MAX_LOGIN_ATTEMPTS and not settings.TESTING:
+            reached_threshold = user.failed_login_attempts >= settings.MAX_LOGIN_ATTEMPTS
+            testing_mode = _is_testing_mode()
+            enforce_lock = settings.ENFORCE_ACCOUNT_LOCKS_IN_TESTS if testing_mode else True
+
+            if reached_threshold and enforce_lock:
                 user.is_active = False
                 user.locked_until = datetime.utcnow() + timedelta(minutes=settings.ACCOUNT_LOCK_DURATION_MINUTES)
             await self.db.commit()  # Commit immediately to lock the user or record the attempt

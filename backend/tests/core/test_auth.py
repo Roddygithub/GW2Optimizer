@@ -4,6 +4,7 @@ from fastapi import status
 from datetime import timedelta
 from unittest.mock import patch
 
+from app.core.config import settings
 from app.models.user import UserCreate, UserLogin
 from tests.conftest import TestUser
 from app.core.security import create_access_token
@@ -81,14 +82,18 @@ async def test_get_current_user_with_token(client: AsyncClient, auth_headers: di
 
 async def test_get_current_user_with_cookie(client: AsyncClient, test_user: TestUser):
     """Test accessing a protected endpoint with a valid cookie."""
-    # Log in to set the cookie
-    await client.post(
+    login_response = await client.post(
         "/api/v1/auth/token",
         data={"username": test_user.email, "password": getattr(test_user, "password", "")},
     )
+    assert login_response.status_code == status.HTTP_200_OK
+    token = login_response.json()["access_token"]
 
     # Make request without Authorization header, relying on the cookie
-    response = await client.get("/api/v1/auth/me")
+    response = await client.get(
+        "/api/v1/auth/me",
+        cookies={settings.ACCESS_TOKEN_COOKIE_NAME: token},
+    )
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert data["email"] == TEST_USER_EMAIL

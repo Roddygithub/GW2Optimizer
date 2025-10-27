@@ -78,6 +78,8 @@ class Settings(BaseSettings):
     TESTING: bool = bool(os.getenv("PYTEST_CURRENT_TEST"))
     LOG_FILE: str = "logs/gw2optimizer.log"
     ACCOUNT_LOCK_DURATION_MINUTES: int = 15
+    ENFORCE_ACCOUNT_LOCKS_IN_TESTS: bool = True
+    ENABLE_HTTPS_REDIRECT: bool = False
 
     # Learning Configuration
     LEARNING_DATA_DIR: str = "./data/learning"

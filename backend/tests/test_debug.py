@@ -38,9 +38,11 @@ async def test_database_tables(db_session: AsyncSession):
         result = await db_session.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
         tables = [row[0] for row in result]
     else:
-        # PostgreSQL/other databases
-        inspector = inspect(engine)
-        tables = inspector.get_table_names()
+        # PostgreSQL/other databases - rely on information_schema via async session
+        result = await db_session.execute(
+            text("SELECT table_name FROM information_schema.tables WHERE table_schema='public'")
+        )
+        tables = [row[0] for row in result]
 
     print(f"\nTables in database: {tables}")
     print(f"Base.metadata.tables: {list(Base.metadata.tables.keys())}")

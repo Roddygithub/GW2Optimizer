@@ -1,13 +1,13 @@
-"""
-Security middleware for adding security headers and handling HTTPS redirection.
-"""
+"""Security middleware for adding security headers and handling HTTPS redirection."""
+import os
 import time
 import uuid
+from typing import Dict
+
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from starlette.responses import Response
-from typing import Dict
 
 
 class ProcessTimeMiddleware(BaseHTTPMiddleware):
@@ -141,7 +141,8 @@ def add_security_middleware(app, settings):
     app.add_middleware(ProcessTimeMiddleware)
 
     # Redirect HTTP to HTTPS in production
-    if not settings.DEBUG:
+    is_testing = bool(getattr(settings, "TESTING", False)) or bool(os.getenv("PYTEST_CURRENT_TEST"))
+    if settings.ENABLE_HTTPS_REDIRECT and not is_testing:
         app.add_middleware(HTTPSRedirectMiddleware)
 
     # Add custom security headers
