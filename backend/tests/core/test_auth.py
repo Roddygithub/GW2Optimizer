@@ -126,7 +126,7 @@ async def test_account_lockout(client: AsyncClient, test_user: TestUser, monkeyp
     """Test that an account is locked after too many failed login attempts."""
     # Ensure testing mode is disabled for this test
     monkeypatch.delenv("TESTING", raising=False)
-    
+
     for i in range(5):
         response = await client.post(
             "/api/v1/auth/token",

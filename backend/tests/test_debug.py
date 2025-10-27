@@ -33,7 +33,7 @@ async def test_database_tables(db_session: AsyncSession):
         engine = engine.sync_engine
 
     # Check database type
-    if engine.dialect.name == 'sqlite':
+    if engine.dialect.name == "sqlite":
         # SQLite specific query
         result = await db_session.execute(text("SELECT name FROM sqlite_master WHERE type='table'"))
         tables = [row[0] for row in result]
