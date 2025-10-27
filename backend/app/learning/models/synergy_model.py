@@ -23,11 +23,20 @@ Training:
 import json
 import pickle
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TYPE_CHECKING
 from datetime import datetime
 import numpy as np
-from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.preprocessing import StandardScaler
+
+try:
+    from sklearn.ensemble import GradientBoostingRegressor
+    from sklearn.preprocessing import StandardScaler
+except ImportError:  # pragma: no cover - optional dependency for docs builds
+    GradientBoostingRegressor = None  # type: ignore[assignment]
+    StandardScaler = None  # type: ignore[assignment]
+
+if TYPE_CHECKING:  # pragma: no cover - typing only
+    from sklearn.ensemble import GradientBoostingRegressor as _GradientBoostingRegressor
+    from sklearn.preprocessing import StandardScaler as _StandardScaler
 
 from app.core.logging import logger
 from app.core.config import settings
@@ -108,8 +117,8 @@ class SynergyModel:
         self.metadata_path = str(Path(settings.LEARNING_DATA_DIR) / "models" / "synergy_metadata.json")
 
         # Modèle et scaler
-        self.model: Optional[GradientBoostingRegressor] = None
-        self.scaler: Optional[StandardScaler] = None
+        self.model: Optional["_GradientBoostingRegressor"] = None
+        self.scaler: Optional["_StandardScaler"] = None
 
         # Métadonnées
         self.metadata = {
@@ -125,6 +134,13 @@ class SynergyModel:
         Path(self.model_path).parent.mkdir(parents=True, exist_ok=True)
 
         logger.info("SynergyModel initialized", extra={"model_path": self.model_path})
+
+    def _ensure_sklearn(self) -> None:
+        """Ensure scikit-learn is available for model operations."""
+        if GradientBoostingRegressor is None or StandardScaler is None:
+            raise ImportError(
+                "scikit-learn is required for SynergyModel operations. Install scikit-learn to enable ML training."
+            )
 
     def _extract_features(self, composition: Dict[str, Any]) -> np.ndarray:
         """
@@ -201,6 +217,8 @@ class SynergyModel:
             logger.warning("No training data provided")
             return
 
+        self._ensure_sklearn()
+
         logger.info(f"Training SynergyModel on {len(data)} samples")
 
         # Extraire features et labels
@@ -220,12 +238,14 @@ class SynergyModel:
 
         # Scaler
         if self.scaler is None:
+            self._ensure_sklearn()
             self.scaler = StandardScaler()
 
         X_scaled = self.scaler.fit_transform(X)
 
         # Modèle
         if self.model is None:
+            self._ensure_sklearn()
             self.model = GradientBoostingRegressor(
                 n_estimators=100, learning_rate=0.1, max_depth=5, random_state=42, verbose=0
             )
@@ -251,6 +271,8 @@ class SynergyModel:
             Synergy score (0-10)
         """
         if self.model is None or self.scaler is None:
+            if GradientBoostingRegressor is None or StandardScaler is None:
+                logger.warning("scikit-learn not installed; using heuristic fallback for prediction")
             logger.warning("Model not trained, using heuristics for score")
 
             base_score = composition.get("synergy_score")
@@ -289,6 +311,7 @@ class SynergyModel:
         features = self._extract_features(composition)
 
         # Scaler
+        self._ensure_sklearn()
         features_scaled = self.scaler.transform(features)
 
         # Prédiction
@@ -312,6 +335,10 @@ class SynergyModel:
 
         if not composition:
             logger.warning("No composition in feedback")
+            return
+
+        if GradientBoostingRegressor is None or StandardScaler is None:
+            logger.warning("scikit-learn not installed; skipping model update")
             return
 
         logger.info("Updating model with feedback", extra={"rating": rating})
@@ -383,6 +410,10 @@ class SynergyModel:
             return False
 
         try:
+            if GradientBoostingRegressor is None or StandardScaler is None:
+                logger.warning("scikit-learn not installed; skipping model load")
+                return False
+
             # Charger modèle
             with open(load_path, "rb") as f:
                 self.model = pickle.load(f)
