@@ -8,10 +8,11 @@ from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.logging import logger
+from app.core.config import settings
 
 
 def _build_database_url() -> str:
-    """Construct the database URL strictly from Postgres environment variables."""
+    """Construct the database URL with sensible fallbacks for non-Postgres environments."""
 
     database_url = os.getenv("DATABASE_URL")
     if database_url:
@@ -24,8 +25,17 @@ def _build_database_url() -> str:
 
     required_vars = {"POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_HOST", "POSTGRES_DB"}
     missing = sorted(var for var in required_vars if not os.getenv(var))
+
     if missing:
-        raise RuntimeError("Missing required Postgres environment variables: " + ", ".join(missing))
+        if getattr(settings, "REQUIRE_POSTGRES", False):
+            raise RuntimeError("Missing required Postgres environment variables: " + ", ".join(missing))
+
+        logger.warning(
+            "Postgres environment variables missing (%s); falling back to SQLite for documentation/test builds.",
+            ", ".join(missing),
+        )
+        sqlite_path = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
+        return sqlite_path
 
     user = os.getenv("POSTGRES_USER")
     password = os.getenv("POSTGRES_PASSWORD")

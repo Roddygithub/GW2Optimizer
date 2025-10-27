@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     # Database Configuration
     DATABASE_URL: str = "sqlite+aiosqlite:///./gw2optimizer.db"
     DATABASE_ECHO: bool = False
+    REQUIRE_POSTGRES: bool = False
 
     # API Configuration
     API_VERSION: str = "v1"
