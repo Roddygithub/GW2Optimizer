@@ -4,8 +4,6 @@ import pytest
 from httpx import AsyncClient
 from fastapi import status
 
-from app.models.user import UserDB
-
 
 pytestmark = pytest.mark.asyncio
 
@@ -28,14 +26,21 @@ class TestBuildAPI:
 
     async def test_create_build_authenticated(self, client: AsyncClient, auth_headers: dict, sample_build_data: dict):
         """Test creating a build with authentication."""
-        response = await client.post("/api/v1/builds", json=sample_build_data, headers=auth_headers)
+        request_data = sample_build_data.copy()
 
-        assert response.status_code == status.HTTP_201_CREATED
-        data = response.json()
-        assert data["name"] == sample_build_data["name"]
-        assert data["profession"] == sample_build_data["profession"]
-        assert "id" in data
-        assert "created_at" in data
+        response = await client.post("/api/v1/builds", json=request_data, headers=auth_headers)
+        assert response.status_code == status.HTTP_201_CREATED, (
+            f"Expected status code 201 but got {response.status_code}. Response: {response.text}"
+        )
+
+        build_data = response.json()
+        assert build_data["name"] == request_data["name"]
+        assert build_data["profession"] == request_data["profession"]
+        assert build_data["game_mode"] == request_data["game_mode"]
+        assert build_data["role"] == request_data["role"]
+        assert "id" in build_data
+        assert "created_at" in build_data
+        assert "user_id" in build_data
 
     async def test_create_build_invalid_data(self, client: AsyncClient, auth_headers: dict):
         """Test creating a build with invalid data."""
@@ -52,7 +57,7 @@ class TestBuildAPI:
     async def test_get_build_by_id(self, client: AsyncClient, auth_headers: dict, sample_build_data: dict):
         """Test getting a build by ID."""
         # Create a build first
-        create_response = await client.post("/api/v1/builds", json=sample_build_data, headers=auth_headers)
+        create_response = await client.post("/api/v1/builds", json=sample_build_data.copy(), headers=auth_headers)
         build_id = create_response.json()["id"]
 
         # Get the build
@@ -72,10 +77,11 @@ class TestBuildAPI:
     async def test_list_user_builds(self, client: AsyncClient, auth_headers: dict, sample_build_data: dict):
         """Test listing user's builds."""
         # Create multiple builds
-        await client.post("/api/v1/builds", json=sample_build_data, headers=auth_headers)
+        await client.post("/api/v1/builds", json=sample_build_data.copy(), headers=auth_headers)
 
-        sample_build_data["name"] = "Second Build"
-        await client.post("/api/v1/builds", json=sample_build_data, headers=auth_headers)
+        second_build = sample_build_data.copy()
+        second_build["name"] = "Second Build"
+        await client.post("/api/v1/builds", json=second_build, headers=auth_headers)
 
         # List builds
         response = await client.get("/api/v1/builds", headers=auth_headers)
@@ -90,11 +96,12 @@ class TestBuildAPI:
     ):
         """Test listing builds with profession filter."""
         # Create builds with different professions
-        await client.post("/api/v1/builds", json=sample_build_data, headers=auth_headers)
+        await client.post("/api/v1/builds", json=sample_build_data.copy(), headers=auth_headers)
 
-        sample_build_data["name"] = "Necro Build"
-        sample_build_data["profession"] = "Necromancer"
-        await client.post("/api/v1/builds", json=sample_build_data, headers=auth_headers)
+        necro_build = sample_build_data.copy()
+        necro_build["name"] = "Necro Build"
+        necro_build["profession"] = "Necromancer"
+        await client.post("/api/v1/builds", json=necro_build, headers=auth_headers)
 
         # Filter by Guardian
         response = await client.get("/api/v1/builds?profession=Guardian", headers=auth_headers)
@@ -107,8 +114,9 @@ class TestBuildAPI:
     async def test_list_public_builds(self, client: AsyncClient, sample_build_data: dict, auth_headers: dict):
         """Test listing public builds without authentication."""
         # Create a public build
-        sample_build_data["is_public"] = True
-        await client.post("/api/v1/builds", json=sample_build_data, headers=auth_headers)
+        public_build = sample_build_data.copy()
+        public_build["is_public"] = True
+        await client.post("/api/v1/builds", json=public_build, headers=auth_headers)
 
         # List public builds without auth
         response = await client.get("/api/v1/builds/public/all")
@@ -180,9 +188,10 @@ class TestBuildAPI:
     async def test_get_build_stats(self, client: AsyncClient, auth_headers: dict, sample_build_data: dict):
         """Test getting build statistics."""
         # Create builds
-        await client.post("/api/v1/builds", json=sample_build_data, headers=auth_headers)
-        sample_build_data["name"] = "Second Build"
-        await client.post("/api/v1/builds", json=sample_build_data, headers=auth_headers)
+        await client.post("/api/v1/builds", json=sample_build_data.copy(), headers=auth_headers)
+        second_build = sample_build_data.copy()
+        second_build["name"] = "Second Build"
+        await client.post("/api/v1/builds", json=second_build, headers=auth_headers)
 
         # Get stats
         response = await client.get("/api/v1/builds/stats/count", headers=auth_headers)
@@ -195,8 +204,9 @@ class TestBuildAPI:
         """Test pagination of build listings."""
         # Create 5 builds
         for i in range(5):
-            sample_build_data["name"] = f"Build {i}"
-            await client.post("/api/v1/builds", json=sample_build_data, headers=auth_headers)
+            paged_build = sample_build_data.copy()
+            paged_build["name"] = f"Build {i}"
+            await client.post("/api/v1/builds", json=paged_build, headers=auth_headers)
 
         # Get first page
         response1 = await client.get("/api/v1/builds?skip=0&limit=2", headers=auth_headers)

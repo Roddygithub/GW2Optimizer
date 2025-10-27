@@ -1,11 +1,20 @@
 """Export API endpoints."""
 
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse, HTMLResponse
+from typing import Optional
 
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import HTMLResponse, JSONResponse
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.builds_db import build_db_to_pydantic
+from app.api.teams_db import team_db_to_pydantic
 from app.core.logging import logger
-from app.services.build_service import BuildService
-from app.services.team_service import TeamService
+from app.core.security import get_current_user_optional
+from app.db.base import get_db
+from app.db.models import UserDB
+from app.models.build import BuildDB
+from app.models.team import TeamCompositionDB
 from app.services.exporter.snowcrows_exporter import SnowcrowsExporter
 
 router = APIRouter()
@@ -13,14 +22,26 @@ exporter = SnowcrowsExporter()
 
 
 @router.get("/export/build/{build_id}/json")
-async def export_build_json(build_id: str) -> JSONResponse:
+async def export_build_json(
+    build_id: str,
+    current_user: Optional[UserDB] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
     """Export build as Snowcrows JSON."""
     try:
-        build_service = BuildService()
-        build = await build_service.get_build(build_id)
+        stmt = select(BuildDB).where(BuildDB.id == build_id)
+        result = await db.execute(stmt)
+        build_db = result.scalar_one_or_none()
 
-        if not build:
+        if not build_db:
             raise HTTPException(status_code=404, detail="Build not found")
+
+        if not build_db.is_public and (
+            current_user is None or str(build_db.user_id) != str(current_user.id)
+        ):
+            raise HTTPException(status_code=404, detail="Build not found")
+
+        build = build_db_to_pydantic(build_db)
 
         exported = exporter.export_build_json(build)
         return JSONResponse(content=exported)
@@ -33,14 +54,26 @@ async def export_build_json(build_id: str) -> JSONResponse:
 
 
 @router.get("/export/build/{build_id}/html", response_class=HTMLResponse)
-async def export_build_html(build_id: str) -> HTMLResponse:
+async def export_build_html(
+    build_id: str,
+    current_user: Optional[UserDB] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+) -> HTMLResponse:
     """Export build as Snowcrows HTML."""
     try:
-        build_service = BuildService()
-        build = await build_service.get_build(build_id)
+        stmt = select(BuildDB).where(BuildDB.id == build_id)
+        result = await db.execute(stmt)
+        build_db = result.scalar_one_or_none()
 
-        if not build:
+        if not build_db:
             raise HTTPException(status_code=404, detail="Build not found")
+
+        if not build_db.is_public and (
+            current_user is None or str(build_db.user_id) != str(current_user.id)
+        ):
+            raise HTTPException(status_code=404, detail="Build not found")
+
+        build = build_db_to_pydantic(build_db)
 
         html = exporter.export_build_html(build)
         return HTMLResponse(content=html)
@@ -53,14 +86,26 @@ async def export_build_html(build_id: str) -> HTMLResponse:
 
 
 @router.get("/export/team/{team_id}/json")
-async def export_team_json(team_id: str) -> JSONResponse:
+async def export_team_json(
+    team_id: str,
+    current_user: Optional[UserDB] = Depends(get_current_user_optional),
+    db: AsyncSession = Depends(get_db),
+) -> JSONResponse:
     """Export team composition as JSON."""
     try:
-        team_service = TeamService()
-        team = await team_service.get_team(team_id)
+        stmt = select(TeamCompositionDB).where(TeamCompositionDB.id == team_id)
+        result = await db.execute(stmt)
+        team_db = result.scalar_one_or_none()
 
-        if not team:
+        if not team_db:
             raise HTTPException(status_code=404, detail="Team not found")
+
+        if not team_db.is_public and (
+            current_user is None or str(team_db.user_id) != str(current_user.id)
+        ):
+            raise HTTPException(status_code=404, detail="Team not found")
+
+        team = team_db_to_pydantic(team_db)
 
         exported = exporter.export_team_json(team)
         return JSONResponse(content=exported)

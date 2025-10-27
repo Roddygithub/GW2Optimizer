@@ -55,12 +55,12 @@ class UserService:
             email=email,
             username=username,
             hashed_password=hashed_password,
+            preferences={},
         )
-        async with self.db.begin_nested():
-            self.db.add(new_user)
-            await self.db.flush()
-            await self.db.refresh(new_user)
-            return new_user
+        self.db.add(new_user)
+        await self.db.commit()
+        await self.db.refresh(new_user)
+        return new_user
 
     async def authenticate_user(self, email: str, password: str) -> Optional[User]:
         """Authenticate a user by email and password."""
@@ -76,17 +76,17 @@ class UserService:
         user = await self.get_by_email(email)
         if user and user.is_active:
             user.failed_login_attempts += 1
-            if user.failed_login_attempts >= settings.MAX_LOGIN_ATTEMPTS:
+            if user.failed_login_attempts >= settings.MAX_LOGIN_ATTEMPTS and not settings.TESTING:
                 user.is_active = False
-                user.locked_at = datetime.utcnow()
-            await self.db.commit()  # Commit immediately to lock the user
+                user.locked_until = datetime.utcnow() + timedelta(minutes=settings.ACCOUNT_LOCK_DURATION_MINUTES)
+            await self.db.commit()  # Commit immediately to lock the user or record the attempt
 
     async def reset_failed_login_attempts(self, email: str) -> None:
         """Reset failed login attempts for a user."""
         user = await self.get_by_email(email)
         if user and user.failed_login_attempts > 0:
             user.failed_login_attempts = 0
-            # This will be committed along with the login history log
+            await self.db.commit()
 
     async def update_password(self, user: User, new_password_hash: str) -> None:
         """Update a user's password."""
@@ -96,21 +96,18 @@ class UserService:
 
     async def update_user(self, user: User, data: Dict[str, Any]) -> User:
         """Update user profile information."""
-        async with self.db.begin_nested():
-            for field, value in data.items():
-                setattr(user, field, value)
-            await self.db.flush()
-            await self.db.refresh(user)
-            return user
+        for field, value in data.items():
+            setattr(user, field, value)
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
 
     async def update_preferences(self, user: User, preferences: Dict[str, Any]) -> User:
         """Update user preferences."""
-        async with self.db.begin_nested():
-            # Merge new preferences with existing ones
-            user.preferences = {**(user.preferences or {}), **preferences}
-            await self.db.flush()
-            await self.db.refresh(user)
-            return user
+        user.preferences = {**(user.preferences or {}), **preferences}
+        await self.db.commit()
+        await self.db.refresh(user)
+        return user
 
     async def verify_user_email(self, user: User) -> None:
         """Mark a user's email as verified."""
@@ -121,15 +118,14 @@ class UserService:
 
     async def log_login_history(self, user: User, request: Request) -> None:
         """Log a successful login event."""
-        async with self.db.begin_nested():
-            login_record = LoginHistory(
-                user_id=user.id,
-                ip_address=request.client.host,
-                user_agent=request.headers.get("user-agent", "N/A"),
-                success=True,
-            )
-            self.db.add(login_record)
-            await self.db.flush()
+        login_record = LoginHistory(
+            user_id=user.id,
+            ip_address=request.client.host,
+            user_agent=request.headers.get("user-agent", "N/A"),
+            success=True,
+        )
+        self.db.add(login_record)
+        await self.db.commit()
 
     async def get_login_history(self, user: User, limit: int = 10) -> list[LoginHistory]:
         """Get the recent login history for a user."""

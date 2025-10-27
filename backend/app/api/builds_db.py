@@ -56,7 +56,7 @@ def build_db_to_pydantic(build_db: BuildDB) -> Build:
     )
 
 
-@router.post("/", response_model=Build, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=Build, status_code=status.HTTP_201_CREATED)
 async def create_build(
     build_data: BuildCreate, current_user: UserDB = Depends(get_current_user), db: AsyncSession = Depends(get_db)
 ) -> Build:
@@ -144,7 +144,7 @@ async def get_build(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error fetching build: {str(e)}")
 
 
-@router.get("/", response_model=List[Build])
+@router.get("", response_model=List[Build])
 async def list_user_builds(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=100, description="Maximum number of records"),
@@ -229,7 +229,7 @@ async def list_public_builds(
         )
 
 
-@router.put("/builds/{build_id}", response_model=Build)
+@router.put("/{build_id}", response_model=Build)
 @invalidate_cache("build:{build_id}")
 async def update_build(
     build_id: str,
@@ -267,7 +267,7 @@ async def update_build(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error updating build: {str(e)}")
 
 
-@router.delete("/builds/{build_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{build_id}", status_code=status.HTTP_204_NO_CONTENT)
 @invalidate_cache("build:{build_id}")
 async def delete_build(
     build_id: str, current_user: UserDB = Depends(get_current_user), db: AsyncSession = Depends(get_db)

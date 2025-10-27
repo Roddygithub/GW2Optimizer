@@ -49,4 +49,4 @@ class LoginHistory(Base):
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(Text, nullable=True)
     success = Column(Boolean, nullable=False)
-    timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    login_timestamp = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

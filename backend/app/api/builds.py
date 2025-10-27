@@ -1,85 +1,14 @@
-"""Build API endpoints."""
+"""Build API router delegating to database-backed endpoints."""
 
-from typing import List, Optional
+from fastapi import APIRouter
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from app.api.builds_db import router as builds_db_router
 
-from app.core.logging import logger
-from app.models.build import Build, BuildCreate, BuildResponse, GameMode, Profession, Role
-from app.services.build_service import BuildService
-from app.db.models import UserDB as User
-from app.api.auth import get_current_active_user
-
-router = APIRouter(prefix="/builds", tags=["Builds"])
-build_service = BuildService()
+router = APIRouter()
+router.include_router(builds_db_router, prefix="/builds", tags=["Builds"])
 
 
-@router.post("", response_model=BuildResponse)
-async def create_build(request: BuildCreate, current_user: User = Depends(get_current_active_user)) -> BuildResponse:
-    """
-    Create a new build.
-
-    Can accept:
-    - GW2Skill URL to parse
-    - Custom requirements for AI to generate
-    """
-    try:
-        logger.info(f"Creating build: {request.profession} - {request.role} - {request.game_mode}")
-        response = await build_service.create_build(request)
-        return response
-    except Exception as e:
-        logger.error(f"Error creating build: {e}")
-        raise HTTPException(status_code=500, detail=f"Error creating build: {str(e)}")
-
-
-@router.get("/{build_id}", response_model=Build)
-async def get_build(build_id: str, current_user: User = Depends(get_current_active_user)) -> Build:
-    """Get a specific build by ID."""
-    try:
-        build = await build_service.get_build(build_id)
-        if not build:
-            raise HTTPException(status_code=404, detail="Build not found")
-        return build
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error fetching build: {e}")
-        raise HTTPException(status_code=500, detail=f"Error fetching build: {str(e)}")
-
-
-@router.get("", response_model=List[Build])
-async def list_builds(
-    profession: Optional[Profession] = Query(None),
-    game_mode: Optional[GameMode] = Query(None),
-    role: Optional[Role] = Query(None),
-    limit: int = Query(20, ge=1, le=100),
-    current_user: User = Depends(get_current_active_user),
-) -> List[Build]:
-    """
-    List builds with optional filters.
-    """
-    try:
-        builds = await build_service.list_builds(
-            profession=profession,
-            game_mode=game_mode,
-            role=role,
-            limit=limit,
-        )
-        return builds
-    except Exception as e:
-        logger.error(f"Error listing builds: {e}")
-        raise HTTPException(status_code=500, detail=f"Error listing builds: {str(e)}")
-
-
-@router.post("/parse")
-async def parse_gw2skill_url(url: str, current_user: User = Depends(get_current_active_user)) -> BuildResponse:
-    """
-    Parse a GW2Skill URL and extract build information.
-    """
-    try:
-        logger.info(f"Parsing GW2Skill URL: {url}")
-        response = await build_service.parse_gw2skill_url(url)
-        return response
-    except Exception as e:
-        logger.error(f"Error parsing URL: {e}")
-        raise HTTPException(status_code=500, detail=f"Error parsing URL: {str(e)}")
+@router.get("/builds/legacy", include_in_schema=False)
+async def legacy_notice() -> dict[str, str]:
+    """Provide guidance for legacy clients when accessing deprecated endpoints."""
+    return {"detail": "Legacy build endpoints have moved to database-backed routes."}

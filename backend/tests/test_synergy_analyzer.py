@@ -217,14 +217,58 @@ def test_score_profession_diversity(analyzer, sample_team):
 @pytest.mark.legacy
 def test_empty_team(analyzer):
     """Test analysis with empty team."""
-    from tests.factories import create_test_team_composition
+    from datetime import datetime
+    from uuid import uuid4
+    from app.models.team import TeamComposition, TeamSlot
+    from app.models.build import Build, Profession, GameMode, Role
 
-    empty_team = create_test_team_composition(
-        name="Empty Team",
+    # Create a minimal Build object
+    build = Build(
+        id=str(uuid4()),
+        name="Test Build",
+        profession=Profession.GUARDIAN,
         game_mode=GameMode.ZERG,
-        team_size=0,
-        slots=[],
+        role=Role.DPS,
+        user_id=str(uuid4()),
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+        trait_lines=[],
+        skills=[],
+        equipment=[],
+        synergies=[],
+        counters=[]
     )
+
+    # Create a TeamSlot with the build
+    slot = TeamSlot(
+        id=str(uuid4()),
+        slot_number=1,
+        build=build,
+        player_name=None,
+        priority=1
+    )
+
+    # Create a TeamComposition with the slot
+    empty_team = TeamComposition(
+        id=str(uuid4()),
+        name="Test Team",
+        game_mode=GameMode.ZERG,
+        team_size=1,
+        user_id=str(uuid4()),
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+        slots=[slot],
+        synergies=[],
+        strengths=[],
+        weaknesses=[],
+        overall_rating=0.0,
+        description="Test team",
+        is_public=False
+    )
+
+    # Now test with an empty slots list
+    empty_team.slots = []
+    empty_team.team_size = 0
 
     synergies = analyzer.analyze_team(empty_team)
     assert synergies == []

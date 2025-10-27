@@ -1,5 +1,6 @@
 """Application configuration."""
 
+import os
 from typing import List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -38,6 +39,12 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     ACCESS_TOKEN_COOKIE_NAME: str = "access_token"
     REFRESH_TOKEN_COOKIE_NAME: str = "refresh_token"
+    MAX_LOGIN_ATTEMPTS: int = 5
+    LOGIN_RATE_LIMIT: str = "50/minute"
+    REGISTRATION_RATE_LIMIT: str = "10/hour"
+    REGISTRATION_RATE_LIMIT_COUNT: int = 10
+    REGISTRATION_RATE_LIMIT_WINDOW_SECONDS: int = 3600
+    PASSWORD_RECOVERY_RATE_LIMIT: str = "5/hour"
 
     # CORS
     CORS_ORIGINS: List[str] = [
@@ -68,8 +75,9 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
 
     # Testing
-    TESTING: bool = False  # Disable rate limiting and other restrictions in tests
+    TESTING: bool = bool(os.getenv("PYTEST_CURRENT_TEST"))
     LOG_FILE: str = "logs/gw2optimizer.log"
+    ACCOUNT_LOCK_DURATION_MINUTES: int = 15
 
     # Learning Configuration
     LEARNING_DATA_DIR: str = "./data/learning"

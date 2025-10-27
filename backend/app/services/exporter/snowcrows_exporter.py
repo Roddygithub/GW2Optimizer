@@ -21,16 +21,21 @@ class SnowcrowsExporter:
         Returns:
             Dictionary in Snowcrows format
         """
+        # Handle profession and role which might be enums or strings
+        profession = build.profession.value if hasattr(build.profession, 'value') else build.profession
+        game_mode = build.game_mode.value if hasattr(build.game_mode, 'value') else build.game_mode
+        role = build.role.value if hasattr(build.role, 'value') else build.role
+        
         return {
             "name": build.name,
-            "profession": build.profession.value,
+            "profession": profession,
             "specialization": build.specialization or "Core",
             "traits": self._export_traits(build.trait_lines),
             "skills": self._export_skills(build.skills),
             "equipment": self._export_equipment(build.equipment),
             "metadata": {
-                "game_mode": build.game_mode.value,
-                "role": build.role.value,
+                "game_mode": game_mode,
+                "role": role,
                 "source": build.source_type or "gw2optimizer",
                 "source_url": str(build.source_url) if build.source_url else None,
                 "effectiveness": build.effectiveness,
@@ -53,12 +58,17 @@ class SnowcrowsExporter:
         Returns:
             HTML string
         """
+        # Handle enums which might be strings or enums
+        profession = build.profession.value if hasattr(build.profession, 'value') else build.profession
+        role = build.role.value if hasattr(build.role, 'value') else build.role
+        game_mode = build.game_mode.value if hasattr(build.game_mode, 'value') else build.game_mode
+        
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{build.name} - {build.profession.value}</title>
+    <title>{build.name} - {profession}</title>
     <style>
         {self._get_snowcrows_css()}
     </style>
@@ -68,10 +78,10 @@ class SnowcrowsExporter:
         <header class="build-header">
             <h1>{build.name}</h1>
             <div class="build-meta">
-                <span class="profession">{build.profession.value}</span>
+                <span class="profession">{profession}</span>
                 <span class="specialization">{build.specialization or 'Core'}</span>
-                <span class="role">{build.role.value}</span>
-                <span class="game-mode">{build.game_mode.value}</span>
+                <span class="role">{role}</span>
+                <span class="game-mode">{game_mode}</span>
             </div>
         </header>
 
@@ -117,33 +127,48 @@ class SnowcrowsExporter:
         Returns:
             Dictionary with team data
         """
+        # Handle game_mode which might be an enum or string
+        game_mode = team.game_mode.value if hasattr(team.game_mode, 'value') else team.game_mode
+        
+        # Process slots, handling cases where build might be None
+        slots = []
+        for slot in team.slots:
+            if not hasattr(slot, 'build') or slot.build is None:
+                continue
+                
+            slot_data = {
+                "slot_number": slot.slot_number,
+                "player_name": slot.player_name or "",
+                "priority": slot.priority,
+                "build": self.export_build_json(slot.build),
+            }
+            slots.append(slot_data)
+        
+        # Process synergies, ensuring all required fields exist
+        synergies = []
+        for syn in team.synergies:
+            if not hasattr(syn, 'synergy_type') or not hasattr(syn, 'description'):
+                continue
+                
+            synergy_data = {
+                "type": syn.synergy_type,
+                "description": syn.description,
+                "involved_slots": getattr(syn, 'involved_slots', []),
+                "strength": getattr(syn, 'strength', 0.0),
+            }
+            synergies.append(synergy_data)
+        
         return {
             "name": team.name,
-            "game_mode": team.game_mode.value,
+            "game_mode": game_mode,
             "team_size": team.team_size,
-            "slots": [
-                {
-                    "slot_number": slot.slot_number,
-                    "player_name": slot.player_name,
-                    "priority": slot.priority,
-                    "build": self.export_build_json(slot.build),
-                }
-                for slot in team.slots
-            ],
-            "synergies": [
-                {
-                    "type": syn.synergy_type,
-                    "description": syn.description,
-                    "involved_slots": syn.involved_slots,
-                    "strength": syn.strength,
-                }
-                for syn in team.synergies
-            ],
-            "strengths": team.strengths,
-            "weaknesses": team.weaknesses,
+            "slots": slots,
+            "synergies": synergies,
+            "strengths": team.strengths or [],
+            "weaknesses": team.weaknesses or [],
             "overall_rating": team.overall_rating,
             "metadata": {
-                "created_by": team.created_by,
+                "created_by": getattr(team, 'created_by', ''),
                 "exported_at": datetime.utcnow().isoformat(),
             },
         }

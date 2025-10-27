@@ -286,8 +286,11 @@ class CommunityScraper:
         unique_builds = []
 
         for build in builds:
+            # Normalize profession which may already be a string depending on model config
+            profession_value = getattr(build.profession, "value", build.profession)
+
             # Create unique key
-            key = (build.name.lower(), build.profession.value)
+            key = (build.name.lower(), str(profession_value).lower())
 
             if key not in seen:
                 seen.add(key)

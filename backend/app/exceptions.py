@@ -9,6 +9,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.exceptions import RequestValidationError
+from redis.exceptions import ConnectionError
 from app.core.logging import logger
 
 
@@ -29,6 +30,20 @@ class UserExistsException(BusinessException):
 
     def __init__(self, detail: str = "User already exists"):
         super().__init__(detail, status.HTTP_409_CONFLICT, "USER_EXISTS")
+
+
+class UserEmailExistsException(BusinessException):
+    """Exception raised when an email is already registered."""
+
+    def __init__(self, detail: str = "Email already exists"):
+        super().__init__(detail, status.HTTP_409_CONFLICT, "USER_EMAIL_EXISTS")
+
+
+class UserUsernameExistsException(BusinessException):
+    """Exception raised when a username is already taken."""
+
+    def __init__(self, detail: str = "Username already exists"):
+        super().__init__(detail, status.HTTP_409_CONFLICT, "USER_USERNAME_EXISTS")
 
 
 class InvalidCredentialsException(BusinessException):
@@ -90,6 +105,8 @@ def add_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(Exception)
     async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+        if isinstance(exc, ConnectionError):
+            raise exc
         correlation_id = getattr(request.state, "correlation_id", "N/A")
         logger.error(
             f"Unhandled Exception: {exc} for {request.method} {request.url} [ID: {correlation_id}]", exc_info=True

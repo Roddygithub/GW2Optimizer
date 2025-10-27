@@ -251,8 +251,39 @@ class SynergyModel:
             Synergy score (0-10)
         """
         if self.model is None or self.scaler is None:
-            logger.warning("Model not trained, returning default score")
-            return 7.0  # Default score
+            logger.warning("Model not trained, using heuristics for score")
+
+            base_score = composition.get("synergy_score")
+            if isinstance(base_score, (int, float)):
+                return float(base_score)
+
+            builds = composition.get("builds", [])
+            fallback = 7.0
+            if builds:
+                total = 0.0
+                count = 0
+                for build in builds:
+                    if not isinstance(build, dict):
+                        continue
+                    prof = build.get("profession", "")
+                    role = build.get("role", "")
+                    amount = build.get("count", 1) or 1
+
+                    score = 5.0
+                    if prof:
+                        prof_key = prof.strip().lower()
+                        score += 0.3 * hash(prof_key) % 5
+                    if role:
+                        role_key = role.strip().lower()
+                        score += 0.2 * hash(role_key) % 5
+
+                    total += score * amount
+                    count += amount
+
+                if count:
+                    fallback = max(0.0, min(10.0, total / count))
+
+            return float(round(fallback, 1))
 
         # Extraire features
         features = self._extract_features(composition)

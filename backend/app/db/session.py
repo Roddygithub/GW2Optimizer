@@ -1,20 +1,51 @@
 """Database session management."""
 
+from __future__ import annotations
+
+import os
 from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
-from app.core.config import settings
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-# Create async engine
-# Remove pool settings for SQLite as they are not compatible
+from app.core.logging import logger
+
+
+def _build_database_url() -> str:
+    """Construct the database URL strictly from Postgres environment variables."""
+
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        if database_url.startswith("postgres://"):
+            logger.warning("DATABASE_URL uses deprecated postgres:// prefix; updating to postgresql+asyncpg://")
+            database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+        if not database_url.startswith("postgresql+"):
+            database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return database_url
+
+    required_vars = {"POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_HOST", "POSTGRES_DB"}
+    missing = sorted(var for var in required_vars if not os.getenv(var))
+    if missing:
+        raise RuntimeError(
+            "Missing required Postgres environment variables: " + ", ".join(missing)
+        )
+
+    user = os.getenv("POSTGRES_USER")
+    password = os.getenv("POSTGRES_PASSWORD")
+    host = os.getenv("POSTGRES_HOST")
+    port = os.getenv("POSTGRES_PORT", "5432")
+    db_name = os.getenv("POSTGRES_DB")
+
+    return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db_name}"
+
+
+DATABASE_URL = _build_database_url()
+
 engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DEBUG,
+    DATABASE_URL,
+    echo=os.getenv("SQL_ECHO", "0") == "1",
     future=True,
-    connect_args={"check_same_thread": False},  # Required for SQLite
 )
 
-# Create async session factory
 AsyncSessionLocal = async_sessionmaker(
     engine,
     class_=AsyncSession,
@@ -25,12 +56,8 @@ AsyncSessionLocal = async_sessionmaker(
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """
-    Dependency for getting async database sessions.
+    """Provide a transactional scope around a series of operations."""
 
-    Yields:
-        AsyncSession: Database session
-    """
     async with AsyncSessionLocal() as session:
         try:
             yield session
@@ -38,5 +65,3 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()

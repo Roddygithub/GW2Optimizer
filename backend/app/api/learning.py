@@ -15,7 +15,7 @@ pipeline = LearningPipeline(
 )
 
 
-@router.get("/learning/stats", response_model=LearningStats)
+@router.get("/stats", response_model=LearningStats)
 async def get_learning_stats() -> LearningStats:
     """
     Get current learning system statistics.
@@ -34,7 +34,7 @@ async def get_learning_stats() -> LearningStats:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
-@router.post("/learning/pipeline/run")
+@router.post("/pipeline/run")
 async def run_pipeline(background_tasks: BackgroundTasks) -> dict:
     """
     Trigger the learning pipeline manually.
@@ -60,13 +60,13 @@ async def run_pipeline(background_tasks: BackgroundTasks) -> dict:
         raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
-@router.get("/learning/config/finetuning", response_model=FineTuningConfig)
+@router.get("/config/finetuning", response_model=FineTuningConfig)
 async def get_finetuning_config() -> FineTuningConfig:
     """Get current fine-tuning configuration."""
     return pipeline.finetuning_config
 
 
-@router.post("/learning/config/finetuning", response_model=FineTuningConfig)
+@router.post("/config/finetuning", response_model=FineTuningConfig)
 async def update_finetuning_config(config: FineTuningConfig) -> FineTuningConfig:
     """Update fine-tuning configuration."""
     pipeline.finetuning_config = config
@@ -77,13 +77,13 @@ async def update_finetuning_config(config: FineTuningConfig) -> FineTuningConfig
     return config
 
 
-@router.get("/learning/config/storage", response_model=StorageConfig)
+@router.get("/config/storage", response_model=StorageConfig)
 async def get_storage_config() -> StorageConfig:
     """Get current storage configuration."""
     return pipeline.storage_config
 
 
-@router.post("/learning/config/storage", response_model=StorageConfig)
+@router.post("/config/storage", response_model=StorageConfig)
 async def update_storage_config(config: StorageConfig) -> StorageConfig:
     """Update storage configuration."""
     pipeline.storage_config = config
@@ -93,7 +93,7 @@ async def update_storage_config(config: StorageConfig) -> StorageConfig:
     return config
 
 
-@router.post("/learning/cleanup")
+@router.post("/cleanup")
 async def trigger_cleanup(background_tasks: BackgroundTasks) -> dict:
     """
     Trigger storage cleanup manually.

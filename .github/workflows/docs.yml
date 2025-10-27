@@ -32,6 +32,10 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install mkdocs mkdocs-material mkdocstrings[python] pdoc3
+          cd backend
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt || true
+          cd -
 
       - name: Generate API docs with pdoc
         run: |

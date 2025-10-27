@@ -213,6 +213,7 @@ def include_routers(app: FastAPI) -> None:
     health_router = APIRouter()
     health_router.include_router(health.router, prefix="", tags=["Health"])
     app.include_router(health_router, prefix="")
+    app.include_router(health.router, prefix=settings.API_V1_STR, tags=["Health"])
 
     # API v1 routes
     api_router = APIRouter(prefix=settings.API_V1_STR)
@@ -223,15 +224,13 @@ def include_routers(app: FastAPI) -> None:
     # Protected routes (require authentication)
     api_router.include_router(ai.router, prefix="/ai", tags=["AI"])
     api_router.include_router(ai_optimizer.router, prefix="/ai-optimizer", tags=["AI Optimizer"])
-    api_router.include_router(builds.router, prefix="", tags=["Builds"])  # Empty prefix as it's already in the router
-    api_router.include_router(teams.router, prefix="/teams", tags=["Teams"])
+    api_router.include_router(builds.router, tags=["Builds"])
+    api_router.include_router(teams.router, tags=["Teams"])
     api_router.include_router(chat.router, prefix="/chat", tags=["Chat"])
     api_router.include_router(export.router, prefix="/export", tags=["Export"])
     api_router.include_router(learning.router, prefix="/learning", tags=["Learning"])
     api_router.include_router(meta.router, prefix="/meta", tags=["Meta"])
     api_router.include_router(scraper.router, prefix="/scraper", tags=["Scraper"])
-    api_router.include_router(builds_db.router, prefix="/db/builds", tags=["Builds DB"])
-    api_router.include_router(teams_db.router, prefix="/db/teams", tags=["Teams DB"])
     api_router.include_router(websocket_mcm.router, prefix="/mcm", tags=["WebSocket MCM"])
 
     # Include the API router with the prefix

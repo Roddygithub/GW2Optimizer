@@ -39,7 +39,6 @@ COMMON_PASSWORDS = {"password", "123456", "qwerty", "azerty", "123456789", "pass
 class UserCreate(UserBase):
     password: str = Field(
         ...,
-        min_length=12,
         description="User's password. Must be at least 12 characters long and contain uppercase, lowercase, a digit, and a special character.",
         example="ValidPass!123",
     )
@@ -48,6 +47,9 @@ class UserCreate(UserBase):
     @classmethod
     def password_complexity(cls, v: str, info: FieldValidationInfo) -> str:
         """Validate password complexity with user-friendly messages."""
+        if len(v) < 12:
+            raise ValueError("Le mot de passe doit contenir au moins 12 caractères.")
+
         errors = []
         if not re.search(r"[A-Z]", v):
             errors.append("au moins une lettre majuscule")

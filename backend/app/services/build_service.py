@@ -34,20 +34,24 @@ class BuildService:
         try:
             build: Optional[Build] = None
 
+            profession_value = self._ensure_enum_value(request.profession)
+            role_value = self._ensure_enum_value(request.role)
+            game_mode_value = self._ensure_enum_value(request.game_mode)
+
             # If GW2Skill URL provided, parse it
             if request.gw2skill_url:
                 build = await self.parser.parse_url(str(request.gw2skill_url))
                 if build:
                     # Update with request parameters
-                    build.game_mode = request.game_mode
-                    build.role = request.role
+                    build.game_mode = game_mode_value
+                    build.role = role_value
 
             # If no build yet, generate with AI
             if not build:
-                build = await self._generate_build_with_ai(request)
+                build = await self._generate_build_with_ai(request, profession_value, game_mode_value, role_value)
 
             # Generate AI analysis
-            ai_analysis = await self._analyze_build(build)
+            ai_analysis = await self._analyze_build(build, profession_value, game_mode_value, role_value)
 
             # Find similar builds
             similar_builds = await self._find_similar_builds(build)
@@ -104,7 +108,12 @@ class BuildService:
         if not build:
             raise ValueError("Failed to parse GW2Skill URL")
 
-        ai_analysis = await self._analyze_build(build)
+        ai_analysis = await self._analyze_build(
+            build,
+            self._ensure_enum_value(build.profession),
+            self._ensure_enum_value(build.game_mode),
+            self._ensure_enum_value(build.role),
+        )
         similar_builds = await self._find_similar_builds(build)
 
         if not build.id:
@@ -117,9 +126,21 @@ class BuildService:
             similar_builds=similar_builds,
         )
 
-    async def _generate_build_with_ai(self, request: BuildCreate) -> Build:
+    def _ensure_enum_value(self, value: Profession | GameMode | Role | str | None) -> str:
+        """Return the enum value as a string regardless of input type."""
+        if value is None:
+            return ""
+        return value.value if hasattr(value, "value") else str(value)
+
+    async def _generate_build_with_ai(
+        self,
+        request: BuildCreate,
+        profession_value: str,
+        game_mode_value: str,
+        role_value: str,
+    ) -> Build:
         """Generate a build using AI."""
-        prompt = f"""Generate an optimal {request.profession.value} build for {request.game_mode.value} WvW with {request.role.value} role.
+        prompt = f"""Generate an optimal {profession_value} build for {game_mode_value} WvW with {role_value} role.
 
 Additional requirements: {request.custom_requirements or 'None'}
 
@@ -137,22 +158,28 @@ Provide a meta-appropriate build with:
         # Create basic build structure
         build = Build(
             id=str(uuid.uuid4()),
-            name=f"{request.profession.value} {request.role.value} Build",
-            profession=request.profession,
-            game_mode=request.game_mode,
-            role=request.role,
+            name=f"{profession_value} {role_value} Build",
+            profession=profession_value,
+            game_mode=game_mode_value,
+            role=role_value,
             description=response,
             source_type="ai",
         )
 
         return build
 
-    async def _analyze_build(self, build: Build) -> dict[str, str]:
+    async def _analyze_build(
+        self,
+        build: Build,
+        profession_value: str,
+        game_mode_value: str,
+        role_value: str,
+    ) -> dict[str, str]:
         """Analyze a build with AI."""
-        prompt = f"""Analyze this {build.profession.value} build for {build.game_mode.value} WvW:
+        prompt = f"""Analyze this {profession_value} build for {game_mode_value} WvW:
 
-Role: {build.role.value}
-Specialization: {build.specialization or 'Core'}
+Role: {role_value}
+Specialization: {getattr(build, 'specialization', None) or 'Core'}
 
 Provide:
 1. Strengths
@@ -165,8 +192,8 @@ Provide:
 
         return {
             "analysis": response,
-            "profession": build.profession.value,
-            "role": build.role.value,
+            "profession": profession_value,
+            "role": role_value,
         }
 
     async def _find_similar_builds(self, build: Build) -> List[Build]:

@@ -2,6 +2,9 @@
 
 import pytest
 import json
+from datetime import datetime
+from uuid import uuid4
+
 from app.models.build import Build, GameMode, Profession, Role, TraitLine, Skill, Equipment
 from app.models.team import TeamComposition, TeamSlot
 from app.services.exporter.snowcrows_exporter import SnowcrowsExporter
@@ -150,7 +153,7 @@ def test_export_team_json(exporter, sample_team):
 
     # Check slot structure
     slot = result["slots"][0]
-    assert slot["slot_number"] == 0
+    assert slot["slot_number"] == 1  # slot_number is 1-based in the factory
     assert slot["player_name"] == "Player1"
     assert "build" in slot
 
@@ -206,10 +209,19 @@ def test_render_equipment_html(exporter, sample_build):
 def test_export_empty_build(exporter):
     """Test exporting build with minimal data."""
     minimal_build = Build(
+        id=str(uuid4()),
+        user_id=str(uuid4()),
         name="Minimal Build",
         profession=Profession.WARRIOR,
         game_mode=GameMode.ROAMING,
         role=Role.DPS,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+        trait_lines=[],
+        skills=[],
+        equipment=[],
+        synergies=[],
+        counters=[]
     )
 
     result = exporter.export_build_json(minimal_build)

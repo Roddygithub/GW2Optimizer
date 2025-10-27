@@ -2,6 +2,7 @@
 
 import pytest
 from uuid import uuid4
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -145,10 +146,10 @@ async def test_get_build_private_unauthorized(db_session: AsyncSession, test_use
     db_session.add(other_user)
     await db_session.commit()
 
-    # Try to get build as other user (should fail)
-    retrieved_build = await service.get_build(created_build.id, other_user)
-
-    assert retrieved_build is None
+    # Try to get build as other user (should fail with 404)
+    with pytest.raises(HTTPException) as exc_info:
+        await service.get_build(created_build.id, other_user)
+    assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
 
 
 @pytest.mark.asyncio
@@ -223,9 +224,10 @@ async def test_delete_build(db_session: AsyncSession, test_user: UserDB, build_d
 
     assert result is True
 
-    # Verify build is deleted
-    deleted_build = await service.get_build(build_id, test_user)
-    assert deleted_build is None
+    # Verify build is deleted by checking that get_build raises 404
+    with pytest.raises(HTTPException) as exc_info:
+        await service.get_build(build_id, test_user)
+    assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
 
 
 @pytest.mark.asyncio

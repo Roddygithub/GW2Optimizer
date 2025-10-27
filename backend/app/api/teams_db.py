@@ -70,7 +70,7 @@ def team_db_to_pydantic(team_db: TeamCompositionDB) -> TeamComposition:
     )
 
 
-@router.post("/", response_model=TeamComposition, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=TeamComposition, status_code=status.HTTP_201_CREATED)
 async def create_team(
     team_data: TeamCompositionCreate,
     current_user: UserDB = Depends(get_current_user),
@@ -160,7 +160,7 @@ async def get_team(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error fetching team: {str(e)}")
 
 
-@router.get("/", response_model=List[TeamComposition])
+@router.get("", response_model=List[TeamComposition])
 async def list_user_teams(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=100, description="Maximum number of records"),
@@ -229,7 +229,7 @@ async def list_public_teams(
         )
 
 
-@router.put("/teams/{team_id}", response_model=TeamComposition)
+@router.put("/{team_id}", response_model=TeamComposition)
 @invalidate_cache("team:{team_id}")
 async def update_team(
     team_id: str,
@@ -267,7 +267,7 @@ async def update_team(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error updating team: {str(e)}")
 
 
-@router.delete("/teams/{team_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{team_id}", status_code=status.HTTP_204_NO_CONTENT)
 @invalidate_cache("team:{team_id}")
 async def delete_team(
     team_id: str, current_user: UserDB = Depends(get_current_user), db: AsyncSession = Depends(get_db)
@@ -294,7 +294,7 @@ async def delete_team(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Error deleting team: {str(e)}")
 
 
-@router.post("/teams/{team_id}/builds/{build_id}", response_model=TeamComposition)
+@router.post("/{team_id}/builds/{build_id}", response_model=TeamComposition)
 @invalidate_cache("team:{team_id}")
 async def add_build_to_team(
     team_id: str,
@@ -335,7 +335,7 @@ async def add_build_to_team(
         )
 
 
-@router.delete("/teams/{team_id}/slots/{slot_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{team_id}/slots/{slot_id}", status_code=status.HTTP_204_NO_CONTENT)
 @invalidate_cache("team:{team_id}")
 async def remove_build_from_team(
     team_id: str, slot_id: str, current_user: UserDB = Depends(get_current_user), db: AsyncSession = Depends(get_db)

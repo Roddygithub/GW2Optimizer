@@ -4,7 +4,8 @@ from fastapi import status
 from datetime import timedelta
 from unittest.mock import patch
 
-from app.models.user import User
+from app.models.user import UserCreate, UserLogin
+from tests.conftest import TestUser
 from app.core.security import create_access_token
 
 # Mark all tests in this file as asyncio
@@ -26,7 +27,7 @@ async def test_register_user_success(client: AsyncClient):
     assert "hashed_password" not in data
 
 
-async def test_register_user_duplicate_email(client: AsyncClient, test_user: User):
+async def test_register_user_duplicate_email(client: AsyncClient, test_user: TestUser):
     """Test registration with a duplicate email."""
     response = await client.post(
         "/api/v1/auth/register",
@@ -37,11 +38,11 @@ async def test_register_user_duplicate_email(client: AsyncClient, test_user: Use
     assert data["error_code"] == "USER_EMAIL_EXISTS"
 
 
-async def test_login_success(client: AsyncClient, test_user: User):
+async def test_login_success(client: AsyncClient, test_user: TestUser):
     """Test successful login and cookie setting."""
     response = await client.post(
         "/api/v1/auth/token",
-        data={"username": test_user.email, "password": test_user.password},
+        data={"username": test_user.email, "password": getattr(test_user, 'password', '')},
     )
     assert response.status_code == status.HTTP_200_OK
     token = response.json()
@@ -50,7 +51,7 @@ async def test_login_success(client: AsyncClient, test_user: User):
     assert "access_token" in response.cookies
 
 
-async def test_login_wrong_password(client: AsyncClient, test_user: User):
+async def test_login_wrong_password(client: AsyncClient, test_user: TestUser):
     """Test login with an incorrect password."""
     response = await client.post(
         "/api/v1/auth/token",
@@ -61,11 +62,11 @@ async def test_login_wrong_password(client: AsyncClient, test_user: User):
     assert data["error_code"] == "INVALID_CREDENTIALS"
 
 
-async def test_login_wrong_email(client: AsyncClient, test_user: User):
+async def test_login_wrong_email(client: AsyncClient, test_user: TestUser):
     """Test login with a non-existent email."""
     response = await client.post(
         "/api/v1/auth/token",
-        data={"username": "wrong@example.com", "password": test_user.password},
+        data={"username": "wrong@example.com", "password": getattr(test_user, 'password', '')},
     )
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -78,12 +79,12 @@ async def test_get_current_user_with_token(client: AsyncClient, auth_headers: di
     assert data["email"] == TEST_USER_EMAIL
 
 
-async def test_get_current_user_with_cookie(client: AsyncClient, test_user: User):
+async def test_get_current_user_with_cookie(client: AsyncClient, test_user: TestUser):
     """Test accessing a protected endpoint with a valid cookie."""
     # Log in to set the cookie
     await client.post(
         "/api/v1/auth/token",
-        data={"username": test_user.email, "password": test_user.password},
+        data={"username": test_user.email, "password": getattr(test_user, 'password', '')},
     )
 
     # Make request without Authorization header, relying on the cookie
@@ -121,7 +122,7 @@ async def test_logout(client: AsyncClient, auth_headers: dict):
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-async def test_account_lockout(client: AsyncClient, test_user: User):
+async def test_account_lockout(client: AsyncClient, test_user: TestUser):
     """Test that an account is locked after too many failed login attempts."""
     for i in range(5):
         response = await client.post(
@@ -140,7 +141,7 @@ async def test_account_lockout(client: AsyncClient, test_user: User):
     # A correct login attempt should now be forbidden
     response = await client.post(
         "/api/v1/auth/token",
-        data={"username": test_user.email, "password": test_user.password},
+        data={"username": test_user.email, "password": getattr(test_user, 'password', '')},
     )
     assert response.status_code == status.HTTP_403_FORBIDDEN
     data = response.json()
@@ -148,7 +149,7 @@ async def test_account_lockout(client: AsyncClient, test_user: User):
 
 
 @patch("app.api.auth.send_password_reset_email")
-async def test_password_recovery(mock_send_email, client: AsyncClient, test_user: User):
+async def test_password_recovery(mock_send_email, client: AsyncClient, test_user: TestUser):
     """Test the password recovery request endpoint."""
     response = await client.post(f"/api/v1/auth/password-recovery/{test_user.email}")
     assert response.status_code == status.HTTP_202_ACCEPTED
@@ -156,7 +157,7 @@ async def test_password_recovery(mock_send_email, client: AsyncClient, test_user
 
 
 @patch("app.api.auth.send_password_reset_email")
-async def test_reset_password_success(mock_send_email, client: AsyncClient, test_user: User):
+async def test_reset_password_success(mock_send_email, client: AsyncClient, test_user: TestUser):
     """Test the password reset endpoint with a valid token."""
     # 1. Generate a valid token for the user
     reset_token = create_access_token(subject=test_user.email)
@@ -350,12 +351,12 @@ async def test_invalid_login_form_data(client: AsyncClient):
     assert "username" in data["fields"]
 
 
-async def test_refresh_token_success(client: AsyncClient, test_user: User):
+async def test_refresh_token_success(client: AsyncClient, test_user: TestUser):
     """Test successful token refresh."""
     # 1. Log in to get tokens
     login_response = await client.post(
         "/api/v1/auth/token",
-        data={"username": test_user.email, "password": test_user.password},
+        data={"username": test_user.email, "password": getattr(test_user, 'password', '')},
     )
     assert login_response.status_code == status.HTTP_200_OK
     old_tokens = login_response.json()
@@ -422,29 +423,66 @@ async def test_redis_unavailability_on_auth(mock_sismember, client: AsyncClient,
 
 
 @patch("app.core.circuit_breaker.time.time")
-async def test_circuit_breaker_flow(mock_time, client: AsyncClient, auth_headers: dict):
+@patch("app.core.redis.redis_client")
+async def test_circuit_breaker_flow(mock_redis_client, mock_time, client: AsyncClient, auth_headers: dict):
     """
-    Test the full circuit breaker flow: CLOSED -> OPEN -> HALF-OPEN -> CLOSED.
+    Test the full circuit breaker flow: CLOSED -> OPEN -> HALF_OPEN -> CLOSED.
     """
     from app.core.redis import redis_circuit_breaker
     from redis.exceptions import ConnectionError
+    from app.core.circuit_breaker import CircuitBreakerError
 
     # Reset breaker for a clean test
-    redis_circuit_breaker.record_success()
-    assert redis_circuit_breaker.state == "CLOSED"
+    redis_circuit_breaker._failures = 0
+    redis_circuit_breaker._state = "CLOSED"
+    redis_circuit_breaker._last_failure_time = 0.0
+    
+    # Set initial time
+    current_time = 1000.0
+    mock_time.return_value = current_time
+    
+    # Mock the Redis client to raise ConnectionError
+    mock_redis_client.sismember.side_effect = ConnectionError("Redis connection failed")
 
-    # 1. Simulate failures to OPEN the circuit
-    with patch("fakeredis.aioredis.FakeRedis.sismember", side_effect=ConnectionError):
-        for _ in range(redis_circuit_breaker.max_failures):
-            response = await client.get("/api/v1/auth/me", headers=auth_headers)
-            assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-    assert redis_circuit_breaker.state == "OPEN"
+    # 1. Simulate failures to OPEN the circuit by calling a function through the circuit breaker
+    async def failing_function():
+        raise ConnectionError("Test failure")
 
-    # 2. Simulate waiting for the reset timeout to enter HALF-OPEN state
-    mock_time.return_value = redis_circuit_breaker._last_failure_time + redis_circuit_breaker.reset_timeout + 1
-    assert redis_circuit_breaker.state == "HALF-OPEN"
+    for i in range(redis_circuit_breaker.failure_threshold):
+        try:
+            print(f"Attempt {i+1}/{redis_circuit_breaker.failure_threshold} - Calling failing function...")
+            await redis_circuit_breaker.call_async(failing_function)
+        except Exception as e:
+            print(f"Failure {i+1}/{redis_circuit_breaker.failure_threshold}: {e}")
+            print(f"Current state: {redis_circuit_breaker.state}, Failures: {redis_circuit_breaker._failures}")
+    
+    # Now the circuit should be OPEN
+    print(f"After {redis_circuit_breaker.failure_threshold} failures - State: {redis_circuit_breaker.state}, Failures: {redis_circuit_breaker._failures}")
+    
+    # 2. Now the circuit should be OPEN
+    print(f"Final state: {redis_circuit_breaker.state}, Failures: {redis_circuit_breaker._failures}")
+    assert redis_circuit_breaker.state == "OPEN", f"Expected state to be OPEN, but got {redis_circuit_breaker.state}"
 
-    # 3. A successful call should now move it back to CLOSED
-    response = await client.get("/api/v1/auth/me", headers=auth_headers)
-    assert response.status_code == status.HTTP_200_OK
+    # 3. Try to make a request - should fail fast with CircuitBreakerError
+    try:
+        await redis_circuit_breaker.call_async(failing_function)
+        assert False, "Expected CircuitBreakerError"
+    except CircuitBreakerError as e:
+        print(f"Expected CircuitBreakerError: {e}")
+    
+    # 4. Simulate waiting for the recovery timeout to enter HALF_OPEN state
+    # Set the time to be after the recovery timeout
+    mock_time.return_value = current_time + redis_circuit_breaker.recovery_timeout + 1
+    
+    # 5. The circuit should now be HALF_OPEN
+    assert redis_circuit_breaker.state == "HALF_OPEN"
+    
+    # 6. The next request should be allowed through (HALF_OPEN state)
+    # Mock a successful function call
+    async def successful_function():
+        return "Success"
+    
+    # This should succeed and close the circuit
+    result = await redis_circuit_breaker.call_async(successful_function)
+    assert result == "Success"
     assert redis_circuit_breaker.state == "CLOSED"

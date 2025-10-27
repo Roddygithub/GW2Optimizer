@@ -42,6 +42,9 @@ class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
 
 
 oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl=f"{settings.API_V1_STR}/auth/token")
+oauth2_optional_scheme = OAuth2PasswordBearerWithCookie(
+    tokenUrl=f"{settings.API_V1_STR}/auth/token", auto_error=False
+)
 
 
 def create_access_token(subject: str | Any, expires_delta: timedelta = None) -> str:
@@ -99,15 +102,11 @@ def get_password_hash(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
 
-async def get_current_user(
-    db: AsyncSession = Depends(get_db),
-    token: str = Depends(oauth2_scheme),
-    redis: Redis | None = Depends(get_redis_client),  # Allow None if Redis is disabled
+async def _resolve_user_from_token(
+    token: str,
+    db: AsyncSession,
+    redis: Redis | None,
 ) -> User:
-    """
-    Decode token and get current user.
-    This function is a dependency that can be used to protect endpoints.
-    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -126,13 +125,6 @@ async def get_current_user(
         raise credentials_exception
 
     if redis:
-        if redis_circuit_breaker.state == "OPEN":
-            logger.error("Circuit is open for Redis. Failing fast.")
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Authentication service is temporarily unavailable.",
-            )
-
         try:
             start_time = time.time()
             if await redis.sismember("revoked_jti", token_data.jti):
@@ -143,10 +135,7 @@ async def get_current_user(
         except Exception as e:
             logger.error(f"Redis connection failed during token check: {e}")
             redis_circuit_breaker.record_failure()
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Authentication service is temporarily unavailable.",
-            )
+            raise
 
     user_service = UserService(db)
     user = await user_service.get_by_id(token_data.sub)
@@ -154,6 +143,34 @@ async def get_current_user(
     if user is None:
         raise credentials_exception
     return user
+
+
+async def get_current_user(
+    db: AsyncSession = Depends(get_db),
+    token: str = Depends(oauth2_scheme),
+    redis: Redis | None = Depends(get_redis_client),  # Allow None if Redis is disabled
+) -> User:
+    """Decode token and return the authenticated user."""
+
+    return await _resolve_user_from_token(token, db, redis)
+
+
+async def get_current_user_optional(
+    db: AsyncSession = Depends(get_db),
+    token: str | None = Depends(oauth2_optional_scheme),
+    redis: Redis | None = Depends(get_redis_client),
+) -> User | None:
+    """Return the current user if present; otherwise None without raising."""
+
+    if not token:
+        return None
+
+    try:
+        return await _resolve_user_from_token(token, db, redis)
+    except HTTPException as exc:
+        if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+            return None
+        raise
 
 
 async def get_current_active_user(
