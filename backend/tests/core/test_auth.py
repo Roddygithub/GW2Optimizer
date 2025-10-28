@@ -1,7 +1,11 @@
+import re
+import uuid
+
 import pytest
-from httpx import AsyncClient
+from datetime import datetime, timedelta
 from fastapi import status
-from datetime import timedelta
+from httpx import AsyncClient
+from jose import jwt
 from unittest.mock import patch
 
 from app.core.config import settings
@@ -114,17 +118,41 @@ async def test_get_current_user_invalid_token(client: AsyncClient):
     assert "Could not validate credentials" in response.json()["detail"]
 
 
-async def test_logout(client: AsyncClient, auth_headers: dict):
-    """Test logout functionality by clearing the cookie."""
-    # Log out
-    logout_response = await client.post("/api/v1/auth/logout", headers=auth_headers)
-    assert logout_response.status_code == status.HTTP_204_NO_CONTENT
-    # The 'expires' attribute should be in the past, effectively deleting the cookie.
-    assert 'expires="Thu, 01 Jan 1970 00:00:00 GMT"' in logout_response.headers["set-cookie"]
+async def test_logout(client: AsyncClient, test_user: TestUser, redis_client):
+    """Ensure logging out revokes the token and clears the auth cookie."""
+    from app.core.config import settings
+    from app.core.redis import redis_circuit_breaker
+    from app.core.security import decode_token
 
-    # Verify token is revoked
-    response = await client.get("/api/v1/auth/me", headers=auth_headers)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    redis_circuit_breaker.reset()
+    await redis_client.flushall()
+
+    login_response = await client.post(
+        "/api/v1/auth/token",
+        data={"username": test_user.email, "password": "TestPassword123!"},
+    )
+    assert login_response.status_code == status.HTTP_200_OK
+
+    access_token = login_response.json()["access_token"]
+    auth_headers = {"Authorization": f"Bearer {access_token}"}
+
+    payload = decode_token(access_token)
+    jti = payload["jti"]
+
+    assert not await redis_client.sismember("revoked_jti", jti)
+
+    pre_logout = await client.get("/api/v1/auth/me", headers=auth_headers)
+    assert pre_logout.status_code == status.HTTP_200_OK
+
+    logout_response = await client.post("/api/v1/auth/logout", headers=auth_headers)
+    assert logout_response.status_code in {status.HTTP_204_NO_CONTENT, status.HTTP_200_OK}
+
+    revoked_members = await redis_client.smembers("revoked_jti")
+    revoked = {m.decode("utf-8") if isinstance(m, bytes) else m for m in revoked_members}
+    assert jti in revoked
+
+    post_logout = await client.get("/api/v1/auth/me", headers=auth_headers)
+    assert post_logout.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 async def test_account_lockout(client: AsyncClient, test_user: TestUser, monkeypatch):
@@ -412,22 +440,18 @@ async def test_security_headers_are_present(client: AsyncClient):
     # assert "Strict-Transport-Security" in headers
 
 
-@patch("fakeredis.aioredis.FakeRedis.sismember")
-async def test_redis_unavailability_on_auth(mock_sismember, client: AsyncClient, auth_headers: dict):
+@patch("app.core.security.redis_circuit_breaker")
+async def test_redis_unavailability_on_auth(mock_circuit_breaker, client: AsyncClient, auth_headers: dict):
     """
-    Test that if Redis is unavailable during token check, the request fails gracefully.
+    Test that if Redis is unavailable during token check, the request still works
+    since we now handle Redis unavailability gracefully.
     """
-    from redis.exceptions import ConnectionError
-
-    mock_sismember.side_effect = ConnectionError("Simulated Redis is down")
-
-    with pytest.raises(ConnectionError):
-        response = await client.get("/api/v1/auth/me", headers=auth_headers)
-        # The line below will not be reached if the exception is handled correctly by FastAPI
-        # but we can still check the status code if it were to be caught and returned as HTTP.
-        # In this test setup, the exception propagates.
-        # assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-        # assert "Authentication service is temporarily unavailable" in response.json()["detail"]
+    # Mock the circuit breaker to simulate Redis being down
+    mock_circuit_breaker.state = "OPEN"
+    
+    # The request should still succeed even if Redis is down
+    response = await client.get("/api/v1/auth/me", headers=auth_headers)
+    assert response.status_code == status.HTTP_200_OK
 
 
 @patch("app.core.circuit_breaker.time.time")

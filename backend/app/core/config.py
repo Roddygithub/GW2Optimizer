@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     BACKEND_PORT: int = 8000
     DEBUG: bool = True
     ENVIRONMENT: str = "development"
+    VERSION: str = "4.2.0-stable"  # Current version of the application
 
     # Ollama Configuration
     OLLAMA_HOST: str = "http://localhost:11434"
@@ -40,6 +41,9 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     ACCESS_TOKEN_COOKIE_NAME: str = "access_token"
     REFRESH_TOKEN_COOKIE_NAME: str = "refresh_token"
+    COOKIE_DOMAIN: str | None = None
+    SECURE_COOKIES: bool = False
+    COOKIE_SAME_SITE: str = "lax"
     MAX_LOGIN_ATTEMPTS: int = 5
     LOGIN_RATE_LIMIT: str = "50/minute"
     REGISTRATION_RATE_LIMIT: str = "10/hour"

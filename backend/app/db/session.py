@@ -48,10 +48,31 @@ def _build_database_url() -> str:
 
 DATABASE_URL = _build_database_url()
 
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=os.getenv("SQL_ECHO", "0") == "1",
-    future=True,
+# Configure engine based on database type
+if DATABASE_URL.startswith('sqlite'):
+    # SQLite configuration
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=settings.DATABASE_ECHO,
+        connect_args={"check_same_thread": False},
+    )
+else:
+    # PostgreSQL configuration
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=settings.DATABASE_ECHO,
+        pool_pre_ping=True,
+        pool_size=getattr(settings, 'POOL_SIZE', 5),  # Default to 5 if not set
+        max_overflow=getattr(settings, 'MAX_OVERFLOW', 10),  # Default to 10 if not set
+    )
+
+# Create async session factory
+async_session = async_sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine,
+    expire_on_commit=False,
+    class_=AsyncSession,
 )
 
 AsyncSessionLocal = async_sessionmaker(

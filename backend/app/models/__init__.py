@@ -6,6 +6,15 @@ from app.models.chat import ChatMessage, ChatRequest, ChatResponse
 from app.db.models import UserDB as User, LoginHistory
 from app.models.user import UserCreate, UserLogin, UserOut, UserUpdate
 from app.models.token import Token, TokenData
+from app.models.gw2.entities import (
+    Profession,
+    Specialization,
+    Trait,
+    Skill,
+    Weapon,
+    Item,
+    Build as GW2Build,
+)
 
 __all__ = [
     # Build models
@@ -31,6 +40,14 @@ __all__ = [
     # Auth models
     "Token",
     "TokenData",
+    # GW2 domain models
+    "Profession",
+    "Specialization",
+    "Trait",
+    "Skill",
+    "Weapon",
+    "Item",
+    "GW2Build",
     "TeamComposition",
     "TeamResponse",
     "ChatMessage",

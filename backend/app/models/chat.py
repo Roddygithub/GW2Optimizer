@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Dict, Any
 from enum import Enum
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 
 
@@ -21,8 +21,9 @@ class ChatMessage(BaseModel):
     content: str = Field(..., description="The content of the message")
     timestamp: Optional[str] = Field(None, description="ISO 8601 timestamp of the message")
 
-    @validator("content")
-    def content_not_empty(cls, v):
+    @field_validator("content")
+    @classmethod
+    def content_not_empty(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError("Message content cannot be empty")
         return v.strip()
@@ -38,8 +39,9 @@ class ChatRequest(BaseModel):
     context: Optional[Dict[str, Any]] = Field(None, description="Additional context for the conversation")
     version: str = Field(..., description="Client application version")
 
-    @validator("conversation_history")
-    def validate_history(cls, v):
+    @field_validator("conversation_history")
+    @classmethod
+    def validate_history(cls, v: List[Dict[str, str]]) -> List[Dict[str, str]]:
         for msg in v:
             if "role" not in msg or "content" not in msg:
                 raise ValueError("Each message must have 'role' and 'content' fields")
@@ -64,8 +66,9 @@ class BuildSuggestion(BaseModel):
         None, description="GW2Skills URL for the build (e.g., https://gw2skills.net/editor/abc123)"
     )
 
-    @validator("gw2skills_url")
-    def validate_gw2skills_url(cls, v):
+    @field_validator("gw2skills_url")
+    @classmethod
+    def validate_gw2skills_url(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
 
@@ -75,7 +78,6 @@ class BuildSuggestion(BaseModel):
         pattern = r"^https?://(?:en\.)?gw2skills\.net/editor/[\w-]+$"
         if not re.match(pattern, v):
             raise ValueError("Invalid GW2Skills URL format. Expected format: https://gw2skills.net/editor/...")
-
         return v
 
 

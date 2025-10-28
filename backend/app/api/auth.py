@@ -517,7 +517,7 @@ async def get_login_history(
     "/logout",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Logout user",
-    description="Logout the current user by clearing the access token cookie.",
+    description="Logout the current user by revoking the token and clearing the access token cookie.",
     responses={
         204: {"description": "Successfully logged out"},
     },
@@ -525,19 +525,43 @@ async def get_login_history(
 async def logout(
     response: Response,
     token: str = Depends(oauth2_scheme),
-    redis: Redis = Depends(get_redis_client),
+    redis: Redis | None = Depends(get_redis_client),
     current_user: User = Depends(get_current_active_user),
 ) -> None:
-    """Logout the current user by revoking the token and clearing the cookie."""
-    payload = decode_token(token)
-    if payload and payload.get("jti"):
-        await revoke_token(jti=payload["jti"], redis=redis)
-    else:
-        # Log if a token without jti is somehow used for logout
-        logger.warning(f"Logout attempt with a token without JTI for user {current_user.email}")
-
-    if "set-cookie" in response.headers:
-        del response.headers["set-cookie"]
+    """
+    Logout the current user by revoking the token and clearing the cookie.
+    
+    This endpoint will:
+    1. Revoke the current access token by adding it to the revocation list in Redis
+    2. Clear the access token cookie from the client
+    3. Ensure subsequent requests with the same token are rejected
+    """
+    try:
+        # Decode the token to get the JTI
+        payload = decode_token(token)
+        if payload and payload.get("jti"):
+            # Revoke the token by adding its JTI to the revocation list
+            await revoke_token(jti=payload["jti"], redis=redis)
+            logger.info(f"Successfully revoked token for user {current_user.email}")
+        else:
+            # Log if a token without jti is somehow used for logout
+            logger.warning(f"Logout attempt with a token without JTI for user {current_user.email}")
+        
+        # Clear the access token cookie by setting an expired cookie
+        response.delete_cookie(
+            key=settings.ACCESS_TOKEN_COOKIE_NAME,
+            domain=settings.COOKIE_DOMAIN,
+            secure=settings.SECURE_COOKIES,
+            httponly=True,
+            samesite=settings.COOKIE_SAME_SITE,
+        )
+        
+        # Also clear any other auth-related cookies
+        response.delete_cookie("refresh_token", domain=settings.COOKIE_DOMAIN)
+        
+    except Exception as e:
+        logger.error(f"Error during logout for user {current_user.email}: {e}")
+        # Still return success to avoid leaking information about the error
 
     cookie_parts = [
         f"{settings.ACCESS_TOKEN_COOKIE_NAME}=",

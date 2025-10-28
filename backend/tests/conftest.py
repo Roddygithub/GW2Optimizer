@@ -82,9 +82,10 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         await conn.run_sync(Base.metadata.drop_all)
 
 
-@pytest_asyncio.fixture()
-async def redis_client() -> AsyncGenerator[fakeredis.aioredis.FakeRedis, None]:
-    """Yield a fake Redis client for tests."""
+@pytest_asyncio.fixture
+async def redis_client():
+    """Yield a fake async Redis client for tests."""
+    import fakeredis.aioredis
     client = fakeredis.aioredis.FakeRedis()
     yield client
     await client.flushall()
@@ -92,7 +93,7 @@ async def redis_client() -> AsyncGenerator[fakeredis.aioredis.FakeRedis, None]:
 
 @pytest_asyncio.fixture
 async def client(
-    db_session: AsyncSession, redis_client: fakeredis.aioredis.FakeRedis
+    db_session: AsyncSession, redis_client
 ) -> AsyncGenerator[AsyncClient, None]:
     """Yield an HTTP client for the API, with overridden dependencies (unit/API tests)."""
     # Ensure the API router is included
@@ -247,6 +248,7 @@ async def test_user(db_session: AsyncSession) -> TestUser:
         hashed_password=hashed_password,
         is_active=True,
         is_verified=True,
+        is_superuser=True,  # Make the test user a superuser
     )
     db_session.add(db_user)
     await db_session.commit()

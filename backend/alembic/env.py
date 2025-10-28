@@ -17,8 +17,20 @@ from app.core.config import settings
 # access to the values within the .ini file in use.
 config = context.config
 
-# Override the SQLAlchemy URL from settings
-config.set_main_option("sqlalchemy.url", str(settings.DATABASE_URL))
+# Override the SQLAlchemy URL from settings, ensuring a sync driver for Alembic
+def _sync_database_url(url: str) -> str:
+    """Alembic requires synchronous drivers; swap async ones when necessary."""
+
+    if url.startswith("sqlite+aiosqlite"):
+        return url.replace("sqlite+aiosqlite", "sqlite", 1)
+    if url.startswith("postgresql+asyncpg"):
+        return url.replace("postgresql+asyncpg", "postgresql+psycopg", 1)
+    return url
+
+
+SYNC_DATABASE_URL = _sync_database_url(str(settings.DATABASE_URL))
+
+config.set_main_option("sqlalchemy.url", SYNC_DATABASE_URL)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -30,6 +42,9 @@ from app.db.base_class import Base
 
 # Import all models to ensure they are registered with SQLAlchemy
 from app.models.user import UserDB
+from app.models.build import BuildDB
+from app.models.team import TeamCompositionDB, TeamSlotDB
+from app.models.gw2 import entities as gw2_entities  # noqa: F401
 
 # Set the metadata for Alembic to use
 target_metadata = Base.metadata
@@ -71,7 +86,7 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
     """
     # Use the URL from settings
-    url = str(settings.DATABASE_URL)
+    url = SYNC_DATABASE_URL
 
     # Configure the engine
     connectable = engine_from_config(

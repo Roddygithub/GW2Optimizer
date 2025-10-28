@@ -1,0 +1,28 @@
+{
+  "id": "bd09cb2c-f0c5-409b-8a7f-6d1a1087ce70",
+  "name": "Mistral Test Comp",
+  "size": 10,
+  "game_mode": "raid",
+  "builds": [
+    {
+      "profession": "Guardian",
+      "role": "Support",
+      "count": 2
+    }
+  ],
+  "strategy": "Test strategy",
+  "strengths": [
+    "str1"
+  ],
+  "weaknesses": [
+    "weak1"
+  ],
+  "synergy_score": 9.0,
+  "metadata": {
+    "source": "mistral_ai",
+    "model": "mistral-large-latest",
+    "request_id": "b64d155e-fc95-4bee-8b29-079077623542",
+    "preferences": null
+  },
+  "timestamp": "2025-10-28T00:29:03.459996"
+}

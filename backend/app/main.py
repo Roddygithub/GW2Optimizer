@@ -45,6 +45,7 @@ from app.api import (
     builds,
     chat,
     export,
+    gw2_sync,
     health,
     learning,
     meta,
@@ -141,14 +142,24 @@ def create_application() -> FastAPI:
     # Add security middleware
     add_security_middleware(app, settings)
 
+    # Add health check endpoint
+    add_health_check(app)
+
+    # Add shutdown event for scheduler
+    @app.on_event("shutdown")
+    async def shutdown_event():
+        from app.tasks.scheduler import shutdown_scheduler
+        shutdown_scheduler()
+
     # Add exception handlers
     add_exception_handlers(app)
 
-    # Include API routers
+    # Include all API routers
     include_routers(app)
 
-    # Add health check endpoint
-    add_health_check(app)
+    # Initialize the scheduler
+    from app.tasks.scheduler import start_scheduler
+    start_scheduler()
 
     # Initialize Sentry (production only)
     if SENTRY_AVAILABLE and not settings.TESTING and hasattr(settings, "SENTRY_DSN") and settings.SENTRY_DSN:
@@ -228,6 +239,7 @@ def include_routers(app: FastAPI) -> None:
     api_router.include_router(teams.router, tags=["Teams"])
     api_router.include_router(chat.router, prefix="/chat", tags=["Chat"])
     api_router.include_router(export.router, prefix="/export", tags=["Export"])
+    api_router.include_router(gw2_sync.router, prefix="/gw2-sync", tags=["GW2 Data Sync"])
     api_router.include_router(learning.router, prefix="/learning", tags=["Learning"])
     api_router.include_router(meta.router, prefix="/meta", tags=["Meta"])
     api_router.include_router(scraper.router, prefix="/scraper", tags=["Scraper"])

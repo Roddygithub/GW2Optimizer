@@ -13,6 +13,9 @@ from pydantic import ValidationError
 
 from app.core.config import settings
 from app.db.session import get_db
+
+# JWT Algorithm
+ALGORITHM = "HS256"
 from app.db.models import UserDB as User
 from app.models.token import TokenData
 from app.core.redis import get_redis_client, redis_circuit_breaker
@@ -111,35 +114,95 @@ async def _resolve_user_from_token(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
+    print(f"[DEBUG] _resolve_user_from_token - Starting token validation")
+    
     try:
+        print(f"[DEBUG] _resolve_user_from_token - Decoding token")
         payload = decode_token(token)
+        print(f"[DEBUG] _resolve_user_from_token - Decoded payload: {payload}")
+        
         if payload is None:
+            print("[DEBUG] _resolve_user_from_token - Payload is None")
             raise credentials_exception
+            
         token_data = TokenData(**payload)
+        print(f"[DEBUG] _resolve_user_from_token - Token data: {token_data}")
+        
         if token_data.jti is None:
+            print("[DEBUG] _resolve_user_from_token - JTI is None")
             raise credentials_exception
+            
     except (JWTError, ValidationError) as e:
         logger.warning(f"JWT decoding/validation failed: {e}")
-        raise credentials_exception
+        print(f"[DEBUG] _resolve_user_from_token - JWT validation error: {e}")
+        raise credentials_exception from e
 
-    if redis:
-        try:
-            start_time = time.time()
-            if await redis.sismember("revoked_jti", token_data.jti):
-                raise credentials_exception
-            duration = time.time() - start_time
-            logger.debug(f"Redis sismember check took {duration:.4f} seconds.")
-            redis_circuit_breaker.record_success()
-        except Exception as e:
-            logger.error(f"Redis connection failed during token check: {e}")
-            redis_circuit_breaker.record_failure()
-            raise
+    token_revoked_exc = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Token revoked or expired",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
+    if redis is not None:
+        print(f"[DEBUG] _resolve_user_from_token - Redis client is available")
+        print(f"[DEBUG] _resolve_user_from_token - Redis client type: {type(redis).__name__}")
+        print(f"[DEBUG] _resolve_user_from_token - Circuit breaker state: {redis_circuit_breaker.state}")
+
+        if redis_circuit_breaker.state != "OPEN":
+            try:
+                print(f"[DEBUG] _resolve_user_from_token - Checking Redis for revoked token with JTI: {token_data.jti}")
+
+                revoked_jtis = await redis.smembers("revoked_jti")
+                print(f"[DEBUG] _resolve_user_from_token - Raw revoked JTIs from Redis: {revoked_jtis}")
+
+                revoked_jtis_set = set()
+                for j in revoked_jtis:
+                    if isinstance(j, bytes):
+                        try:
+                            j = j.decode("utf-8")
+                        except UnicodeDecodeError:
+                            print(f"[DEBUG] _resolve_user_from_token - Error decoding JTI: {j}")
+                            continue
+                    revoked_jtis_set.add(j)
+
+                print(f"[DEBUG] _resolve_user_from_token - Decoded revoked JTIs: {revoked_jtis_set}")
+                print(f"[DEBUG] _resolve_user_from_token - Token JTI to check: {token_data.jti} (type: {type(token_data.jti)})")
+
+                if token_data.jti in revoked_jtis_set:
+                    print("[DEBUG] _resolve_user_from_token - Token is revoked, raising explicit exception")
+                    raise token_revoked_exc
+
+                print("[DEBUG] _resolve_user_from_token - Token is not revoked, continuing...")
+                redis_circuit_breaker.record_success()
+
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.error(f"Redis connection failed during token check: {e}", exc_info=True)
+                print(f"[DEBUG] _resolve_user_from_token - Redis error: {e}")
+                import traceback
+                print(f"[DEBUG] _resolve_user_from_token - Traceback: {traceback.format_exc()}")
+                redis_circuit_breaker.record_failure()
+
+                if redis_circuit_breaker.state == "OPEN":
+                    logger.warning("Circuit breaker is OPEN, continuing without token revocation check")
+                else:
+                    logger.warning("Unexpected Redis error, continuing without token revocation check")
+        else:
+            print("[DEBUG] _resolve_user_from_token - Circuit breaker is OPEN, skipping Redis check")
+    else:
+        print("[DEBUG] _resolve_user_from_token - Redis client is None, skipping revocation check")
+
+    print(f"[DEBUG] _resolve_user_from_token - Getting user from database with ID: {token_data.sub}")
+    
     user_service = UserService(db)
     user = await user_service.get_by_id(token_data.sub)
-
+    
     if user is None:
+        print("[DEBUG] _resolve_user_from_token - User not found in database")
         raise credentials_exception
+        
+    print(f"[DEBUG] _resolve_user_from_token - Found user: {user.id}, is_superuser: {getattr(user, 'is_superuser', 'N/A')}")
     return user
 
 
@@ -149,8 +212,16 @@ async def get_current_user(
     redis: Redis | None = Depends(get_redis_client),  # Allow None if Redis is disabled
 ) -> User:
     """Decode token and return the authenticated user."""
-
-    return await _resolve_user_from_token(token, db, redis)
+    # Debug: Print the received token
+    print(f"[DEBUG] get_current_user - Received token: {token}")
+    
+    try:
+        user = await _resolve_user_from_token(token, db, redis)
+        print(f"[DEBUG] get_current_user - Authenticated user: {user.id}, is_superuser: {getattr(user, 'is_superuser', 'N/A')}")
+        return user
+    except Exception as e:
+        print(f"[DEBUG] get_current_user - Error: {str(e)}")
+        raise
 
 
 async def get_current_user_optional(
@@ -187,26 +258,65 @@ async def revoke_token(jti: str, redis: Redis | None):
     Adds a token's JTI to the revocation list in Redis with an expiration
     time matching the access token's lifetime.
     """
+    print(f"[DEBUG] revoke_token - Starting revocation for JTI: {jti}")
+    
     if not redis:
-        logger.warning("Redis is not available. Token revocation is not being performed.")
+        msg = "Redis is not available. Token revocation is not being performed."
+        logger.warning(msg)
+        print(f"[DEBUG] {msg}")
         return
 
     if redis_circuit_breaker.state == "OPEN":
-        logger.error(f"Circuit is open. Skipping token revocation for JTI {jti}.")
+        msg = f"Circuit is open. Skipping token revocation for JTI {jti}."
+        logger.error(msg)
+        print(f"[DEBUG] {msg}")
         return
 
     try:
+        print(f"[DEBUG] revoke_token - Adding JTI {jti} to revoked_jti set")
+        
+        # Check current state before making changes
+        is_already_revoked = await redis.sismember("revoked_jti", jti)
+        print(f"[DEBUG] revoke_token - Is JTI {jti} already revoked? {is_already_revoked}")
+        
+        # Get current TTL for debugging
+        try:
+            ttl = await redis.ttl("revoked_jti")
+            print(f"[DEBUG] revoke_token - Current TTL for revoked_jti: {ttl} seconds")
+        except Exception as e:
+            print(f"[DEBUG] revoke_token - Could not get TTL for revoked_jti: {e}")
+        
         start_time = time.time()
         async with redis.pipeline(transaction=True) as pipe:
+            # Add the JTI to the revoked set
             await pipe.sadd("revoked_jti", jti)
             # The expiration should be slightly longer than the token's lifetime to be safe.
-            await pipe.expire("revoked_jti", settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60 + 5)
-            await pipe.execute()
+            expire_seconds = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60 + 5
+            print(f"[DEBUG] revoke_token - Setting TTL for revoked_jti to {expire_seconds} seconds")
+            await pipe.expire("revoked_jti", expire_seconds)
+            
+            # Execute the pipeline
+            results = await pipe.execute()
+            print(f"[DEBUG] revoke_token - Pipeline results: {results}")
+            
         duration = time.time() - start_time
         logger.info(f"Token revocation for JTI {jti} took {duration:.4f} seconds.")
-        # In a real metrics system, this would be:
-        # metrics.histogram('redis.operation.duration', duration, tags=['operation:revoke'])
+        print(f"[DEBUG] revoke_token - Successfully revoked token JTI {jti}")
+        
+        # Verify the JTI was added
+        is_now_revoked = await redis.sismember("revoked_jti", jti)
+        print(f"[DEBUG] revoke_token - Verification: Is JTI {jti} now in revoked set? {is_now_revoked}")
+        
+        # Get all revoked JTIs for debugging
+        revoked_jtis = await redis.smembers("revoked_jti")
+        print(f"[DEBUG] revoke_token - Current revoked JTIs: {revoked_jtis}")
+        
         redis_circuit_breaker.record_success()
+        return True
+        
     except Exception as e:
-        logger.error(f"Failed to revoke token JTI {jti} in Redis: {e}", exc_info=True)
+        error_msg = f"Failed to revoke token JTI {jti} in Redis: {e}"
+        logger.error(error_msg, exc_info=True)
+        print(f"[DEBUG] {error_msg}")
         redis_circuit_breaker.record_failure()
+        return False
