@@ -9,6 +9,7 @@ from jose import jwt, JWTError
 import bcrypt
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
+from redis.exceptions import RedisError
 from pydantic import ValidationError
 
 from app.core.config import settings
@@ -105,11 +106,14 @@ async def _resolve_user_from_token(
     db: AsyncSession,
     redis: Redis | None,
 ) -> User:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    def _credentials_exc() -> HTTPException:
+        return HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    credentials_exception = _credentials_exc()
 
     try:
         payload = decode_token(token)
@@ -122,18 +126,45 @@ async def _resolve_user_from_token(
         logger.warning(f"JWT decoding/validation failed: {e}")
         raise credentials_exception
 
+    def _token_revoked_exc() -> HTTPException:
+        return HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token revoked",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    def _fail_closed_exc() -> HTTPException:
+        return HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unable to verify token revocation",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     if redis:
+        if redis_circuit_breaker.state == "OPEN":
+            logger.warning("Redis circuit breaker OPEN during token check; failing closed")
+            redis_circuit_breaker.record_failure()
+            raise _fail_closed_exc()
+
         try:
             start_time = time.time()
             if await redis.sismember("revoked_jti", token_data.jti):
-                raise credentials_exception
+                logger.info("Access token rejected: JTI present in revoked set")
+                raise _token_revoked_exc()
+
             duration = time.time() - start_time
             logger.debug(f"Redis sismember check took {duration:.4f} seconds.")
             redis_circuit_breaker.record_success()
-        except Exception as e:
-            logger.error(f"Redis connection failed during token check: {e}")
-            redis_circuit_breaker.record_failure()
+        except HTTPException:
             raise
+        except RedisError as err:
+            logger.error("Redis error while verifying token revocation: %s", err)
+            redis_circuit_breaker.record_failure()
+            raise _fail_closed_exc() from err
+        except Exception as err:
+            logger.error("Unexpected error while verifying token revocation", exc_info=True)
+            redis_circuit_breaker.record_failure()
+            raise _fail_closed_exc() from err
 
     user_service = UserService(db)
     user = await user_service.get_by_id(token_data.sub)

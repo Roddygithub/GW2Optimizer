@@ -21,6 +21,14 @@
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src"],
-  "exclude": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"]
+  "include": [
+    "src",
+    "tests/e2e/**/*.ts",
+    "playwright.config.ts",
+    "src/types/global.d.ts"
+  ],
+  "exclude": [
+    "src/tests/**/*.ts",
+    "tests/unit/**"
+  ]
 }

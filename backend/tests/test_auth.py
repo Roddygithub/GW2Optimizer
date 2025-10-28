@@ -410,17 +410,12 @@ async def test_security_headers_are_present(client: AsyncClient):
 
 @patch("fakeredis.aioredis.FakeRedis.sismember")
 async def test_redis_unavailability_on_auth(mock_sismember, client: AsyncClient, auth_headers: dict):
-    """
-    Test that if Redis is unavailable during token check, the request fails gracefully.
-    """
+    """Redis failures while checking token revocation must fail closed with 401."""
     from redis.exceptions import ConnectionError
 
     mock_sismember.side_effect = ConnectionError("Simulated Redis is down")
 
-    with pytest.raises(ConnectionError):
-        response = await client.get("/api/v1/auth/me", headers=auth_headers)
-        # The line below will not be reached if the exception is handled correctly by FastAPI
-        # but we can still check the status code if it were to be caught and returned as HTTP.
-        # In this test setup, the exception propagates.
-        # assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-        # assert "Authentication service is temporarily unavailable" in response.json()["detail"]
+    response = await client.get("/api/v1/auth/me", headers=auth_headers)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    assert response.json()["detail"] == "Unable to verify token revocation"
+    assert response.headers.get("www-authenticate") == "Bearer"

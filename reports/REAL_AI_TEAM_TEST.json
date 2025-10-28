@@ -1,0 +1,120 @@
+{
+  "timestamp": "2025-10-28T12:40:28.842171",
+  "test_type": "Real AI Team Optimization",
+  "duration_seconds": 35.874654,
+  "configuration": {
+    "team_size": 50,
+    "game_mode": "zerg",
+    "focus": "balanced"
+  },
+  "wvw_data": {
+    "status": "unavailable",
+    "matches_count": 0,
+    "objectives_count": 0
+  },
+  "composition": {
+    "name": "Standard Zerg Composition",
+    "size": 50,
+    "game_mode": "zerg",
+    "builds": [
+      {
+        "profession": "Guardian",
+        "role": "Support",
+        "count": 10,
+        "priority": "High",
+        "description": "Firebrand for stability and healing"
+      },
+      {
+        "profession": "Warrior",
+        "role": "Tank",
+        "count": 5,
+        "priority": "High",
+        "description": "Spellbreaker for frontline"
+      },
+      {
+        "profession": "Necromancer",
+        "role": "DPS",
+        "count": 15,
+        "priority": "High",
+        "description": "Scourge for AoE damage"
+      },
+      {
+        "profession": "Mesmer",
+        "role": "Support",
+        "count": 7,
+        "priority": "Medium",
+        "description": "Chronomancer for boons and portals"
+      },
+      {
+        "profession": "Revenant",
+        "role": "DPS",
+        "count": 7,
+        "priority": "Medium",
+        "description": "Herald for damage and boons"
+      },
+      {
+        "profession": "Engineer",
+        "role": "DPS",
+        "count": 5,
+        "priority": "Low",
+        "description": "Scrapper for utility"
+      }
+    ],
+    "strategy": "Standard balanced composition for WvW zerg fights",
+    "strengths": [
+      "Strong boon coverage",
+      "Good AoE damage",
+      "Excellent stability",
+      "Balanced offense and defense"
+    ],
+    "weaknesses": [
+      "Vulnerable to heavy focus fire",
+      "Requires good coordination",
+      "Limited mobility without portals"
+    ],
+    "timestamp": "2025-10-28T12:41:04.716284",
+    "source": "fallback",
+    "model": "rule_based"
+  },
+  "validation": {
+    "valid": true,
+    "warnings": [],
+    "errors": [],
+    "checks": {
+      "total_size": {
+        "expected": 50,
+        "actual": 49,
+        "valid": true
+      },
+      "role_distribution": {
+        "Support": 17,
+        "Tank": 5,
+        "DPS": 27
+      },
+      "support_ratio": {
+        "count": 17,
+        "ratio": 0.3469387755102041,
+        "valid": true
+      },
+      "tank_ratio": {
+        "count": 5,
+        "ratio": 0.10204081632653061,
+        "valid": true
+      },
+      "profession_distribution": {
+        "Guardian": 10,
+        "Warrior": 5,
+        "Necromancer": 15,
+        "Mesmer": 7,
+        "Revenant": 7,
+        "Engineer": 5
+      }
+    }
+  },
+  "metrics": {
+    "total_duration": 35.874654,
+    "gw2_api_success": false,
+    "mistral_source": "fallback",
+    "validation_valid": true
+  }
+}
