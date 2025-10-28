@@ -1,12 +1,10 @@
 import process from 'node:process';
-import { test as playwright } from '@playwright/test';
-
-const { defineConfig, devices } = playwright;
+import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:5173';
 const isCI = Boolean(process.env.CI);
 
-const config = defineConfig({
+export default defineConfig({
   testDir: './tests/e2e',
   timeout: 30_000,
   expect: {
@@ -32,11 +30,9 @@ const config = defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run preview -- --host',
+    command: 'npm run build && npm run preview -- --host --port 5173',
     url: baseURL,
     reuseExistingServer: !isCI,
     timeout: 120_000,
   },
 });
-
-export default config;
