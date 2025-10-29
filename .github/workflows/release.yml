@@ -49,20 +49,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          echo "## 🎉 What's New" > release_notes.md
-          echo "" >> release_notes.md
-          
-          # Extract changes from CHANGELOG.md for this version
-          if [ -f "CHANGELOG.md" ]; then
-            sed -n "/## \[${{ steps.version.outputs.version }}\]/,/## \[/p" CHANGELOG.md | head -n -1 >> release_notes.md
-          fi
-          
-          # Add commit history
-          echo "" >> release_notes.md
-          echo "## 📝 Commits" >> release_notes.md
-          git log --pretty=format:"- %s (%h)" $(git describe --tags --abbrev=0 HEAD^)..HEAD >> release_notes.md
-          
-          cat release_notes.md
+          version="${{ steps.version.outputs.version }}"
+          output="release_notes.md"
+          {
+            printf '## 🎉 What\'s New\n\n'
+            if [ -f "CHANGELOG.md" ]; then
+              sed -n "/## \[${version}\]/,/## \[/p" CHANGELOG.md | head -n -1
+              printf '\n'
+            fi
+            printf '## 📝 Commits\n\n'
+            prev_tag="$(git describe --tags --abbrev=0 HEAD^)"
+            git log --pretty=format:"- %s (%h)" "${prev_tag}"..HEAD
+            printf '\n'
+          } > "${output}"
+
+          cat "${output}"
 
       - name: Build distribution
         shell: bash
