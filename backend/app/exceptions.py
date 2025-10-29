@@ -72,6 +72,7 @@ def add_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=exc.status_code,
             content={"error_code": "HTTP_EXCEPTION", "detail": exc.detail, "correlation_id": correlation_id},
+            headers=exc.headers or {},
         )
 
     @app.exception_handler(BusinessException)

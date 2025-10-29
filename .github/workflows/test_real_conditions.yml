@@ -157,8 +157,8 @@ jobs:
         if: always()
         run: |
           if [ -f backend/backend.pid ]; then
-            kill $(cat backend/backend.pid) 2>/dev/null || true
+            kill "$(cat backend/backend.pid)" 2>/dev/null || true
           fi
           if [ -f frontend/frontend.pid ]; then
-            kill $(cat frontend/frontend.pid) 2>/dev/null || true
+            kill "$(cat frontend/frontend.pid)" 2>/dev/null || true
           fi

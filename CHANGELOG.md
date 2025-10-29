@@ -5,6 +5,31 @@ All notable changes to GW2Optimizer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.2.0] - 2025-10-28 - Auth & Testing Improvements
+
+### 🔒 Fixed
+- **Auth**: Implémentation du mode fail-closed avec 401 + WWW-Authenticate pour les jetons invalides/révoqués
+- **Tests**: Gestion des erreurs Redis dans les scénarios de tests d'authentification
+
+### 🚀 CI/CD
+- **Workflows**: Ajout de `workflows-lint` comme dépendance pour tous les jobs
+- **Frontend**: Job `frontend-unit` avec rapports de couverture (HTML/LCOV/JSON)
+- **E2E**: Job `e2e` avec rapports Playwright (HTML + JSON)
+- **Artifacts**: Téléchargement des rapports de couverture et de tests E2E
+
+### 🧪 Tests
+- **E2E**: Intégration de Playwright avec specs résilientes (skips contrôlés)
+- **Couverture**: Configuration Vitest avec seuils alignés (L49/S49/F61/B70%)
+- **Exclusions**: Filtrage des fichiers non pertinents (ex: .d.ts, mocks, fixtures)
+
+### 📚 Documentation
+- **README**: Ajout des sections Auth, Tests Frontend et E2E
+- **CHANGELOG**: Mise à jour complète des notes de version
+
+### 🔄 Dependencies
+- **Frontend**: Mise à jour des dépendances de développement
+- **CI**: Configuration des workflows GitHub Actions
+
 ---
 
 ## [3.0.0] - 2025-10-23 - Production Ready 🚀

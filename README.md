@@ -119,7 +119,42 @@ GW2Optimizer/
 └── scripts/                # Scripts utilitaires
 ```
 
-## 🔧 Installation
+## 🔐 Authentification et Sécurité
+
+### Gestion des jetons JWT
+- **Révocation des jetons** : Chaque jeton émis contient un identifiant unique (JTI) stocké dans Redis avec une durée de vie (TTL) alignée sur l'expiration du jeton.
+- **Mode fail-closed** : En cas d'indisponibilité de Redis, l'API rejette les requêtes d'authentification avec une erreur 401 et l'en-tête `WWW-Authenticate: Bearer` pour forcer la déconnexion du client.
+
+## 🧪 Tests et Qualité
+
+### Tests Frontend (Unitaires + Couverture)
+- **Lancement** : `npm test -- --coverage`
+- **Rapports** : Génère des rapports au format text, lcov et json-summary
+- **Seuils minimaux** (CI) :
+  - Lignes : 49%
+  - Instructions : 49%
+  - Fonctions : 61%
+  - Branches : 70%
+
+### Tests E2E avec Playwright
+- **Configuration requise** :
+  ```bash
+  npm ci
+  npx playwright install --with-deps
+  ```
+- **Lancement** : `npm run test:e2e`
+- **Variables d'environnement** :
+  - `E2E_BASE_URL` : URL de base de l'application (défaut: `http://localhost:5173`)
+  - `E2E_USER` / `E2E_PASS` : Identifiants de test (optionnels, les tests avec authentification seront ignorés si non définis)
+- **Rapports** :
+  - HTML interactif dans `playwright-report/`
+  - Données brutes dans `playwright-report/report.json`
+
+## 🚀 Installation et Démarrage Rapides
+- Python 3.11+
+- Node.js 18+
+- Ollama installé localement
+- Modèle Mistral 7B téléchargé (`ollama pull mistral`)
 
 ### Prérequis
 - Python 3.11+

@@ -1,0 +1,18 @@
+FROM mcr.microsoft.com/playwright:v1.56.1-jammy
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Install Playwright browsers
+RUN npx playwright install --with-deps
+
+# Copy source code
+COPY . .
+
+# Command to run tests
+CMD ["npm", "run", "test:e2e"]
