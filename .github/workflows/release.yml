@@ -52,15 +52,15 @@ jobs:
           version="${{ steps.version.outputs.version }}"
           output="release_notes.md"
           {
-            printf '## 🎉 What\'s New\n\n'
+            printf "## 🎉 What's New\n\n"
             if [ -f "CHANGELOG.md" ]; then
               sed -n "/## \[${version}\]/,/## \[/p" CHANGELOG.md | head -n -1
-              printf '\n'
+              printf "\n"
             fi
-            printf '## 📝 Commits\n\n'
+            printf "## 📝 Commits\n\n"
             prev_tag="$(git describe --tags --abbrev=0 HEAD^)"
             git log --pretty=format:"- %s (%h)" "${prev_tag}"..HEAD
-            printf '\n'
+            printf "\n"
           } > "${output}"
 
           cat "${output}"
