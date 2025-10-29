@@ -33,7 +33,9 @@ jobs:
 
       - name: Extract version
         id: version
+        shell: bash
         run: |
+          set -euo pipefail
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             VERSION="${{ inputs.version }}"
           else
@@ -44,7 +46,9 @@ jobs:
 
       - name: Generate changelog
         id: changelog
+        shell: bash
         run: |
+          set -euo pipefail
           echo "## 🎉 What's New" > release_notes.md
           echo "" >> release_notes.md
           
@@ -61,14 +65,16 @@ jobs:
           cat release_notes.md
 
       - name: Build distribution
+        shell: bash
         run: |
+          set -euo pipefail
           cd backend
           pip install build
           python -m build
           ls -lh dist/
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.version }}
           name: GW2Optimizer ${{ steps.version.outputs.version }}
