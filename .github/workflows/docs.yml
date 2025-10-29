@@ -93,3 +93,4 @@ jobs:
           else
             echo "❌ Documentation échouée (${result})"
             exit 1
+          fi
