@@ -101,6 +101,10 @@ backend/test.db
 backend/test_*.db
 backend/coverage.xml
 frontend/coverage/
+.coverage.json
+.playwright.json
+backend/data/learning/generated/
+bin/
 
 # CI/CD
 .github/secrets/
