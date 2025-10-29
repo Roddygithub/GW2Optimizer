@@ -17,9 +17,22 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      - uses: docker://ghcr.io/rhysd/actionlint:1.7.8
-        with:
-          args: -color
+      - name: Install actionlint (no GHCR)
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${ACTIONLINT_VERSION:-1.7.8}"
+          ARCH="$(uname -m)"
+          case "$ARCH" in
+            x86_64) ARCH=amd64 ;;
+            aarch64|arm64) ARCH=arm64 ;;
+            *) ARCH=amd64 ;;
+          esac
+          URL="https://github.com/rhysd/actionlint/releases/download/v${VERSION}/actionlint_${VERSION}_linux_${ARCH}.tar.gz"
+          curl -sSL "$URL" | tar -xz actionlint
+      - name: Run actionlint
+        shell: bash
+        run: ./actionlint -color
 
   lint-backend:
     name: Lint Backend
