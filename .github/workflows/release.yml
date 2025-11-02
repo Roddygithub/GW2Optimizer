@@ -33,42 +33,49 @@ jobs:
 
       - name: Extract version
         id: version
+        shell: bash
         run: |
+          set -euo pipefail
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             VERSION="${{ inputs.version }}"
           else
-            VERSION=${GITHUB_REF#refs/tags/}
+            VERSION="${GITHUB_REF#refs/tags/}"
           fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "📌 Version: $VERSION"
 
       - name: Generate changelog
         id: changelog
+        shell: bash
         run: |
-          echo "## 🎉 What's New" > release_notes.md
-          echo "" >> release_notes.md
-          
-          # Extract changes from CHANGELOG.md for this version
-          if [ -f "CHANGELOG.md" ]; then
-            sed -n "/## \[${{ steps.version.outputs.version }}\]/,/## \[/p" CHANGELOG.md | head -n -1 >> release_notes.md
-          fi
-          
-          # Add commit history
-          echo "" >> release_notes.md
-          echo "## 📝 Commits" >> release_notes.md
-          git log --pretty=format:"- %s (%h)" $(git describe --tags --abbrev=0 HEAD^)..HEAD >> release_notes.md
-          
-          cat release_notes.md
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          output="release_notes.md"
+          {
+            printf "## 🎉 What's New\n\n"
+            if [ -f "CHANGELOG.md" ]; then
+              sed -n "/## \[${version}\]/,/## \[/p" CHANGELOG.md | head -n -1
+              printf "\n"
+            fi
+            printf "## 📝 Commits\n\n"
+            prev_tag="$(git describe --tags --abbrev=0 HEAD^)"
+            git log --pretty=format:"- %s (%h)" "${prev_tag}"..HEAD
+            printf "\n"
+          } > "${output}"
+
+          cat "${output}"
 
       - name: Build distribution
+        shell: bash
         run: |
+          set -euo pipefail
           cd backend
           pip install build
           python -m build
           ls -lh dist/
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.version }}
           name: GW2Optimizer ${{ steps.version.outputs.version }}

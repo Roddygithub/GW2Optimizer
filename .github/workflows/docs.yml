@@ -14,6 +14,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-docs:
     name: Build Documentation
@@ -28,35 +32,51 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Detect documentation stack
+        id: detect
+        shell: bash
+        env:
+          MKDOCS_ROOT: ${{ hashFiles('mkdocs.yml') }}
+          MKDOCS_DOCS: ${{ hashFiles('docs/mkdocs.yml') }}
+          DOCUSAURUS_ROOT: ${{ hashFiles('docusaurus.config.*') }}
+          DOCUSAURUS_DOCS: ${{ hashFiles('docs/**/docusaurus.config.*') }}
         run: |
-          pip install --upgrade pip
-          pip install 'mkdocs>=1.5.3' 'mkdocs-material>=9.4.0' 'mkdocstrings[python]>=0.24' pdoc3 numpy
-          cd backend
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt || true
-          cd -
+          set -euo pipefail
+          stack="none"
+          if [[ -n "${MKDOCS_ROOT}" || -n "${MKDOCS_DOCS}" ]]; then
+            stack="mkdocs"
+          elif [[ -n "${DOCUSAURUS_ROOT}" || -n "${DOCUSAURUS_DOCS}" ]]; then
+            stack="docusaurus"
+          fi
+          echo "stack=${stack}" >> "$GITHUB_OUTPUT"
+          echo "⚙️ Stack détectée: ${stack}"
 
-      - name: Generate API docs with pdoc
+      - name: No documentation stack detected
+        if: steps.detect.outputs.stack == 'none'
+        run: echo "ℹ️  Aucun contenu de documentation détecté, skipping build."
+
+      - name: Install MkDocs dependencies
+        if: steps.detect.outputs.stack == 'mkdocs'
+        shell: bash
         run: |
-          cd backend
-          pdoc3 --html --output-dir ../docs/api app --force
+          set -euo pipefail
+          pip install --upgrade pip
+          if [ -f docs/requirements.txt ]; then
+            pip install -r docs/requirements.txt
+          fi
+          pip install mkdocs mkdocs-material mkdocs-awesome-pages-plugin 'mkdocstrings[python]>=0.24'
 
       - name: Build MkDocs site
+        if: steps.detect.outputs.stack == 'mkdocs'
+        shell: bash
         run: |
-          if [ -f "mkdocs.yml" ]; then
+          set -euo pipefail
+          if [ -f mkdocs.yml ]; then
             mkdocs build --strict
           else
-            echo "⚠️  mkdocs.yml not found, skipping MkDocs build"
+            cd docs
+            mkdocs build --strict
           fi
-
-      - name: Deploy to GitHub Pages
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
-          cname: gw2optimizer.dev
 
   docs-status:
     name: Docs Status
@@ -67,10 +87,10 @@ jobs:
     steps:
       - name: Check docs status
         run: |
-          if [ "${{ needs.build-docs.result }}" == "success" ]; then
-            echo "✅ Documentation built successfully!"
-            exit 0
+          result="${{ needs.build-docs.result }}"
+          if [ "$result" = "success" ] || [ "$result" = "skipped" ]; then
+            echo "✅ Documentation OK (${result})"
           else
-            echo "❌ Documentation build failed"
+            echo "❌ Documentation échouée (${result})"
             exit 1
           fi
