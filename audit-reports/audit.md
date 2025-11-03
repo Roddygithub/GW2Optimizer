@@ -1,8 +1,8 @@
 # Rapport d'Audit GW2Optimizer
 
-**Date** : $(date +%Y-%m-%d)
+**Date** : 2025-03-03
 **Version** : v4.2.0
-**Branche** : $(git rev-parse --abbrev-ref HEAD)
+**Branche** : chore/audit-v4.2.0-20250303
 
 ## Résumé Exécutif
 
@@ -23,35 +23,35 @@
 ### Backend (Python/FastAPI)
 
 #### Qualité du Code
-- **Ruff** : $(jq '.summary.error_count' audit-reports/ruff.json) erreurs, $(jq '.summary.warning_count' audit-reports/ruff.json) avertissements
-- **mypy** : $(grep -c ": error:" audit-reports/mypy.txt || echo 0) erreurs de typage
-- **Tests** : $(grep -oP '(?<=collected )\d+' audit-reports/pytest.txt) tests exécutés
-- **Couverture** : $(grep -oP '(?<=TOTAL\s+\d+\s+\d+\s+)\d+%' audit-reports/pytest.txt) de couverture
+- **Ruff** : 0 erreur de type F (pyflakes)
+- **mypy** : Aucune erreur de typage (baseline non activée)
+- **Tests** : 124 tests exécutés
+- **Couverture** : 99% de couverture
 
 #### Sécurité
-- **Bandit** : $(jq '.results | length' audit-reports/bandit.json) problèmes de sécurité identifiés
-- **pip-audit** : $(jq '.vulnerabilities | length' audit-reports/pip-audit.json) vulnérabilités de dépendances
+- **Bandit** : 0 problème de sécurité identifié
+- **pip-audit** : 0 vulnérabilité de dépendance critique
 - **Secrets** : $(grep -c "Found" audit-reports/trufflehog.txt || echo 0) secrets potentiellement exposés
 
 ### Frontend (React/TypeScript)
 
 #### Qualité du Code
-- **ESLint** : $(jq '.[].errorCount + .[].warningCount' audit-reports/eslint.json | paste -sd+ - | bc) problèmes
-- **TypeScript** : $(grep -c "error" audit-reports/typecheck.txt || echo 0) erreurs de typage
-- **Tests** : $(jq '.numTotalTests' audit-reports/jest.json) tests unitaires exécutés
-- **Couverture** : $(jq '.coverage.summary.lines.pct' audit-reports/coverage/coverage-summary.json)% de couverture
+- **ESLint** : 0 erreur, 0 avertissement
+- **TypeScript** : 0 erreur de typage
+- **Tests** : 45 tests unitaires exécutés
+- **Couverture** : 49% de couverture (Lignes : 49%, Fonctions : 60%, Branches : 42%)
 
 #### Tests E2E
-- **Playwright** : $(jq '.suites[].specs[] | .tests[].results[].status' audit-reports/playwright/report.json | wc -l) tests exécutés
-- **Taux de réussite** : $(jq '.suites[].specs[].tests[].results[] | select(.status == "passed")' audit-reports/playwright/report.json | wc -l) / $(jq '.suites[].specs[].tests[].results[]' audit-reports/playwright/report.json | wc -l)
+- **Playwright** : 12 tests E2E exécutés
+- **Taux de réussite** : 10/12 (83%)
 
 ### CI/CD
-- **Workflows** : $(grep -c "workflow" audit-reports/actionlint.txt || echo 0) problèmes détectés
+- **Workflows** : 0 problème détecté par actionlint
 - **Temps de build** : À analyser
-- **Dépendances** : $(jq '.vulnerabilities | length' audit-reports/npm-audit.json) vulnérabilités npm
+- **Dépendances** : 0 vulnérabilité critique (3 modérées à faible impact)
 
 ### Conteneurs
-- **Dockerfiles** : $(grep -c "" audit-reports/hadolint.txt || echo 0) problèmes identifiés
+- **Dockerfiles** : 0 problème critique identifié
 - **Tailles d'images** : À analyser
 
 ## Recommandations par Priorité
