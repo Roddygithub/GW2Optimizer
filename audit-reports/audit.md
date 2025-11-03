@@ -87,3 +87,7 @@
 - [Rapport npm audit](npm-audit.json)
 - [Rapport Playwright](playwright/)
 - [Rapport Hadolint](hadolint.txt)
+
+## Security Notes
+
+See [SECURITY.md](../SECURITY.md) for the documented “Known risk: ecdsa dependency” (risk accepted, monitored via Dependabot/pip-audit).
