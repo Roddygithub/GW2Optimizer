@@ -61,7 +61,7 @@ async def analyze_meta(request: MetaAnalysisRequest):
     Raises:
         HTTPException: En cas d'erreur d'analyse
     """
-    logger.info(f"Meta analysis requested for game_mode={request.game_mode}, " f"profession={request.profession}")
+    logger.info(f"Meta analysis requested for game_mode={request.game_mode}, profession={request.profession}")
 
     try:
         # Créer et exécuter le workflow

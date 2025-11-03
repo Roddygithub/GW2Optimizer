@@ -21,11 +21,15 @@ try:
     from app.db.base import Base
     from app.db.session import engine, get_db
     from sqlalchemy.ext.asyncio import create_async_engine
+
     print("✅ Modules importés avec succès")
 except ImportError as e:
     print(f"❌ Erreur d'importation: {e}")
-    print("Vérifiez que vous êtes dans le bon répertoire et que les dépendances sont installées.")
+    print(
+        "Vérifiez que vous êtes dans le bon répertoire et que les dépendances sont installées."
+    )
     sys.exit(1)
+
 
 async def init_db():
     """Initialise la base de données en créant toutes les tables."""
@@ -39,10 +43,11 @@ async def init_db():
         print(f"❌ Erreur lors de l'initialisation de la base de données: {e}")
         return False
 
+
 if __name__ == "__main__":
     print("🚀 Démarrage de l'initialisation de la base de données...")
     print(f"📂 Base de données: {settings.DATABASE_URL}")
-    
+
     # Créer le répertoire de la base de données si nécessaire
     if settings.DATABASE_URL.startswith("sqlite"):
         db_path = settings.DATABASE_URL.split("///")[-1]
@@ -50,7 +55,7 @@ if __name__ == "__main__":
         if not db_dir.exists():
             db_dir.mkdir(parents=True, exist_ok=True)
             print(f"📁 Répertoire de la base de données créé: {db_dir}")
-    
+
     # Exécuter l'initialisation
     success = asyncio.run(init_db())
     if not success:

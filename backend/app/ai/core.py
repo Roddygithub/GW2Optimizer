@@ -189,7 +189,7 @@ class GW2AICore:
             try:
                 game_mode = GameMode(game_mode.lower())
             except ValueError:
-                raise ValueError(f"Invalid game mode: {game_mode}. " f"Valid modes: {[m.value for m in GameMode]}")
+                raise ValueError(f"Invalid game mode: {game_mode}. Valid modes: {[m.value for m in GameMode]}")
 
         # Auto-adapt team size if not provided
         if team_size is None:

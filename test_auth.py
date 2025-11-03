@@ -31,9 +31,10 @@ def test_register_user_success():
 
 
 def test_login_success_and_cookie_set(test_user_password, test_user_hashed_password):
-    with patch("app.api.auth.verify_password", return_value=True), \
-         patch("app.api.auth.get_password_hash", return_value=test_user_hashed_password):
-        
+    with (
+        patch("app.api.auth.verify_password", return_value=True),
+        patch("app.api.auth.get_password_hash", return_value=test_user_hashed_password),
+    ):
         response = client.post(
             "/api/v1/auth/token",
             data={"username": "testuser", "password": test_user_password},
@@ -51,10 +52,13 @@ def test_login_failure_wrong_password():
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
-def test_access_protected_route_with_valid_token(test_user_password, test_user_hashed_password):
-    with patch("app.api.auth.verify_password", return_value=True), \
-         patch("app.api.auth.get_password_hash", return_value=test_user_hashed_password):
-        
+def test_access_protected_route_with_valid_token(
+    test_user_password, test_user_hashed_password
+):
+    with (
+        patch("app.api.auth.verify_password", return_value=True),
+        patch("app.api.auth.get_password_hash", return_value=test_user_hashed_password),
+    ):
         login_response = client.post(
             "/api/v1/auth/token",
             data={"username": "testuser", "password": test_user_password},
@@ -66,7 +70,9 @@ def test_access_protected_route_with_valid_token(test_user_password, test_user_h
             headers={"Authorization": f"Bearer {token}"},
         )
         assert protected_response.status_code == status.HTTP_200_OK
-        assert protected_response.json() == {"message": "Hello, testuser! You are in a protected area."}
+        assert protected_response.json() == {
+            "message": "Hello, testuser! You are in a protected area."
+        }
 
 
 def test_access_protected_route_with_invalid_token():

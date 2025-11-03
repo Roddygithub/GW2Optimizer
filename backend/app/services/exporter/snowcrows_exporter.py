@@ -1,6 +1,5 @@
 """Snowcrows format exporter."""
 
-import json
 from typing import Dict, List
 from datetime import datetime
 
@@ -79,7 +78,7 @@ class SnowcrowsExporter:
             <h1>{build.name}</h1>
             <div class="build-meta">
                 <span class="profession">{profession}</span>
-                <span class="specialization">{build.specialization or 'Core'}</span>
+                <span class="specialization">{build.specialization or "Core"}</span>
                 <span class="role">{role}</span>
                 <span class="game-mode">{game_mode}</span>
             </div>
@@ -110,7 +109,7 @@ class SnowcrowsExporter:
         
         <footer class="build-footer">
             <p>Exported from GW2Optimizer</p>
-            <p>Source: {build.source_type or 'AI Generated'}</p>
+            <p>Source: {build.source_type or "AI Generated"}</p>
         </footer>
     </div>
 </body>
@@ -338,7 +337,7 @@ class SnowcrowsExporter:
             html += f"""
             <div class="trait-line">
                 <h3>{tl.name}</h3>
-                <p>Traits: {', '.join(map(str, tl.traits)) if tl.traits else 'Not specified'}</p>
+                <p>Traits: {", ".join(map(str, tl.traits)) if tl.traits else "Not specified"}</p>
             </div>
             """
         return html
@@ -369,8 +368,8 @@ class SnowcrowsExporter:
             <div class="equipment-item">
                 <h3>{eq.slot}</h3>
                 <p>{eq.name}</p>
-                <p>Stats: {eq.stats or 'Not specified'}</p>
-                {f'<p>Rune/Sigil: {eq.rune_or_sigil}</p>' if eq.rune_or_sigil else ''}
+                <p>Stats: {eq.stats or "Not specified"}</p>
+                {f"<p>Rune/Sigil: {eq.rune_or_sigil}</p>" if eq.rune_or_sigil else ""}
             </div>
             """
         return html
@@ -404,7 +403,7 @@ class SnowcrowsExporter:
             <section class="build-section">
                 <h2>Synergies</h2>
                 <ul class="synergies">
-                    {''.join(f'<li>{syn}</li>' for syn in build.synergies)}
+                    {"".join(f"<li>{syn}</li>" for syn in build.synergies)}
                 </ul>
             </section>
             """
@@ -414,7 +413,7 @@ class SnowcrowsExporter:
             <section class="build-section">
                 <h2>Counters</h2>
                 <ul class="counters">
-                    {''.join(f'<li>{counter}</li>' for counter in build.counters)}
+                    {"".join(f"<li>{counter}</li>" for counter in build.counters)}
                 </ul>
             </section>
             """

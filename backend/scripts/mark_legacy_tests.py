@@ -4,7 +4,6 @@ Mark legacy tests with @pytest.mark.legacy decorator.
 Tests that fail due to Pydantic validation or other legacy issues.
 """
 
-import os
 from pathlib import Path
 
 # Legacy test files and their failing tests
@@ -96,8 +95,8 @@ def main():
         print()
 
     print(f"✅ Marked {total_marked} tests as legacy")
-    print(f"\nRun critical tests only: pytest -m 'not legacy'")
-    print(f"Run legacy tests only: pytest -m legacy")
+    print("\nRun critical tests only: pytest -m 'not legacy'")
+    print("Run legacy tests only: pytest -m legacy")
 
 
 if __name__ == "__main__":

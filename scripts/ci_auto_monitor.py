@@ -19,6 +19,7 @@ Notes:
 - This script is conservative. It only applies very specific, low-risk fixes.
 - Logs are written to reports/ci/ and reports/ci/logs/.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -134,10 +135,13 @@ def apply_minimal_fixes(log_preview: str) -> List[str]:
     fixes: List[str] = []
 
     # Pattern 1: Coverage threshold too high
-    if "--cov-fail-under=80" in (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8") and (
+    if "--cov-fail-under=80" in (ROOT / ".github/workflows/ci.yml").read_text(
+        encoding="utf-8"
+    ) and (
         "failed to reach minimum coverage" in log_preview
         or "FAIL Required test coverage" in log_preview
-        or "Coverage" in log_preview and "%" in log_preview
+        or "Coverage" in log_preview
+        and "%" in log_preview
     ):
         path = ROOT / ".github/workflows/ci.yml"
         content = path.read_text(encoding="utf-8")
@@ -189,7 +193,9 @@ def sample_build_data():
         path = ROOT / ".github/workflows/ci.yml"
         content = path.read_text(encoding="utf-8")
         if "flake8 app/ tests/ --max-line-length=120" not in content:
-            content = content.replace("flake8 app/ tests/", "flake8 app/ tests/ --max-line-length=120")
+            content = content.replace(
+                "flake8 app/ tests/", "flake8 app/ tests/ --max-line-length=120"
+            )
             path.write_text(content, encoding="utf-8")
             fixes.append("Set flake8 max-line-length to 120 in ci.yml")
 
@@ -198,7 +204,14 @@ def sample_build_data():
 
 def cleanup_markdown_root() -> List[str]:
     """Delete non-essential .md files in repo root (conservative)."""
-    whitelist = {"README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE.md", "ARCHITECTURE.md", "ROADMAP.md"}
+    whitelist = {
+        "README.md",
+        "CHANGELOG.md",
+        "CONTRIBUTING.md",
+        "LICENSE.md",
+        "ARCHITECTURE.md",
+        "ROADMAP.md",
+    }
     removed: List[str] = []
     for p in ROOT.glob("*.md"):
         if p.name not in whitelist:
@@ -212,7 +225,14 @@ def cleanup_markdown_root() -> List[str]:
     return removed
 
 
-def monitor(repo: str, branch: str, iterations: int, interval: int, auto_fix: bool, cleanup: bool) -> int:
+def monitor(
+    repo: str,
+    branch: str,
+    iterations: int,
+    interval: int,
+    auto_fix: bool,
+    cleanup: bool,
+) -> int:
     print(f"[monitor] Starting monitor for {repo} on {branch}")
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
@@ -229,7 +249,9 @@ def monitor(repo: str, branch: str, iterations: int, interval: int, auto_fix: bo
 
     for cycle in range(1, iterations + 1):
         print(f"[monitor] === Cycle {cycle}/{iterations} ===")
-        statuses: List[Tuple[str, str, Optional[int]]] = []  # (filename, conclusion, run_id)
+        statuses: List[
+            Tuple[str, str, Optional[int]]
+        ] = []  # (filename, conclusion, run_id)
 
         for fname in REQUIRED_WORKFLOWS.keys():
             print(f"[monitor] Checking workflow: {fname}")
@@ -270,14 +292,16 @@ def monitor(repo: str, branch: str, iterations: int, interval: int, auto_fix: bo
         log_preview = []
         for fname, conclusion, run_id in statuses:
             if run_id and conclusion not in ("success",):
-                dest = LOGS_DIR / f"{fname.replace('.yml','')}_{run_id}.zip"
+                dest = LOGS_DIR / f"{fname.replace('.yml', '')}_{run_id}.zip"
                 if download_logs(repo, run_id, dest):
                     log_preview.append(f"{fname}:{conclusion}:logs={dest.name}")
                 else:
                     log_preview.append(f"{fname}:{conclusion}:logs=unavailable")
 
         preview_text = "\n".join(log_preview)
-        (REPORTS_DIR / "CI_DEBUG_LOGS.md").write_text(preview_text or "No logs available", encoding="utf-8")
+        (REPORTS_DIR / "CI_DEBUG_LOGS.md").write_text(
+            preview_text or "No logs available", encoding="utf-8"
+        )
 
         if auto_fix:
             fixes = apply_minimal_fixes(preview_text)
@@ -304,8 +328,12 @@ if __name__ == "__main__":
     parser.add_argument("--branch", default="main")
     parser.add_argument("--iterations", type=int, default=5)
     parser.add_argument("--interval", type=int, default=120)
-    parser.add_argument("--auto-fix", type=int, default=1, help="apply minimal safe fixes")
-    parser.add_argument("--cleanup", type=int, default=1, help="cleanup markdown when green")
+    parser.add_argument(
+        "--auto-fix", type=int, default=1, help="apply minimal safe fixes"
+    )
+    parser.add_argument(
+        "--cleanup", type=int, default=1, help="cleanup markdown when green"
+    )
     args = parser.parse_args()
 
     sys.exit(

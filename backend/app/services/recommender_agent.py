@@ -32,10 +32,10 @@ class RecommenderAgent(BaseAgent):
         """
         prompt = f"""
         Based on the game Guild Wars 2, recommend a build for the following specifications:
-        - Profession: {inputs.get('profession', 'any')}
-        - Role: {inputs.get('role', 'any')}
-        - Game Mode: {inputs.get('game_mode', 'any')}
-        - Additional Context: {inputs.get('context', 'None')}
+        - Profession: {inputs.get("profession", "any")}
+        - Role: {inputs.get("role", "any")}
+        - Game Mode: {inputs.get("game_mode", "any")}
+        - Additional Context: {inputs.get("context", "None")}
 
         Provide a concise build name, a brief description of its playstyle, and a list of key synergies.
         Format the output as a JSON object with the keys "build_name", "description", and "synergies".

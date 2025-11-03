@@ -6,8 +6,7 @@ Analyse les tendances, détecte les changements de méta, et propose des adaptat
 """
 
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timedelta
-import asyncio
+from datetime import datetime
 
 from app.agents.base import BaseAgent
 from app.core.logging import logger
@@ -88,9 +87,7 @@ class MetaAgent(BaseAgent):
         current_builds = inputs.get("current_builds", [])
         time_range = inputs.get("time_range", 30)
 
-        logger.info(
-            f"Analyzing meta for game_mode={game_mode}, " f"profession={profession}, time_range={time_range} days"
-        )
+        logger.info(f"Analyzing meta for game_mode={game_mode}, profession={profession}, time_range={time_range} days")
 
         # Analyse du méta actuel
         meta_snapshot = await self._analyze_current_meta(game_mode, profession)

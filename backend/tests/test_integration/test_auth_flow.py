@@ -232,18 +232,18 @@ class TestAuthenticationFlow:
             "password": "SecurePassword123!",
         }
         register1_response = await integration_client.post("/api/v1/auth/register", json=user1_data)
-        assert (
-            register1_response.status_code == status.HTTP_201_CREATED
-        ), f"User1 register failed: {register1_response.status_code} - {register1_response.text}"
+        assert register1_response.status_code == status.HTTP_201_CREATED, (
+            f"User1 register failed: {register1_response.status_code} - {register1_response.text}"
+        )
 
         login1_response = await integration_client.post(
             "/api/v1/auth/login",
             data={"username": user1_data["email"], "password": user1_data["password"]},
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-        assert (
-            login1_response.status_code == status.HTTP_200_OK
-        ), f"User1 login failed: {login1_response.status_code} - {login1_response.text}"
+        assert login1_response.status_code == status.HTTP_200_OK, (
+            f"User1 login failed: {login1_response.status_code} - {login1_response.text}"
+        )
         user1_token = login1_response.json()["access_token"]
         user1_headers = {"Authorization": f"Bearer {user1_token}"}
 
@@ -259,9 +259,9 @@ class TestAuthenticationFlow:
             "equipment": [],
         }
         build_response = await integration_client.post("/api/v1/builds", json=build_data, headers=user1_headers)
-        assert (
-            build_response.status_code == status.HTTP_201_CREATED
-        ), f"Build creation failed: {build_response.status_code} - {build_response.text}"
+        assert build_response.status_code == status.HTTP_201_CREATED, (
+            f"Build creation failed: {build_response.status_code} - {build_response.text}"
+        )
         build_id = build_response.json()["id"]
 
         # Create second user with unique email
@@ -271,18 +271,18 @@ class TestAuthenticationFlow:
             "password": "SecurePassword123!",
         }
         register2_response = await integration_client.post("/api/v1/auth/register", json=user2_data)
-        assert (
-            register2_response.status_code == status.HTTP_201_CREATED
-        ), f"User2 register failed: {register2_response.status_code} - {register2_response.text}"
+        assert register2_response.status_code == status.HTTP_201_CREATED, (
+            f"User2 register failed: {register2_response.status_code} - {register2_response.text}"
+        )
 
         login2_response = await integration_client.post(
             "/api/v1/auth/login",
             data={"username": user2_data["email"], "password": user2_data["password"]},
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-        assert (
-            login2_response.status_code == status.HTTP_200_OK
-        ), f"User2 login failed: {login2_response.status_code} - {login2_response.text}"
+        assert login2_response.status_code == status.HTTP_200_OK, (
+            f"User2 login failed: {login2_response.status_code} - {login2_response.text}"
+        )
         user2_token = login2_response.json()["access_token"]
         user2_headers = {"Authorization": f"Bearer {user2_token}"}
 

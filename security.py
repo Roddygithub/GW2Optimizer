@@ -43,12 +43,12 @@ class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
         return authorization
 
 
-oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl=f"{settings.API_V1_STR}/auth/token")
+oauth2_scheme = OAuth2PasswordBearerWithCookie(
+    tokenUrl=f"{settings.API_V1_STR}/auth/token"
+)
 
 
-def create_access_token(
-    subject: str | Any, expires_delta: timedelta = None
-) -> str:
+def create_access_token(subject: str | Any, expires_delta: timedelta = None) -> str:
     """
     Create a new access token.
     """
@@ -61,13 +61,14 @@ def create_access_token(
     to_encode = {
         "exp": expire,
         "sub": str(subject),
-        "jti": str(uuid.uuid4()) # Add a unique identifier to the token
+        "jti": str(uuid.uuid4()),  # Add a unique identifier to the token
     }
     encoded_jwt = jwt.encode(
         to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
     )
     return encoded_jwt
-    
+
+
 def create_refresh_token(subject: str | Any) -> str:
     """
     Create a new refresh token.
@@ -77,13 +78,14 @@ def create_refresh_token(subject: str | Any) -> str:
         "exp": expire,
         "sub": str(subject),
         "type": "refresh",
-        "jti": str(uuid.uuid4()) # Add a unique identifier to the refresh token
+        "jti": str(uuid.uuid4()),  # Add a unique identifier to the refresh token
     }
     encoded_jwt = jwt.encode(
         to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
     )
     return encoded_jwt
-    
+
+
 def decode_token(token: str) -> Optional[dict]:
     """
     Decodes a JWT token, trying multiple keys for rotation.
@@ -96,7 +98,8 @@ def decode_token(token: str) -> Optional[dict]:
         except JWTError:
             continue
     return None
-    
+
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against a hashed password."""
     return pwd_context.verify(plain_password, hashed_password)
@@ -112,7 +115,7 @@ def get_password_hash(password: str) -> str:
 async def get_current_user(
     db: AsyncSession = Depends(get_db),
     token: str = Depends(oauth2_scheme),
-    redis: Redis | None = Depends(get_redis_client), # Allow None if Redis is disabled
+    redis: Redis | None = Depends(get_redis_client),  # Allow None if Redis is disabled
 ) -> User:
     """
     Decode token and get current user.
@@ -141,7 +144,10 @@ async def get_current_user(
                 raise credentials_exception
         except Exception as e:
             logger.error(f"Redis connection failed during token check: {e}")
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Authentication service is temporarily unavailable.")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Authentication service is temporarily unavailable.",
+            )
 
     user_service = UserService(db)
     user = await user_service.get_by_id(token_data.sub)
@@ -161,20 +167,25 @@ async def get_current_active_user(
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
+
 async def revoke_token(jti: str, redis: Redis | None):
     """
     Adds a token's JTI to the revocation list in Redis with an expiration
     time matching the access token's lifetime.
     """
     if not redis:
-        logger.warning("Redis is not available. Token revocation is not being performed.")
+        logger.warning(
+            "Redis is not available. Token revocation is not being performed."
+        )
         return
 
     try:
         start_time = time.time()
         async with redis.pipeline(transaction=True) as pipe:
             await pipe.sadd("revoked_jti", jti)
-            await pipe.expire("revoked_jti", settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60 + 5)
+            await pipe.expire(
+                "revoked_jti", settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60 + 5
+            )
             await pipe.execute()
         duration = time.time() - start_time
         logger.info(f"Token revocation for JTI {jti} took {duration:.4f} seconds.")

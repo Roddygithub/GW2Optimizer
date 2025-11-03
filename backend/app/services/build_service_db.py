@@ -4,11 +4,11 @@ from typing import List, Optional
 from uuid import uuid4
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, or_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import logger
-from app.models.build import Build, BuildCreate, BuildDB, BuildUpdate, GameMode, Profession, Role
+from app.models.build import BuildCreate, BuildDB, BuildUpdate, GameMode, Profession, Role
 from app.db.models import UserDB
 
 

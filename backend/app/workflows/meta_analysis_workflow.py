@@ -8,7 +8,7 @@ Orchestre le Meta Agent et l'intégration API GW2 pour une analyse approfondie.
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-from app.workflows.base import BaseWorkflow, WorkflowStep, WorkflowStatus
+from app.workflows.base import BaseWorkflow, WorkflowStep
 from app.agents.meta_agent import MetaAgent
 from app.services.gw2_api_client import GW2APIClient
 from app.core.logging import logger
@@ -114,7 +114,7 @@ class MetaAnalysisWorkflow(BaseWorkflow):
         time_range = inputs.get("time_range", 30)
         current_builds = inputs.get("current_builds", [])
 
-        logger.info(f"Starting Meta Analysis Workflow for game_mode={game_mode}, " f"profession={profession}")
+        logger.info(f"Starting Meta Analysis Workflow for game_mode={game_mode}, profession={profession}")
 
         workflow_context = {
             "game_mode": game_mode,

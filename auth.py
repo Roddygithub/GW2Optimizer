@@ -13,6 +13,7 @@ from app.core.security import (
     verify_password,
     get_password_hash,
 )
+
 # Replace with your actual schemas and services
 from pydantic import BaseModel
 
@@ -20,6 +21,7 @@ from pydantic import BaseModel
 class User(BaseModel):
     id: int
     username: str
+
 
 class UserCreate(BaseModel):
     username: str
@@ -72,9 +74,8 @@ async def login_for_access_token(
     # In a real app, you would fetch the user from the DB
     # user = await user_service.get_by_username(form_data.username)
     # For demonstration, we use a mock user and password
-    is_valid_user = (
-        form_data.username == "testuser"
-        and verify_password(form_data.password, get_password_hash("testpass"))
+    is_valid_user = form_data.username == "testuser" and verify_password(
+        form_data.password, get_password_hash("testpass")
     )
 
     if not is_valid_user:

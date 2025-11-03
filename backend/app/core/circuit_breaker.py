@@ -5,7 +5,7 @@ Circuit Breaker implementation for handling failures in distributed systems.
 import time
 import asyncio
 from functools import wraps
-from typing import Any, Callable, TypeVar, Optional  # noqa: F401 (used in type annotations)
+from typing import Any, Awaitable, Callable, Optional, TypeVar  # noqa: F401 (used in type annotations)
 
 from app.core.logging import logger
 
@@ -146,7 +146,7 @@ class CircuitBreaker:
                 has_retry = attempt <= self.max_retries
                 if has_retry:
                     retry_delay = min(2**attempt, 10)  # Exponential backoff, max 10s
-                    logger.warning(f"Attempt {attempt} failed: {str(e)}. " f"Retrying in {retry_delay}s...")
+                    logger.warning(f"Attempt {attempt} failed: {str(e)}. Retrying in {retry_delay}s...")
                     await asyncio.sleep(retry_delay)
                     continue
 
@@ -176,8 +176,7 @@ class CircuitBreaker:
         if self._failures >= self.failure_threshold:
             self._state = "OPEN"
             logger.error(
-                f"Circuit breaker opened after {self._failures} failures. "
-                f"Will retry in {self.recovery_timeout} seconds"
+                f"Circuit breaker opened after {self._failures} failures. Will retry in {self.recovery_timeout} seconds"
             )
 
     def _record_success(self) -> None:

@@ -134,7 +134,6 @@ class TestCircuitBreaker:
 
         # Mock sleep to avoid waiting in tests
         with patch("asyncio.sleep") as mock_sleep, patch("logging.Logger.warning") as mock_warning:
-
             # The circuit breaker should retry once (total of 2 attempts)
             result = await circuit.call_async(mock_func)
 

@@ -116,9 +116,7 @@ class SynergyAgent(BaseAgent):
 
         for profession in professions:
             if profession not in valid_professions:
-                raise ValueError(
-                    f"Invalid profession '{profession}'. " f"Must be one of: {', '.join(valid_professions)}"
-                )
+                raise ValueError(f"Invalid profession '{profession}'. Must be one of: {', '.join(valid_professions)}")
 
     async def run(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -184,7 +182,7 @@ class SynergyAgent(BaseAgent):
                 "timestamp": response_data.get("created_at"),
             }
 
-            logger.info(f"Team synergy analysis completed for {len(professions)} professions " f"in {game_mode}")
+            logger.info(f"Team synergy analysis completed for {len(professions)} professions in {game_mode}")
 
             return result
 
@@ -213,7 +211,6 @@ class SynergyAgent(BaseAgent):
         Returns:
             Prompt formaté pour Mistral
         """
-        profession_list = ", ".join(professions)
         profession_counts = {}
         for prof in professions:
             profession_counts[prof] = profession_counts.get(prof, 0) + 1

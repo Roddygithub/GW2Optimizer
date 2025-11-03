@@ -352,7 +352,7 @@ class SynergyModel:
             return
 
         # Scaler
-        features_scaled = self.scaler.transform(features)
+        self.scaler.transform(features)
 
         # Update (warm start)
         # Note: GradientBoostingRegressor ne supporte pas partial_fit

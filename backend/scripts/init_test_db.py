@@ -3,6 +3,7 @@
 Initialize test database with all tables.
 Used in CI to create tables before running tests.
 """
+
 import asyncio
 import os
 import sys

@@ -157,7 +157,7 @@ class AIService:
         agent = self.agents.get(agent_name)
         if not agent:
             available_agents = ", ".join(self.agents.keys())
-            raise ValueError(f"Agent '{agent_name}' not found. " f"Available agents: {available_agents}")
+            raise ValueError(f"Agent '{agent_name}' not found. Available agents: {available_agents}")
 
         logger.info(f"🤖 Executing agent '{agent_name}'...")
 
@@ -196,7 +196,7 @@ class AIService:
         workflow = self.workflows.get(workflow_name)
         if not workflow:
             available_workflows = ", ".join(self.workflows.keys())
-            raise ValueError(f"Workflow '{workflow_name}' not found. " f"Available workflows: {available_workflows}")
+            raise ValueError(f"Workflow '{workflow_name}' not found. Available workflows: {available_workflows}")
 
         logger.info(f"🔄 Executing workflow '{workflow_name}'...")
 

@@ -9,7 +9,6 @@ from datetime import datetime
 import uuid
 import re
 
-from app.core.logging import logger
 
 if TYPE_CHECKING:
     from app.db.models import UserDB

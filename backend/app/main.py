@@ -6,13 +6,10 @@ and includes all API routers.
 """
 
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -50,8 +47,6 @@ from app.api import (
     meta,
     scraper,
     teams,
-    builds_db,
-    teams_db,
     websocket_mcm,
     sentry_debug,
 )

@@ -1,8 +1,7 @@
 """Community websites scraper for builds."""
 
 import re
-from typing import List, Optional, Dict
-from datetime import datetime
+from typing import List, Optional
 
 import httpx
 from bs4 import BeautifulSoup
@@ -10,7 +9,6 @@ from bs4 import BeautifulSoup
 from app.core.config import settings
 from app.core.logging import logger
 from app.models.build import Build, GameMode, Profession, Role
-from app.models.learning import DataSource
 
 
 class CommunityScraper:
@@ -86,8 +84,6 @@ class CommunityScraper:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.get(url, headers=headers)
                 response.raise_for_status()
-
-                soup = BeautifulSoup(response.text, "html.parser")
 
                 # Placeholder: Each source needs custom parsing logic
                 # based on their HTML structure

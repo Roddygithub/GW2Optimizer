@@ -58,11 +58,11 @@ async def test_real_ai_optimization():
         wvw_data = await gw2_service.fetch_live_wvw_data()
 
         if wvw_data.get("status") == "success":
-            log(f"  ✅ WvW data fetched successfully", Colors.GREEN)
+            log("  ✅ WvW data fetched successfully", Colors.GREEN)
             log(f"  - Matches: {len(wvw_data.get('matches', []))}", Colors.NC)
             log(f"  - Objectives: {len(wvw_data.get('objectives', []))}", Colors.NC)
         else:
-            log(f"  ⚠️ WvW data fetch failed, using fallback", Colors.YELLOW)
+            log("  ⚠️ WvW data fetch failed, using fallback", Colors.YELLOW)
             wvw_data = {}
     except Exception as e:
         log(f"  ⚠️ Error fetching WvW data: {str(e)}", Colors.YELLOW)
@@ -79,7 +79,7 @@ async def test_real_ai_optimization():
     try:
         composition = await mistral_service.generate_team_composition(wvw_data=wvw_data, team_size=50, game_mode="zerg")
 
-        log(f"  ✅ Team composition generated", Colors.GREEN)
+        log("  ✅ Team composition generated", Colors.GREEN)
         log(f"  - Name: {composition.get('name', 'Unknown')}", Colors.NC)
         log(f"  - Size: {composition.get('size', 0)} players", Colors.NC)
         log(f"  - Source: {composition.get('source', 'Unknown')}", Colors.NC)
@@ -97,17 +97,17 @@ async def test_real_ai_optimization():
     validation = validate_composition(composition, 50)
 
     if validation["valid"]:
-        log(f"  ✅ Composition is valid", Colors.GREEN)
+        log("  ✅ Composition is valid", Colors.GREEN)
     else:
-        log(f"  ⚠️ Composition has issues", Colors.YELLOW)
+        log("  ⚠️ Composition has issues", Colors.YELLOW)
 
     if validation["errors"]:
-        log(f"  ❌ Errors:", Colors.RED)
+        log("  ❌ Errors:", Colors.RED)
         for error in validation["errors"]:
             log(f"    - {error}", Colors.RED)
 
     if validation["warnings"]:
-        log(f"  ⚠️ Warnings:", Colors.YELLOW)
+        log("  ⚠️ Warnings:", Colors.YELLOW)
         for warning in validation["warnings"]:
             log(f"    - {warning}", Colors.YELLOW)
 
@@ -139,19 +139,19 @@ async def test_real_ai_optimization():
 
     # Display strategy
     if "strategy" in composition:
-        log(f"  Strategy:", Colors.YELLOW)
+        log("  Strategy:", Colors.YELLOW)
         log(f"    {composition['strategy']}", Colors.NC)
         log("", Colors.NC)
 
     # Display strengths/weaknesses
     if "strengths" in composition:
-        log(f"  Strengths:", Colors.GREEN)
+        log("  Strengths:", Colors.GREEN)
         for strength in composition["strengths"]:
             log(f"    ✓ {strength}", Colors.GREEN)
         log("", Colors.NC)
 
     if "weaknesses" in composition:
-        log(f"  Weaknesses:", Colors.RED)
+        log("  Weaknesses:", Colors.RED)
         for weakness in composition["weaknesses"]:
             log(f"    ✗ {weakness}", Colors.RED)
         log("", Colors.NC)
@@ -214,7 +214,7 @@ async def test_real_ai_optimization():
     log("=" * 80, Colors.BLUE)
     log("", Colors.NC)
 
-    log(f"✅ Team composition generated successfully", Colors.GREEN)
+    log("✅ Team composition generated successfully", Colors.GREEN)
     log(f"✅ Reports saved to {report_dir}", Colors.GREEN)
     log(f"✅ Duration: {duration:.2f}s", Colors.GREEN)
 
@@ -229,25 +229,25 @@ def generate_markdown_report(data: dict) -> str:
 
     md = f"""# 🔥 TEST RÉEL - MISTRAL AI + GW2 API
 
-**Date**: {data['timestamp']}
-**Duration**: {data['duration_seconds']:.2f}s
-**Status**: {'✅ SUCCESS' if validation['valid'] else '⚠️ ISSUES'}
+**Date**: {data["timestamp"]}
+**Duration**: {data["duration_seconds"]:.2f}s
+**Status**: {"✅ SUCCESS" if validation["valid"] else "⚠️ ISSUES"}
 
 ---
 
 ## 📊 CONFIGURATION
 
-- **Team Size**: {data['configuration']['team_size']} players
-- **Game Mode**: {data['configuration']['game_mode']}
-- **Focus**: {data['configuration']['focus']}
+- **Team Size**: {data["configuration"]["team_size"]} players
+- **Game Mode**: {data["configuration"]["game_mode"]}
+- **Focus**: {data["configuration"]["focus"]}
 
 ---
 
 ## 📡 GW2 API DATA
 
-- **Status**: {data['wvw_data']['status']}
-- **Matches**: {data['wvw_data']['matches_count']}
-- **Objectives**: {data['wvw_data']['objectives_count']}
+- **Status**: {data["wvw_data"]["status"]}
+- **Matches**: {data["wvw_data"]["matches_count"]}
+- **Objectives**: {data["wvw_data"]["objectives_count"]}
 
 ---
 
@@ -255,10 +255,10 @@ def generate_markdown_report(data: dict) -> str:
 
 ### Overview
 
-- **Name**: {composition.get('name', 'Unknown')}
-- **Size**: {composition.get('size', 0)} players
-- **Source**: {composition.get('source', 'Unknown')}
-- **Model**: {composition.get('model', 'Unknown')}
+- **Name**: {composition.get("name", "Unknown")}
+- **Size**: {composition.get("size", 0)} players
+- **Source**: {composition.get("source", "Unknown")}
+- **Model**: {composition.get("model", "Unknown")}
 
 ### Builds
 
@@ -267,11 +267,11 @@ def generate_markdown_report(data: dict) -> str:
     builds = composition.get("builds", [])
     for build in builds:
         md += f"""
-#### {build.get('profession', 'Unknown')} - {build.get('role', 'Unknown')}
+#### {build.get("profession", "Unknown")} - {build.get("role", "Unknown")}
 
-- **Count**: {build.get('count', 0)} players
-- **Priority**: {build.get('priority', 'Unknown')}
-- **Description**: {build.get('description', 'N/A')}
+- **Count**: {build.get("count", 0)} players
+- **Priority**: {build.get("priority", "Unknown")}
+- **Description**: {build.get("description", "N/A")}
 """
 
     md += f"""
@@ -279,7 +279,7 @@ def generate_markdown_report(data: dict) -> str:
 
 ## 📈 STRATEGY
 
-{composition.get('strategy', 'N/A')}
+{composition.get("strategy", "N/A")}
 
 ### Strengths
 
@@ -298,9 +298,9 @@ def generate_markdown_report(data: dict) -> str:
 
 ## ✅ VALIDATION
 
-- **Valid**: {'✅ Yes' if validation['valid'] else '❌ No'}
-- **Errors**: {len(validation['errors'])}
-- **Warnings**: {len(validation['warnings'])}
+- **Valid**: {"✅ Yes" if validation["valid"] else "❌ No"}
+- **Errors**: {len(validation["errors"])}
+- **Warnings**: {len(validation["warnings"])}
 
 ### Checks
 
@@ -327,18 +327,18 @@ def generate_markdown_report(data: dict) -> str:
 
 ## ⏱️ PERFORMANCE METRICS
 
-- **Total Duration**: {data['metrics']['total_duration']:.2f}s
-- **GW2 API Success**: {'✅ Yes' if data['metrics']['gw2_api_success'] else '❌ No'}
-- **Mistral Source**: {data['metrics']['mistral_source']}
-- **Validation**: {'✅ Valid' if data['metrics']['validation_valid'] else '⚠️ Issues'}
+- **Total Duration**: {data["metrics"]["total_duration"]:.2f}s
+- **GW2 API Success**: {"✅ Yes" if data["metrics"]["gw2_api_success"] else "❌ No"}
+- **Mistral Source**: {data["metrics"]["mistral_source"]}
+- **Validation**: {"✅ Valid" if data["metrics"]["validation_valid"] else "⚠️ Issues"}
 
 ---
 
 ## 🎯 CONCLUSION
 
-{'✅ Test réussi - Composition valide et cohérente' if validation['valid'] else '⚠️ Test complété avec avertissements'}
+{"✅ Test réussi - Composition valide et cohérente" if validation["valid"] else "⚠️ Test complété avec avertissements"}
 
-**Recommandation**: {'Déployer en production' if validation['valid'] and not validation['errors'] else 'Réviser la composition'}
+**Recommandation**: {"Déployer en production" if validation["valid"] and not validation["errors"] else "Réviser la composition"}
 
 ---
 

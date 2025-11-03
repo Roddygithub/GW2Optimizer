@@ -7,7 +7,7 @@ des modifications pour améliorer les performances.
 
 import httpx
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from app.agents.base import BaseAgent
 from app.agents.synergy_agent import SynergyAgent
@@ -74,7 +74,7 @@ class OptimizerAgent(BaseAgent):
         self._client = httpx.AsyncClient(timeout=self.timeout)
         self._synergy_agent = SynergyAgent(model=self.model, host=self.host, timeout=self.timeout)
         await self._synergy_agent.initialize()
-        logger.info(f"Optimizer agent initialized with synergy analysis capability")
+        logger.info("Optimizer agent initialized with synergy analysis capability")
 
     async def _cleanup_impl(self) -> None:
         """Ferme le client HTTP et nettoie l'agent de synergie."""
@@ -130,7 +130,7 @@ class OptimizerAgent(BaseAgent):
         if objectives:
             for obj in objectives:
                 if obj not in valid_objectives:
-                    raise ValueError(f"Invalid objective '{obj}'. " f"Must be one of: {', '.join(valid_objectives)}")
+                    raise ValueError(f"Invalid objective '{obj}'. Must be one of: {', '.join(valid_objectives)}")
 
     async def run(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -230,7 +230,7 @@ class OptimizerAgent(BaseAgent):
             }
 
             logger.info(
-                f"Composition optimization completed with " f"{len(optimization_result.get('changes', []))} changes"
+                f"Composition optimization completed with {len(optimization_result.get('changes', []))} changes"
             )
 
             return optimization_result

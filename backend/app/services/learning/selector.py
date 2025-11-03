@@ -74,16 +74,13 @@ class DataSelector:
         """
         # Check minimum datapoints
         if available_datapoints < self.config.min_datapoints:
-            logger.info(
-                f"Not enough datapoints for training: " f"{available_datapoints} < {self.config.min_datapoints}"
-            )
+            logger.info(f"Not enough datapoints for training: {available_datapoints} < {self.config.min_datapoints}")
             return False
 
         # Check training interval
         if last_training_days_ago < self.config.training_interval_days:
             logger.info(
-                f"Too soon since last training: "
-                f"{last_training_days_ago} < {self.config.training_interval_days} days"
+                f"Too soon since last training: {last_training_days_ago} < {self.config.training_interval_days} days"
             )
             return False
 

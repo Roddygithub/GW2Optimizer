@@ -77,8 +77,8 @@ class TeamService:
     async def _generate_team_with_ai(self, request: TeamOptimizeRequest) -> TeamComposition:
         """Generate team composition using AI."""
         prompt = f"""Generate optimal {request.team_size}-player {request.game_mode.value} WvW team.
-Roles: {request.required_roles or 'Balanced'}
-Constraints: {request.constraints or 'None'}"""
+Roles: {request.required_roles or "Balanced"}
+Constraints: {request.constraints or "None"}"""
 
         response = await self.ollama.generate(prompt, temperature=0.6)
 

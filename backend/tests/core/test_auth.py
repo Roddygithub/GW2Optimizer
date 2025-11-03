@@ -478,10 +478,10 @@ async def test_circuit_breaker_flow(mock_redis_client, mock_time, client: AsyncC
 
     for i in range(redis_circuit_breaker.failure_threshold):
         try:
-            print(f"Attempt {i+1}/{redis_circuit_breaker.failure_threshold} - Calling failing function...")
+            print(f"Attempt {i + 1}/{redis_circuit_breaker.failure_threshold} - Calling failing function...")
             await redis_circuit_breaker.call_async(failing_function)
         except Exception as e:
-            print(f"Failure {i+1}/{redis_circuit_breaker.failure_threshold}: {e}")
+            print(f"Failure {i + 1}/{redis_circuit_breaker.failure_threshold}: {e}")
             print(f"Current state: {redis_circuit_breaker.state}, Failures: {redis_circuit_breaker._failures}")
 
     # Now the circuit should be OPEN

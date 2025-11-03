@@ -1,6 +1,6 @@
 import asyncio
 import bcrypt
-from sqlalchemy import select, delete
+from sqlalchemy import delete
 from app.db.session import get_db
 from app.db.models import UserDB as User
 
@@ -30,7 +30,7 @@ async def reset_test_user():
         await db.refresh(new_user)
 
         print(f"✅ Test user reset successfully: {new_user.email}")
-        print(f"   Password: Test123!")
+        print("   Password: Test123!")
         print(f"   Is active: {new_user.is_active}")
         print(f"   Hash: {hashed_password[:20]}...")
 

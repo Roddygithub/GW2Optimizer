@@ -1,16 +1,15 @@
 """GW2Skill URL parser - Complete implementation."""
 
-import json
 import re
-from typing import Dict, List, Optional, Tuple
-from urllib.parse import parse_qs, urlparse, unquote
+from typing import Dict, List, Optional
+from urllib.parse import parse_qs, urlparse
 
 import httpx
 from bs4 import BeautifulSoup
 
 from app.core.logging import logger
 from app.models.build import Build, GameMode, Profession, Role, TraitLine, Skill, Equipment
-from app.services.parser.gw2_data import SPECIALIZATIONS, STAT_COMBOS, EQUIPMENT_SLOTS
+from app.services.parser.gw2_data import STAT_COMBOS, EQUIPMENT_SLOTS
 
 
 class GW2SkillParser:
@@ -53,8 +52,7 @@ class GW2SkillParser:
             logger.info(f"Parsing GW2Skill URL: {url}")
 
             # Parse URL components
-            parsed = urlparse(url)
-            params = parse_qs(parsed.query)
+            urlparse(url)
 
             # Extract profession from URL path
             profession = self._extract_profession(url)
@@ -198,7 +196,7 @@ class GW2SkillParser:
             if not trait_lines:
                 logger.warning("No trait lines found in page, creating placeholders")
                 for i in range(3):
-                    trait_lines.append(TraitLine(id=i, name=f"Trait Line {i+1}", traits=[]))
+                    trait_lines.append(TraitLine(id=i, name=f"Trait Line {i + 1}", traits=[]))
 
         except Exception as e:
             logger.error(f"Error parsing trait lines: {e}")
@@ -221,7 +219,7 @@ class GW2SkillParser:
                 trait_lines.append(
                     TraitLine(
                         id=len(trait_lines),
-                        name=f"Trait Line {len(trait_lines)+1}",
+                        name=f"Trait Line {len(trait_lines) + 1}",
                         traits=[int(tid) for tid in trait_ids[:3]],  # Max 3 traits per line
                     )
                 )
@@ -268,7 +266,7 @@ class GW2SkillParser:
             for idx, skill_id in enumerate(skill_ids[:5]):
                 skills.append(
                     Skill(
-                        slot=skill_slots[idx] if idx < len(skill_slots) else f"Skill{idx+1}",
+                        slot=skill_slots[idx] if idx < len(skill_slots) else f"Skill{idx + 1}",
                         id=int(skill_id),
                         name=f"Skill {skill_id}",
                     )

@@ -1,7 +1,6 @@
 """Automatic evaluation service for builds and teams."""
 
 from datetime import datetime
-from typing import Dict
 
 from app.core.logging import logger
 from app.models.learning import QualityScore, TrainingDatapoint
@@ -47,8 +46,6 @@ class Evaluator:
 
     async def _evaluate_build(self, datapoint: TrainingDatapoint) -> QualityScore:
         """Evaluate a single build."""
-        build_data = datapoint.data
-
         # Prepare evaluation prompt
         prompt = f"""Evaluate this Guild Wars 2 {datapoint.game_mode} build:
 
@@ -105,8 +102,8 @@ Respond with JSON format:
 
         prompt = f"""Evaluate this {datapoint.game_mode} WvW team composition:
 
-Team Size: {team_data.get('team_size', 'unknown')}
-Description: {team_data.get('description', 'N/A')[:200]}
+Team Size: {team_data.get("team_size", "unknown")}
+Description: {team_data.get("description", "N/A")[:200]}
 
 Rate from 0-10:
 1. Synergy Quality: Team synergies and combos

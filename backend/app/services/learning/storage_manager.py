@@ -1,7 +1,6 @@
 """Storage management for automatic cleanup."""
 
-import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import List
 
@@ -52,20 +51,18 @@ class StorageManager:
                 if age_days > self.config.delete_threshold_days or (
                     dp.quality_scores and dp.quality_scores.overall_score < self.config.min_quality_to_keep
                 ):
-
                     bytes_freed = await self._delete_datapoint(dp)
                     stats["deleted"] += 1
                     stats["bytes_freed"] += bytes_freed
 
                 # Archive old datapoints
                 elif age_days > self.config.archive_threshold_days and not dp.is_archived:
-
                     await self._archive_datapoint(dp)
                     stats["archived"] += 1
 
             logger.info(
                 f"Cleanup complete: archived={stats['archived']}, "
-                f"deleted={stats['deleted']}, freed={stats['bytes_freed']/1024/1024:.2f} MB"
+                f"deleted={stats['deleted']}, freed={stats['bytes_freed'] / 1024 / 1024:.2f} MB"
             )
 
             return stats

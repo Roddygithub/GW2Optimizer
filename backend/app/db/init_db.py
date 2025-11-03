@@ -1,6 +1,5 @@
 """Database initialization."""
 
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import logger
 from app.db.base_class import Base

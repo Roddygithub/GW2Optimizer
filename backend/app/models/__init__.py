@@ -29,8 +29,8 @@ from app.models.user import UserCreate, UserLogin, UserOut, UserUpdate  # noqa: 
 # Auth models
 from app.models.token import Token, TokenData  # noqa: F401
 
-# Game models
-from app.models.game import GameMode, Profession, Role  # noqa: F401
+# Game models (enum definitions located in build module)
+from app.models.build import GameMode, Profession, Role  # noqa: F401
 
 __all__ = [
     # Build models
@@ -38,7 +38,6 @@ __all__ = [
     "BuildCreate",
     "BuildResponse",
     "BuildDB",
-    
     # Team models
     "TeamComposition",
     "TeamResponse",
@@ -46,12 +45,10 @@ __all__ = [
     "TeamSlotDB",
     "TeamCompositionCreate",
     "TeamCompositionUpdate",
-    
     # Chat models
     "ChatMessage",
     "ChatRequest",
     "ChatResponse",
-    
     # User models
     "User",
     "LoginHistory",
@@ -59,11 +56,9 @@ __all__ = [
     "UserLogin",
     "UserOut",
     "UserUpdate",
-    
     # Auth models
     "Token",
     "TokenData",
-    
     # Game models
     "GameMode",
     "Profession",

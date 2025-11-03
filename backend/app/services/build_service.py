@@ -142,7 +142,7 @@ class BuildService:
         """Generate a build using AI."""
         prompt = f"""Generate an optimal {profession_value} build for {game_mode_value} WvW with {role_value} role.
 
-Additional requirements: {request.custom_requirements or 'None'}
+Additional requirements: {request.custom_requirements or "None"}
 
 Provide a meta-appropriate build with:
 - Elite specialization (if applicable)
@@ -179,7 +179,7 @@ Provide a meta-appropriate build with:
         prompt = f"""Analyze this {profession_value} build for {game_mode_value} WvW:
 
 Role: {role_value}
-Specialization: {getattr(build, 'specialization', None) or 'Core'}
+Specialization: {getattr(build, "specialization", None) or "Core"}
 
 Provide:
 1. Strengths

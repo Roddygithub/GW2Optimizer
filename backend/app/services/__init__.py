@@ -17,12 +17,12 @@ from .email_service import send_verification_email  # noqa: F401
 from .scheduler import scheduler  # noqa: F401
 
 __all__ = [
-    'AIService',
-    'GW2APIService',
-    'McMAnalyticsService',
-    'UserService',
-    'TeamServiceDB',
-    'BuildServiceDB',
-    'send_verification_email',
-    'scheduler',
+    "AIService",
+    "GW2APIService",
+    "McMAnalyticsService",
+    "UserService",
+    "TeamServiceDB",
+    "BuildServiceDB",
+    "send_verification_email",
+    "scheduler",
 ]

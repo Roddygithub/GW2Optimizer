@@ -33,17 +33,17 @@ class ProjectCleaner:
             "dirs_removed": 0,
             "bytes_freed": 0,
             "files_moved": 0,
-            "files_kept": 0
+            "files_kept": 0,
         }
         self.dry_run = False
-    
+
     def clean_pycache(self):
         """Remove all __pycache__ directories and .pyc files"""
         log("\n🧹 Cleaning Python cache files...", Colors.BLUE)
-        
+
         pycache_dirs = list(self.project_root.rglob("__pycache__"))
         pyc_files = list(self.project_root.rglob("*.pyc"))
-        
+
         # Remove .pyc files first (before removing directories)
         for pyc_file in pyc_files:
             try:
@@ -56,7 +56,7 @@ class ProjectCleaner:
             except (FileNotFoundError, OSError):
                 # File already removed or inaccessible
                 pass
-        
+
         # Then remove __pycache__ directories
         for pycache_dir in pycache_dirs:
             try:
@@ -64,22 +64,28 @@ class ProjectCleaner:
                     if not self.dry_run:
                         shutil.rmtree(pycache_dir, ignore_errors=True)
                     self.stats["dirs_removed"] += 1
-                    log(f"  ✓ Removed: {pycache_dir.relative_to(self.project_root)}", Colors.GREEN)
+                    log(
+                        f"  ✓ Removed: {pycache_dir.relative_to(self.project_root)}",
+                        Colors.GREEN,
+                    )
             except (FileNotFoundError, OSError):
                 # Directory already removed or inaccessible
                 pass
-        
-        log(f"  📊 Removed {self.stats['dirs_removed']} __pycache__ dirs and {self.stats['files_removed']} .pyc files", Colors.YELLOW)
-    
+
+        log(
+            f"  📊 Removed {self.stats['dirs_removed']} __pycache__ dirs and {self.stats['files_removed']} .pyc files",
+            Colors.YELLOW,
+        )
+
     def clean_logs(self):
         """Clean empty log files"""
         log("\n🧹 Cleaning log files...", Colors.BLUE)
-        
+
         log_files = [
             self.project_root / "reports/ci/monitor_live.log",
-            self.project_root / "reports/ci/monitor_output.log"
+            self.project_root / "reports/ci/monitor_output.log",
         ]
-        
+
         for log_file in log_files:
             if log_file.exists():
                 size = log_file.stat().st_size
@@ -87,22 +93,28 @@ class ProjectCleaner:
                     if not self.dry_run:
                         log_file.unlink()
                     self.stats["files_removed"] += 1
-                    log(f"  ✓ Removed empty: {log_file.relative_to(self.project_root)}", Colors.GREEN)
+                    log(
+                        f"  ✓ Removed empty: {log_file.relative_to(self.project_root)}",
+                        Colors.GREEN,
+                    )
                 else:
-                    log(f"  ⊙ Kept (not empty): {log_file.relative_to(self.project_root)} ({size} bytes)", Colors.YELLOW)
+                    log(
+                        f"  ⊙ Kept (not empty): {log_file.relative_to(self.project_root)} ({size} bytes)",
+                        Colors.YELLOW,
+                    )
                     self.stats["files_kept"] += 1
-    
+
     def organize_reports(self):
         """Organize reports into archive"""
         log("\n📁 Organizing reports...", Colors.BLUE)
-        
+
         reports_dir = self.project_root / "reports"
         archive_dir = reports_dir / "archive"
-        
+
         # Create archive directory
         if not self.dry_run:
             archive_dir.mkdir(exist_ok=True)
-        
+
         # Files to archive (old mission reports)
         files_to_archive = [
             "AUDIT_COMPLET_2025-10-22.md",
@@ -113,7 +125,7 @@ class ProjectCleaner:
             "MISSION_v2.9.0_ACTION_PLAN.md",
             "MISSION_v2.9.0_PROGRESS.md",
         ]
-        
+
         for filename in files_to_archive:
             src = reports_dir / filename
             if src.exists():
@@ -122,20 +134,20 @@ class ProjectCleaner:
                     shutil.move(str(src), str(dst))
                 self.stats["files_moved"] += 1
                 log(f"  ✓ Archived: {filename}", Colors.GREEN)
-        
+
         log(f"  📊 Archived {len(files_to_archive)} old reports", Colors.YELLOW)
-    
+
     def organize_ci_reports(self):
         """Organize CI reports into archive"""
         log("\n📁 Organizing CI reports...", Colors.BLUE)
-        
+
         ci_dir = self.project_root / "reports/ci"
         archive_dir = ci_dir / "archive"
-        
+
         # Create archive directory
         if not self.dry_run:
             archive_dir.mkdir(exist_ok=True)
-        
+
         # Files to archive (old CI reports)
         files_to_archive = [
             "ALL_TESTS_FIXED.md",
@@ -162,7 +174,7 @@ class ProjectCleaner:
             "SESSION_FINAL_REPORT_v2.0.0.md",
             "SESSION_FINAL_REPORT_v2.4.2.md",
         ]
-        
+
         for filename in files_to_archive:
             src = ci_dir / filename
             if src.exists():
@@ -171,20 +183,20 @@ class ProjectCleaner:
                     shutil.move(str(src), str(dst))
                 self.stats["files_moved"] += 1
                 log(f"  ✓ Archived: {filename}", Colors.GREEN)
-        
+
         # Keep only the latest mission report
         log(f"  ⊙ Kept: MISSION_v2.7.0_FINAL_REPORT.md (latest)", Colors.YELLOW)
         self.stats["files_kept"] += 1
-        
+
         log(f"  📊 Archived {len(files_to_archive)} old CI reports", Colors.YELLOW)
-    
+
     def create_index(self):
         """Create index files for documentation"""
         log("\n📝 Creating documentation index...", Colors.BLUE)
-        
+
         # Main reports index
         reports_index = self.project_root / "reports/README.md"
-        
+
         index_content = """# 📊 REPORTS INDEX - GW2Optimizer v3.0.0
 
 **Last Updated**: {timestamp}
@@ -240,16 +252,16 @@ For setup and deployment guides, see:
 
 **Generated**: {timestamp}
 """.format(timestamp=datetime.utcnow().isoformat())
-        
+
         if not self.dry_run:
             with open(reports_index, "w") as f:
                 f.write(index_content)
-        
+
         log(f"  ✓ Created: reports/README.md", Colors.GREEN)
-        
+
         # Docs index
         docs_index = self.project_root / "docs/README.md"
-        
+
         docs_content = """# 📚 DOCUMENTATION INDEX - GW2Optimizer v3.0.0
 
 **Last Updated**: {timestamp}
@@ -328,17 +340,17 @@ Mission reports and implementation details are in:
 
 **Generated**: {timestamp}
 """.format(timestamp=datetime.utcnow().isoformat())
-        
+
         if not self.dry_run:
             with open(docs_index, "w") as f:
                 f.write(docs_content)
-        
+
         log(f"  ✓ Created: docs/README.md", Colors.GREEN)
-    
+
     def generate_report(self):
         """Generate cleanup report"""
         log("\n📊 Generating cleanup report...", Colors.BLUE)
-        
+
         report = f"""# 🧹 PROJECT CLEANUP REPORT
 
 **Date**: {datetime.utcnow().isoformat()}
@@ -349,15 +361,15 @@ Mission reports and implementation details are in:
 ## 📊 CLEANUP STATISTICS
 
 ### Files
-- **Removed**: {self.stats['files_removed']} files
-- **Moved**: {self.stats['files_moved']} files
-- **Kept**: {self.stats['files_kept']} files
+- **Removed**: {self.stats["files_removed"]} files
+- **Moved**: {self.stats["files_moved"]} files
+- **Kept**: {self.stats["files_kept"]} files
 
 ### Directories
-- **Removed**: {self.stats['dirs_removed']} directories
+- **Removed**: {self.stats["dirs_removed"]} directories
 
 ### Space
-- **Freed**: {self.stats['bytes_freed']:,} bytes ({self.stats['bytes_freed'] / 1024:.2f} KB)
+- **Freed**: {self.stats["bytes_freed"]:,} bytes ({self.stats["bytes_freed"] / 1024:.2f} KB)
 
 ---
 
@@ -476,45 +488,48 @@ GW2Optimizer/
 
 **Generated**: {datetime.utcnow().isoformat()}
 """
-        
+
         report_path = self.project_root / "reports/CLEANUP_REPORT.md"
         if not self.dry_run:
             with open(report_path, "w") as f:
                 f.write(report)
-        
+
         log(f"  ✓ Created: reports/CLEANUP_REPORT.md", Colors.GREEN)
-        
+
         return report
-    
+
     def run(self, dry_run=False):
         """Run all cleanup tasks"""
         self.dry_run = dry_run
-        
+
         log("=" * 80, Colors.BLUE)
         log(" 🧹 PROJECT CLEANUP - GW2Optimizer v3.0.0", Colors.BLUE)
         log("=" * 80, Colors.BLUE)
-        
+
         if dry_run:
             log("\n⚠️ DRY RUN MODE - No files will be modified", Colors.YELLOW)
-        
+
         self.clean_pycache()
         self.clean_logs()
         self.organize_reports()
         self.organize_ci_reports()
         self.create_index()
         report = self.generate_report()
-        
+
         log("\n" + "=" * 80, Colors.BLUE)
         log(" ✅ CLEANUP COMPLETE", Colors.GREEN)
         log("=" * 80, Colors.BLUE)
-        
+
         log(f"\n📊 Summary:", Colors.YELLOW)
         log(f"  - Files removed: {self.stats['files_removed']}", Colors.NC)
         log(f"  - Files moved: {self.stats['files_moved']}", Colors.NC)
         log(f"  - Files kept: {self.stats['files_kept']}", Colors.NC)
         log(f"  - Directories removed: {self.stats['dirs_removed']}", Colors.NC)
-        log(f"  - Space freed: {self.stats['bytes_freed']:,} bytes ({self.stats['bytes_freed'] / 1024:.2f} KB)", Colors.NC)
-        
+        log(
+            f"  - Space freed: {self.stats['bytes_freed']:,} bytes ({self.stats['bytes_freed'] / 1024:.2f} KB)",
+            Colors.NC,
+        )
+
         log(f"\n📝 Report saved: reports/CLEANUP_REPORT.md", Colors.GREEN)
         log(f"📚 Documentation index: docs/README.md", Colors.GREEN)
         log(f"📊 Reports index: reports/README.md", Colors.GREEN)
@@ -522,13 +537,13 @@ GW2Optimizer/
 
 if __name__ == "__main__":
     import sys
-    
+
     project_root = Path(__file__).parent.parent
     cleaner = ProjectCleaner(project_root)
-    
+
     # Check for --dry-run flag
     dry_run = "--dry-run" in sys.argv
-    
+
     try:
         cleaner.run(dry_run=dry_run)
     except KeyboardInterrupt:
@@ -537,5 +552,6 @@ if __name__ == "__main__":
     except Exception as e:
         log(f"\n\n❌ Error: {e}", Colors.RED)
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
