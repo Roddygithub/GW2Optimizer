@@ -291,3 +291,7 @@ class BuildService:
         except Exception as e:
             logger.error(f"❌ Error counting builds for user {user.username}: {e}")
             return 0
+
+
+# Compatibility alias: preserve historic import name used across the codebase
+BuildServiceDB = BuildService

@@ -485,3 +485,7 @@ class TeamService:
         except Exception as e:
             logger.error(f"❌ Error counting teams for user {user.username}: {e}")
             return 0
+
+
+# Compatibility alias: preserve historic import name
+TeamServiceDB = TeamService
