@@ -1,6 +1,5 @@
 """Database initialization."""
 
-
 from app.core.logging import logger
 from app.db.base_class import Base
 

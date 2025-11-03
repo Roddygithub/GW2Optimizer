@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sess
 
 from app.core.config import settings
 from app.core.logging import logger
-from app.db.base_class import Base
 
 # Database URL
 DATABASE_URL = settings.DATABASE_URL
