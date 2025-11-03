@@ -8,6 +8,7 @@ database operations, and API request/response schemas.
 
 # Build models
 from app.models.build import Build, BuildCreate, BuildResponse, BuildDB  # noqa: F401
+from app.models.build import GameMode, Profession, Role  # noqa: F401
 
 # Team models
 from app.models.team import (  # noqa: F401
@@ -30,7 +31,6 @@ from app.models.user import UserCreate, UserLogin, UserOut, UserUpdate  # noqa: 
 from app.models.token import Token, TokenData  # noqa: F401
 
 # Game models
-from app.models.game import GameMode, Profession, Role  # noqa: F401
 
 __all__ = [
     # Build models
@@ -38,7 +38,9 @@ __all__ = [
     "BuildCreate",
     "BuildResponse",
     "BuildDB",
-    
+    "GameMode",
+    "Profession",
+    "Role",
     # Team models
     "TeamComposition",
     "TeamResponse",
@@ -46,12 +48,10 @@ __all__ = [
     "TeamSlotDB",
     "TeamCompositionCreate",
     "TeamCompositionUpdate",
-    
     # Chat models
     "ChatMessage",
     "ChatRequest",
     "ChatResponse",
-    
     # User models
     "User",
     "LoginHistory",
@@ -59,13 +59,7 @@ __all__ = [
     "UserLogin",
     "UserOut",
     "UserUpdate",
-    
     # Auth models
     "Token",
     "TokenData",
-    
-    # Game models
-    "GameMode",
-    "Profession",
-    "Role",
 ]

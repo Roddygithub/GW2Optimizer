@@ -76,6 +76,14 @@ When using GW2Optimizer:
 * Adjust limits based on your infrastructure
 * Monitor for abuse patterns
 
+## Known risk: ecdsa dependency
+* **Status**: upstream vulnerability reported; no fixed version publicly available at the time of writing.
+* **Impact**: limited in our context. We rely on `python-jose[cryptography]` and do not use ECDSA directly in application flows.
+* **Mitigation**:
+  * Continuous monitoring via Dependabot and `pip-audit`.
+  * Re-evaluate monthly or when upstream releases a patched version.
+* **Decision**: risk accepted (temporary), documented and tracked.
+
 ## Security Updates
 
 Security updates will be released as patch versions (e.g., 1.1.1) and announced via:
@@ -96,5 +104,5 @@ For security concerns, please create a private security advisory on GitHub or co
 
 ---
 
-**Last Updated**: 2025-10-20  
-**Version**: 1.1.0
+**Last Updated**: 2025-11-03  
+**Version**: 1.1.1
