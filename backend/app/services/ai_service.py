@@ -6,13 +6,13 @@ Il charge et orchestre dynamiquement les agents et workflows, en abstrayant
 la complexité sous-jacente.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional  # noqa: F401 (used in type annotations)
 from app.core.logging import logger
 from app.agents.base import BaseAgent
 from app.agents.recommender_agent import RecommenderAgent
 from app.agents.synergy_agent import SynergyAgent
 from app.agents.optimizer_agent import OptimizerAgent
-from app.workflows.base import BaseWorkflow
+from app.workflows.base import BaseWorkflow  # noqa: F401 (used in type annotations)
 from app.workflows.build_optimization_workflow import BuildOptimizationWorkflow
 from app.workflows.team_analysis_workflow import TeamAnalysisWorkflow
 from app.workflows.learning_workflow import LearningWorkflow

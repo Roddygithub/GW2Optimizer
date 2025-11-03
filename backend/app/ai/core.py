@@ -17,15 +17,16 @@ Feature Flags:
     - AI_FALLBACK_ENABLED: Active fallback rule-based
 """
 
-import uuid
-import httpx
 import json
-from typing import Dict, List, Optional, Any
+import uuid
 from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional  # noqa: F401 (used in type annotations)
 
-from app.core.logging import logger
+import httpx
+
 from app.core.config import settings
+from app.core.logging import logger
 
 
 class GameMode(str, Enum):

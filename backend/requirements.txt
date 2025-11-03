@@ -1,5 +1,5 @@
 # FastAPI & Web Framework
-fastapi==0.109.0
+fastapi==0.109.1
 uvicorn[standard]==0.27.0
 pydantic==2.5.3
 pydantic-settings==2.1.0
@@ -7,7 +7,7 @@ slowapi==0.1.9
 
 # HTTP & Requests
 httpx==0.25.2
-requests==2.31.0
+requests==2.32.4
 
 # Scraping
 beautifulsoup4==4.12.3
@@ -24,7 +24,7 @@ psycopg2-binary==2.9.9
 ollama==0.1.6
 
 # Data Processing
-python-multipart==0.0.6
+python-multipart==0.0.18
 python-json-logger==2.0.7
 
 # Validation & Parsing
@@ -40,8 +40,8 @@ aiofiles==23.2.1
 # Authentication
 bcrypt==4.0.1
 passlib[bcrypt]==1.7.4
-python-jose[cryptography]==3.3.0
-python-multipart==0.0.6
+python-jose[cryptography]==3.4.0
+python-multipart==0.0.18
 
 # Utilities
 python-dotenv==1.0.0
@@ -55,7 +55,7 @@ pytest-cov==4.1.0
 pytest-mock==3.12.0
 
 # Linting & Formatting
-black==24.1.1
+black==24.3.0
 flake8==7.0.0
 mypy==1.8.0
 isort==5.13.2
@@ -66,4 +66,4 @@ types-beautifulsoup4==4.12.0.20240106
 
 # Monitoring & Observability
 prometheus-fastapi-instrumentator==6.1.0
-sentry-sdk[fastapi]==1.40.0
+sentry-sdk[fastapi]==1.45.1

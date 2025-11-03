@@ -1,16 +1,17 @@
 """
 AI Team Optimizer API
-Endpoint pour générer des compositions d'équipe optimisées avec Mistral AI
+
+This module provides an API endpoint for generating optimized team compositions
+using Mistral AI and live GW2 data.
 """
 
-from fastapi import APIRouter, HTTPException, Query
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, Optional  # noqa: F401 (used in type annotations)
+
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 
 from app.core.logging import logger
-from app.services.gw2_api import get_gw2_api_service
-from app.services.mistral_ai import get_mistral_service
 
 router = APIRouter()
 
