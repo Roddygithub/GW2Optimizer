@@ -159,8 +159,30 @@ GW2Optimizer/
 ### Prérequis
 - Python 3.11+
 - Node.js 18+
-- Ollama installé localement
-- Modèle Mistral 7B téléchargé (`ollama pull mistral`)
+- PostgreSQL 14+
+- Redis 6+
+- Docker (optionnel pour le déploiement)
+
+### Configuration de pre-commit
+
+Pour activer les vérifications automatiques avant chaque commit :
+
+```bash
+# Installation de pre-commit
+pip install pre-commit
+
+# Installation des hooks git
+pre-commit install
+
+# Exécuter sur tous les fichiers (optionnel mais recommandé pour la première installation)
+pre-commit run --all-files
+```
+
+Les hooks suivants sont configurés :
+- **Ruff** : Vérification des imports inutilisés (F401) et variables inutilisées (F841)
+- **Ruff Format** : Formatage automatique du code
+- **End-of-file fixer** : Assure une seule ligne vide à la fin des fichiers
+- **Trailing whitespace** : Supprime les espaces en fin de ligne
 
 ### Backend
 ```bash
