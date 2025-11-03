@@ -6,20 +6,20 @@ and includes all API routers.
 """
 
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator, List, Optional
+from typing import Any, AsyncGenerator
 
-from fastapi import APIRouter, FastAPI, Request, status
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
 from app.core.logging import logger
 from app.middleware import add_security_middleware
-from app.core.redis import connect_to_redis, redis_client
+from app.core.redis import connect_to_redis, get_redis_client
 from app.exceptions import add_exception_handlers
 
 # Monitoring imports
@@ -110,6 +110,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.error(f"❌ Error shutting down scheduler: {str(e)}")
 
     # Close Redis connection
+    redis_client = await get_redis_client()
     if settings.REDIS_ENABLED and redis_client:
         await redis_client.close()
         logger.info("🔌 Redis connection closed.")

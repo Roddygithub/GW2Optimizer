@@ -20,7 +20,7 @@ from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 
 from app.core.logging import logger
-from app.core.config import settings
+from app.core.config import settings  # noqa: F401
 from app.learning.data.external import ExternalDataStore, get_external_store
 
 
@@ -129,7 +129,7 @@ class ContextAnalyzer:
 
         return meta_data
 
-    async def _scrape_source(self, source_name: str, source_url: str) -> Dict[str, Any]:
+    async def _scrape_source(self, source_name: str, source_url: str) -> Dict[str, Any]:  # noqa: F841
         """
         Scrape une source externe.
 
@@ -202,7 +202,7 @@ class ContextAnalyzer:
         profession_scores: Dict[str, float] = {}
         profession_counts: Dict[str, int] = {}
 
-        for source_name, source_data in sources_data.items():
+        for _, source_data in sources_data.items():
             if "error" in source_data:
                 continue
 

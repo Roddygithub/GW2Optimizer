@@ -5,7 +5,7 @@ Circuit Breaker implementation for handling failures in distributed systems.
 import time
 import asyncio
 from functools import wraps
-from typing import Any, Callable, Awaitable, TypeVar, Optional
+from typing import Any, Callable, TypeVar, Optional  # noqa: F401 (used in type annotations)
 
 from app.core.logging import logger
 

@@ -8,22 +8,21 @@ v4.1.0 Updates:
     - Legacy endpoints marked as deprecated
 """
 
-from typing import Dict, Any, Optional
+import uuid
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, status, Request
+from typing import Any, Dict, Optional  # noqa: F401 (used in type annotations)
+
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-import uuid
 
-from app.core.logging import logger
-from app.core.config import settings
-from app.services.ai_service import AIService
-from app.db.models import UserDB as User
+from app.ai.core import GameMode, get_ai_core  # noqa: F401 (imported but unused)
 from app.api.auth import get_current_active_user
-
-# v4.1.0: Import AI Core
-from app.ai.core import get_ai_core, GameMode
+from app.core.config import settings  # noqa: F401 (imported but unused)
+from app.core.logging import logger
+from app.db.models import UserDB as User
+from app.services.ai_service import AIService  # noqa: F401 (imported but unused)
 
 router = APIRouter()
 

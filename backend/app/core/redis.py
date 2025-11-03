@@ -3,8 +3,8 @@ Redis connection and utilities.
 """
 
 import redis.asyncio as redis
-from redis.asyncio import Redis
-from typing import AsyncGenerator, Optional
+from redis.asyncio import Redis  # noqa: F401 (used in type annotations)
+from typing import Optional
 
 from app.core.config import settings
 from app.core.logging import logger

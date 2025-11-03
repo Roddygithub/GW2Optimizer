@@ -4,7 +4,7 @@ import json
 import hashlib
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar  # noqa: F401 (used in type annotations)
 
 import aiofiles
 

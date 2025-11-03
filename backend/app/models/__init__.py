@@ -1,11 +1,36 @@
-"""Data models."""
+"""
+Data Models
 
-from app.models.build import Build, BuildCreate, BuildResponse, BuildDB
-from app.models.team import TeamComposition, TeamResponse, TeamCompositionDB, TeamSlotDB
-from app.models.chat import ChatMessage, ChatRequest, ChatResponse
-from app.db.models import UserDB as User, LoginHistory
-from app.models.user import UserCreate, UserLogin, UserOut, UserUpdate
-from app.models.token import Token, TokenData
+This module contains all Pydantic and SQLAlchemy models used throughout the application.
+Models are organized by domain (builds, teams, users, etc.) and are used for data validation,
+database operations, and API request/response schemas.
+"""
+
+# Build models
+from app.models.build import Build, BuildCreate, BuildResponse, BuildDB  # noqa: F401
+
+# Team models
+from app.models.team import (  # noqa: F401
+    TeamComposition,
+    TeamResponse,
+    TeamCompositionDB,
+    TeamSlotDB,
+    TeamCompositionCreate,
+    TeamCompositionUpdate,
+)
+
+# Chat models
+from app.models.chat import ChatMessage, ChatRequest, ChatResponse  # noqa: F401
+
+# User models
+from app.db.models import UserDB as User, LoginHistory  # noqa: F401
+from app.models.user import UserCreate, UserLogin, UserOut, UserUpdate  # noqa: F401
+
+# Auth models
+from app.models.token import Token, TokenData  # noqa: F401
+
+# Game models
+from app.models.game import GameMode, Profession, Role  # noqa: F401
 
 __all__ = [
     # Build models
@@ -13,27 +38,34 @@ __all__ = [
     "BuildCreate",
     "BuildResponse",
     "BuildDB",
+    
     # Team models
     "TeamComposition",
     "TeamResponse",
     "TeamCompositionDB",
     "TeamSlotDB",
+    "TeamCompositionCreate",
+    "TeamCompositionUpdate",
+    
     # Chat models
     "ChatMessage",
     "ChatRequest",
     "ChatResponse",
+    
     # User models
     "User",
+    "LoginHistory",
     "UserCreate",
     "UserLogin",
     "UserOut",
     "UserUpdate",
+    
     # Auth models
     "Token",
     "TokenData",
-    "TeamComposition",
-    "TeamResponse",
-    "ChatMessage",
-    "ChatRequest",
-    "ChatResponse",
+    
+    # Game models
+    "GameMode",
+    "Profession",
+    "Role",
 ]
