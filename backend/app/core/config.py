@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     # Authentication
     SECRET_KEY: str = "your-secret-key-change-in-production"
     OLD_SECRET_KEYS: List[str] = []  # For key rotation
+    
+    # GW2 Sync Configuration
+    GW2_SYNC_OPEN: bool = False  # If True, allows unauthenticated access to the sync endpoint
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7

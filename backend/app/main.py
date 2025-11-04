@@ -223,6 +223,8 @@ def include_routers(app: FastAPI) -> None:
     api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 
     # Protected routes (require authentication)
+    from app.api import sync
+    api_router.include_router(sync.router, prefix="/sync", tags=["Sync"])
     api_router.include_router(ai.router, prefix="/ai", tags=["AI"])
     api_router.include_router(ai_optimizer.router, prefix="/ai-optimizer", tags=["AI Optimizer"])
     api_router.include_router(builds.router, tags=["Builds"])
