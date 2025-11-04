@@ -1,23 +1,5 @@
-# Simple configuration for GitHub Labeler v5
-# https://github.com/actions/labeler
+# Minimal configuration for GitHub Labeler v5
+# Only one label for testing
 
 'backend':
   - '**/*.py'
-
-'frontend':
-  - '**/*.{ts,tsx,js,jsx,css,scss}'
-
-'ci':
-  - '.github/workflows/*.{yml,yaml}'
-  - '.github/actions/**/*.{yml,yaml}'
-
-'docs':
-  - '**/*.md'
-  - '**/*.mdx'
-
-'e2e':
-  - 'frontend/tests/e2e/**'
-
-'security':
-  - '**/package*.json'
-  - '**/*.lock'
