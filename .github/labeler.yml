@@ -2,41 +2,42 @@
 # See: https://github.com/actions/labeler
 
 'backend':
-  - any:
-    - changed-files:
-      - any-glob-to-any-file: ['backend/**', '**/*.py']
-      - base-branch: ['feat/connector-gw2-v1']
-    exclude: ['frontend/**', 'docs/**']
+  - 'backend/**'
+  - '**/*.py'
+  - '!frontend/**'
+  - '!docs/**'
 
 'frontend':
-  - any:
-    - changed-files:
-      - any-glob-to-any-file: ['frontend/**', '**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx', '**/*.css', '**/*.scss']
-      - base-branch: ['feat/connector-gw2-v1']
-    exclude: ['backend/**', 'docs/**']
+  - 'frontend/**'
+  - '**/*.ts'
+  - '**/*.tsx'
+  - '**/*.js'
+  - '**/*.jsx'
+  - '**/*.css'
+  - '**/*.scss'
+  - '!backend/**'
+  - '!docs/**'
 
 'ci':
-  - any:
-    - changed-files:
-      - any-glob-to-any-file: ['.github/workflows/**', '.github/actions/**', '**/*.yml', '**/*.yaml']
-      - base-branch: ['feat/connector-gw2-v1']
-    exclude: ['**/node_modules/**', '**/dist/**', '**/build/**']
+  - '.github/workflows/**'
+  - '.github/actions/**'
+  - '**/*.yml'
+  - '**/*.yaml'
+  - '!**/node_modules/**'
+  - '!**/dist/**'
+  - '!**/build/**'
 
 'docs':
-  - any:
-    - changed-files:
-      - any-glob-to-any-file: ['docs/**', 'mkdocs.yml', '**/*.md']
-      - base-branch: ['feat/connector-gw2-v1']
-    exclude: ['**/node_modules/**', '**/dist/**', '**/build/**']
+  - 'docs/**'
+  - 'mkdocs.yml'
+  - '**/*.md'
+  - '!**/node_modules/**'
+  - '!**/dist/**'
+  - '!**/build/**'
 
 'e2e':
-  - any:
-    - changed-files:
-      - any-glob-to-any-file: ['frontend/tests/e2e/**']
-      - base-branch: ['feat/connector-gw2-v1']
+  - 'frontend/tests/e2e/**'
 
 'security':
-  - any:
-    - changed-files:
-      - any-glob-to-any-file: ['backend/requirements*.txt', 'frontend/package*.json']
-      - base-branch: ['feat/connector-gw2-v1']
+  - 'backend/requirements*.txt'
+  - 'frontend/package*.json'
