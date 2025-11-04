@@ -1,6 +1,5 @@
 """Snowcrows format exporter."""
 
-import json
 from typing import Dict, List
 from datetime import datetime
 

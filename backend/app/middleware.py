@@ -7,7 +7,6 @@ and adding correlation IDs and process time information to requests.
 import os
 import time
 import uuid
-from typing import Dict
 
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware

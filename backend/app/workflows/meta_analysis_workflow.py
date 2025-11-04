@@ -8,7 +8,7 @@ Orchestre le Meta Agent et l'intégration API GW2 pour une analyse approfondie.
 from typing import Any, Dict, List, Optional
 from datetime import datetime
 
-from app.workflows.base import BaseWorkflow, WorkflowStep, WorkflowStatus
+from app.workflows.base import BaseWorkflow, WorkflowStep
 from app.agents.meta_agent import MetaAgent
 from app.services.gw2_api_client import GW2APIClient
 from app.core.logging import logger

@@ -10,7 +10,7 @@ from datetime import timedelta
 from functools import wraps
 import os
 import time
-from typing import Any, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
@@ -46,7 +46,6 @@ from app.models.user import (
     UserOut,
     UserUpdate,
     UserPreferencesUpdate,
-    PasswordResetRequest,
     PasswordReset,
     LoginHistoryOut,
 )

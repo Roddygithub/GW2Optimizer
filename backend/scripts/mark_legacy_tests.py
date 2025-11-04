@@ -4,7 +4,6 @@ Mark legacy tests with @pytest.mark.legacy decorator.
 Tests that fail due to Pydantic validation or other legacy issues.
 """
 
-import os
 from pathlib import Path
 
 # Legacy test files and their failing tests
@@ -45,21 +44,21 @@ def mark_test_as_legacy(file_path: Path, test_name: str) -> bool:
     content = file_path.read_text()
 
     # Check if already marked
-    if f"@pytest.mark.legacy\ndef {test_name}" in content:
-        print(f"  ✓ {test_name} already marked")
+    if "@pytest.mark.legacy\ndef {}".format(test_name) in content:
+        print("  ✓ {} already marked".format(test_name))
         return False
 
     # Find the test function
-    search_pattern = f"def {test_name}("
+    search_pattern = "def {}(".format(test_name)
     if search_pattern not in content:
-        print(f"  ✗ {test_name} not found in {file_path.name}")
+        print("  ✗ {} not found in {}".format(test_name, file_path.name))
         return False
 
     # Add decorator before function
     lines = content.split("\n")
     new_lines = []
     for i, line in enumerate(lines):
-        if f"def {test_name}(" in line:
+        if "def {}(".format(test_name) in line:
             # Check if there's already a decorator
             if i > 0 and "@" in lines[i - 1]:
                 # Add after existing decorators
@@ -71,7 +70,7 @@ def mark_test_as_legacy(file_path: Path, test_name: str) -> bool:
         new_lines.append(line)
 
     file_path.write_text("\n".join(new_lines))
-    print(f"  ✓ {test_name} marked as legacy")
+    print("  ✓ {} marked as legacy".format(test_name))
     return True
 
 
@@ -86,18 +85,18 @@ def main():
     for file_name, test_names in LEGACY_TESTS.items():
         file_path = tests_dir / file_name
         if not file_path.exists():
-            print(f"⚠️  {file_name} not found, skipping")
+            print("⚠️  {} not found, skipping".format(file_name))
             continue
 
-        print(f"📄 {file_name}:")
+        print("\n📄 Processing {}...".format(file_name))
         for test_name in test_names:
             if mark_test_as_legacy(file_path, test_name):
                 total_marked += 1
         print()
 
-    print(f"✅ Marked {total_marked} tests as legacy")
-    print(f"\nRun critical tests only: pytest -m 'not legacy'")
-    print(f"Run legacy tests only: pytest -m legacy")
+    print("\n✅ Done! Marked {} tests as legacy.".format(total_marked))
+    print("\nRun critical tests only: pytest -m 'not legacy'")
+    print("Run legacy tests only: pytest -m legacy")
 
 
 if __name__ == "__main__":

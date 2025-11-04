@@ -4,10 +4,9 @@ McM (Mists of Castrum Marinum) Analytics Service.
 Provides analytics and metrics for World vs World combat.
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from datetime import datetime, timedelta
 import asyncio
-from app.core.logging import logger
 
 
 class McMAnalyticsService:

@@ -1,33 +1,46 @@
-backend:
-  changed-files:
-    any-glob-to-any-file: "backend/**"
+# Label pour les modifications dans le backend
+'backend':
+  - 'backend/**'
+  - '**/*.py'
+  - '!frontend/**'
+  - '!docs/**'
 
-frontend:
-  changed-files:
-    any-glob-to-any-file: "frontend/**"
+# Label pour les modifications dans le frontend
+'frontend':
+  - 'frontend/**'
+  - '**/*.ts'
+  - '**/*.tsx'
+  - '**/*.js'
+  - '**/*.jsx'
+  - '**/*.css'
+  - '**/*.scss'
+  - '!backend/**'
+  - '!docs/**'
 
-ci:
-  changed-files:
-    any-glob-to-any-file: ".github/workflows/**"
+# Label pour les modifications dans la CI/CD
+'ci':
+  - '.github/workflows/**'
+  - '.github/actions/**'
+  - '**/*.yml'
+  - '**/*.yaml'
+  - '!**/node_modules/**'
+  - '!**/dist/**'
+  - '!**/build/**'
 
-docs:
-  changed-files:
-    any-glob-to-any-file:
-      - "docs/**"
-      - "mkdocs.yml"
+# Label pour les modifications dans la documentation
+'docs':
+  - 'docs/**'
+  - 'mkdocs.yml'
+  - '**/*.md'
+  - '!**/node_modules/**'
+  - '!**/dist/**'
+  - '!**/build/**'
 
-e2e:
-  changed-files:
-    any-glob-to-any-file: "frontend/tests/e2e/**"
+# Label pour les tests end-to-end
+'e2e':
+  - 'frontend/tests/e2e/**'
 
-security:
-  changed-files:
-    any-glob-to-any-file:
-      - "backend/requirements*.txt"
-      - "frontend/package*.json"
-
-technical-debt:
-  changed-files:
-    any-glob-to-any-file:
-      - "audit-reports/**"
-      - "**/*.md"
+# Label pour les modifications liées à la sécurité
+'security':
+  - 'backend/requirements*.txt'
+  - 'frontend/package*.json'
