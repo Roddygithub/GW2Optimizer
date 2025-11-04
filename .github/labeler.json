@@ -1,9 +1,3 @@
 {
-  "backend": {
-    "changed-files": [
-      {
-        "any-glob-to-any-file": "**/*.py"
-      }
-    ]
-  }
+  "backend": ["**/*.py"]
 }
