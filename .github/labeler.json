@@ -1,8 +1,9 @@
 {
-  "backend": ["backend/**", "**/*.py", "!frontend/**", "!docs/**"],
-  "frontend": ["frontend/**", "**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "**/*.css", "**/*.scss", "!backend/**", "!docs/**"],
-  "ci": [".github/workflows/**", ".github/actions/**", "**/*.yml", "**/*.yaml", "!**/node_modules/**", "!**/dist/**", "!**/build/**"],
-  "docs": ["docs/**", "mkdocs.yml", "**/*.md", "!**/node_modules/**", "!**/dist/**", "!**/build/**"],
-  "e2e": ["frontend/tests/e2e/**"],
-  "security": ["backend/requirements*.txt", "frontend/package*.json"]
+  "backend": {
+    "changed-files": [
+      {
+        "any-glob-to-any-file": "**/*.py"
+      }
+    ]
+  }
 }
