@@ -199,13 +199,15 @@ def main():
 
 **Mission**: Production-Ready + E2E Real Conditions
 **Start**: {}
-""".format(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+""".format(
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
 
     # Run test cycles
     for cycle in range(1, MAX_CYCLES + 1):
-        log("\n{}".format('='*70), Colors.BLUE)
+        log("\n{}".format("=" * 70), Colors.BLUE)
         log(" CYCLE {}/{}".format(cycle, MAX_CYCLES), Colors.BLUE)
-        log("{}".format('='*70), Colors.BLUE)
+        log("{}".format("=" * 70), Colors.BLUE)
 
         start_time = time.time()
         exit_code, logs = run_tests()
@@ -222,7 +224,7 @@ def main():
             fixes = auto_fix(logs)
             full_report += "### Cycle {} - ❌ FAILED\n\n".format(cycle)
             full_report += "- Duration: {:.2f}s\n".format(duration)
-            full_report += "- Fixes applied: {}\n\n".format(', '.join(fixes) if fixes else 'None')
+            full_report += "- Fixes applied: {}\n\n".format(", ".join(fixes) if fixes else "None")
 
             if cycle < MAX_CYCLES:
                 log("\n⏳ Waiting 5s before cycle {}...".format(cycle + 1), Colors.YELLOW)

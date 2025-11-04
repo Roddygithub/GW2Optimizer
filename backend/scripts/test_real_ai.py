@@ -59,8 +59,8 @@ async def test_real_ai_optimization():
 
         if wvw_data.get("status") == "success":
             log("  ✅ WvW data fetched successfully", Colors.GREEN)
-            log("  - Matches: {}".format(len(wvw_data.get('matches', []))), Colors.NC)
-            log("  - Objectives: {}".format(len(wvw_data.get('objectives', []))), Colors.NC)
+            log("  - Matches: {}".format(len(wvw_data.get("matches", []))), Colors.NC)
+            log("  - Objectives: {}".format(len(wvw_data.get("objectives", []))), Colors.NC)
         else:
             log("  ⚠️ WvW data fetch failed, using fallback", Colors.YELLOW)
             wvw_data = {}
@@ -80,10 +80,10 @@ async def test_real_ai_optimization():
         composition = await mistral_service.generate_team_composition(wvw_data=wvw_data, team_size=50, game_mode="zerg")
 
         log("  ✅ Team composition generated", Colors.GREEN)
-        log("  - Name: {}".format(composition.get('name', 'Unknown')), Colors.NC)
-        log("  - Size: {} players".format(composition.get('size', 0)), Colors.NC)
-        log("  - Source: {}".format(composition.get('source', 'Unknown')), Colors.NC)
-        log("  - Model: {}".format(composition.get('model', 'Unknown')), Colors.NC)
+        log("  - Name: {}".format(composition.get("name", "Unknown")), Colors.NC)
+        log("  - Size: {} players".format(composition.get("size", 0)), Colors.NC)
+        log("  - Source: {}".format(composition.get("source", "Unknown")), Colors.NC)
+        log("  - Model: {}".format(composition.get("model", "Unknown")), Colors.NC)
     except Exception as e:
         log("  ❌ Error generating composition: {}".format(str(e)), Colors.RED)
         return 1
@@ -140,7 +140,7 @@ async def test_real_ai_optimization():
     # Display strategy
     if "strategy" in composition:
         log("  Strategy:", Colors.YELLOW)
-        log("    {}".format(composition['strategy']), Colors.NC)
+        log("    {}".format(composition["strategy"]), Colors.NC)
         log("", Colors.NC)
 
     # Display strengths/weaknesses
@@ -161,9 +161,9 @@ async def test_real_ai_optimization():
 
     log("⏱️ Step 5: Performance Metrics:", Colors.BLUE)
     log("  - Total Duration: {:.2f}s".format(duration), Colors.NC)
-    log("  - GW2 API: {}".format('Success' if wvw_data else 'Fallback'), Colors.NC)
-    log("  - Mistral AI: {}".format(composition.get('source', 'Unknown')), Colors.NC)
-    log("  - Validation: {}".format('✅ Valid' if validation['valid'] else '⚠️ Issues'), Colors.NC)
+    log("  - GW2 API: {}".format("Success" if wvw_data else "Fallback"), Colors.NC)
+    log("  - Mistral AI: {}".format(composition.get("source", "Unknown")), Colors.NC)
+    log("  - Validation: {}".format("✅ Valid" if validation["valid"] else "⚠️ Issues"), Colors.NC)
     log("", Colors.NC)
 
     # Step 6: Save report
@@ -263,19 +263,19 @@ def generate_markdown_report(data: dict) -> str:
 ### Builds
 
 """.format(
-        timestamp=data['timestamp'],
-        duration=data['duration_seconds'],
-        status='✅ SUCCESS' if validation['valid'] else '⚠️ ISSUES',
-        team_size=data['configuration']['team_size'],
-        game_mode=data['configuration']['game_mode'],
-        focus=data['configuration']['focus'],
-        gw2_status=data['wvw_data']['status'],
-        matches_count=data['wvw_data']['matches_count'],
-        objectives_count=data['wvw_data']['objectives_count'],
-        name=composition.get('name', 'Unknown'),
-        size=composition.get('size', 0),
-        source=composition.get('source', 'Unknown'),
-        model=composition.get('model', 'Unknown')
+        timestamp=data["timestamp"],
+        duration=data["duration_seconds"],
+        status="✅ SUCCESS" if validation["valid"] else "⚠️ ISSUES",
+        team_size=data["configuration"]["team_size"],
+        game_mode=data["configuration"]["game_mode"],
+        focus=data["configuration"]["focus"],
+        gw2_status=data["wvw_data"]["status"],
+        matches_count=data["wvw_data"]["matches_count"],
+        objectives_count=data["wvw_data"]["objectives_count"],
+        name=composition.get("name", "Unknown"),
+        size=composition.get("size", 0),
+        source=composition.get("source", "Unknown"),
+        model=composition.get("model", "Unknown"),
     )
 
     # Add builds section
@@ -288,11 +288,11 @@ def generate_markdown_report(data: dict) -> str:
 - **Priority**: {priority}
 - **Description**: {description}
 """.format(
-            profession=build.get('profession', 'Unknown'),
-            role=build.get('role', 'Unknown'),
-            count=build.get('count', 0),
-            priority=build.get('priority', 'Unknown'),
-            description=build.get('description', 'N/A')
+            profession=build.get("profession", "Unknown"),
+            role=build.get("role", "Unknown"),
+            count=build.get("count", 0),
+            priority=build.get("priority", "Unknown"),
+            description=build.get("description", "N/A"),
         )
 
     # Add strategy section
@@ -305,7 +305,9 @@ def generate_markdown_report(data: dict) -> str:
 
 ### Strengths
 
-""".format(strategy=composition.get('strategy', 'N/A'))
+""".format(
+        strategy=composition.get("strategy", "N/A")
+    )
 
     # Add strengths
     for strength in composition.get("strengths", []):
@@ -329,16 +331,11 @@ def generate_markdown_report(data: dict) -> str:
 ### Checks
 
 """.format(
-        '✅ Yes' if validation['valid'] else '❌ No',
-        len(validation['errors']),
-        len(validation['warnings'])
+        "✅ Yes" if validation["valid"] else "❌ No", len(validation["errors"]), len(validation["warnings"])
     )
 
     for check_name, check_data in validation.get("checks", {}).items():
-        md += "#### {}\n\n```json\n{}\n```\n\n".format(
-            check_name,
-            json.dumps(check_data, indent=2)
-        )
+        md += "#### {}\n\n```json\n{}\n```\n\n".format(check_name, json.dumps(check_data, indent=2))
 
     if validation["errors"]:
         md += "### Errors\n\n"
@@ -361,16 +358,22 @@ def generate_markdown_report(data: dict) -> str:
 - **GW2 API Success**: {gw2_status}
 - **Mistral Source**: {mistral_source}
 - **Validation Valid**: {validation_status}""".format(
-        duration=data['metrics']['total_duration'],
-        gw2_status='✅ Yes' if data['metrics']['gw2_api_success'] else '❌ No',
-        mistral_source=data['metrics']['mistral_source'],
-        validation_status='✅ Yes' if data['metrics']['validation_valid'] else '❌ No'
+        duration=data["metrics"]["total_duration"],
+        gw2_status="✅ Yes" if data["metrics"]["gw2_api_success"] else "❌ No",
+        mistral_source=data["metrics"]["mistral_source"],
+        validation_status="✅ Yes" if data["metrics"]["validation_valid"] else "❌ No",
     )
 
     # Add conclusion
-    conclusion = '✅ Test réussi - Composition valide et cohérente' if validation['valid'] else '⚠️ Test complété avec avertissements'
-    recommendation = 'Déployer en production' if validation['valid'] and not validation['errors'] else 'Réviser la composition'
-    
+    conclusion = (
+        "✅ Test réussi - Composition valide et cohérente"
+        if validation["valid"]
+        else "⚠️ Test complété avec avertissements"
+    )
+    recommendation = (
+        "Déployer en production" if validation["valid"] and not validation["errors"] else "Réviser la composition"
+    )
+
     md += """
 ---
 
@@ -386,9 +389,7 @@ def generate_markdown_report(data: dict) -> str:
 **Test Type**: Real AI Team Optimization
 **Version**: v3.0.0
 """.format(
-        conclusion=conclusion,
-        recommendation=recommendation,
-        timestamp=datetime.utcnow().isoformat()
+        conclusion=conclusion, recommendation=recommendation, timestamp=datetime.utcnow().isoformat()
     )
 
     return md
