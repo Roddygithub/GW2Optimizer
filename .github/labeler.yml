@@ -1,46 +1,62 @@
 # Label pour les modifications dans le backend
 'backend':
-  - 'backend/**'
-  - '**/*.py'
-  - '!frontend/**'
-  - '!docs/**'
+  - changed-files:
+    - any:
+      - 'backend/**'
+      - '**/*.py'
+    exclude:
+      - 'frontend/**'
+      - 'docs/**'
 
 # Label pour les modifications dans le frontend
 'frontend':
-  - 'frontend/**'
-  - '**/*.ts'
-  - '**/*.tsx'
-  - '**/*.js'
-  - '**/*.jsx'
-  - '**/*.css'
-  - '**/*.scss'
-  - '!backend/**'
-  - '!docs/**'
+  - changed-files:
+    - any:
+      - 'frontend/**'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.js'
+      - '**/*.jsx'
+      - '**/*.css'
+      - '**/*.scss'
+    exclude:
+      - 'backend/**'
+      - 'docs/**'
 
 # Label pour les modifications dans la CI/CD
 'ci':
-  - '.github/workflows/**'
-  - '.github/actions/**'
-  - '**/*.yml'
-  - '**/*.yaml'
-  - '!**/node_modules/**'
-  - '!**/dist/**'
-  - '!**/build/**'
+  - changed-files:
+    - any:
+      - '.github/workflows/**'
+      - '.github/actions/**'
+      - '**/*.yml'
+      - '**/*.yaml'
+    exclude:
+      - '**/node_modules/**'
+      - '**/dist/**'
+      - '**/build/**'
 
 # Label pour les modifications dans la documentation
 'docs':
-  - 'docs/**'
-  - 'mkdocs.yml'
-  - '**/*.md'
-  - '!**/node_modules/**'
-  - '!**/dist/**'
-  - '!**/build/**'
+  - changed-files:
+    - any:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - '**/*.md'
+    exclude:
+      - '**/node_modules/**'
+      - '**/dist/**'
+      - '**/build/**'
 
 # Label pour les tests end-to-end
 'e2e':
-  - 'frontend/tests/e2e/**'
+  - changed-files:
+    - any:
+      - 'frontend/tests/e2e/**'
 
 # Label pour les modifications liées à la sécurité
 'security':
-  - 'backend/requirements*.txt'
-  - 'frontend/package*.json'
+  - changed-files:
+    - any:
+      - 'backend/requirements*.txt'
+      - 'frontend/package*.json'
