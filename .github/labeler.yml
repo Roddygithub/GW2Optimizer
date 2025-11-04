@@ -1,5 +1,5 @@
-# Minimal configuration for GitHub Labeler v5
-# Only one label for testing
+# Configuration for GitHub Labeler v5
+# This is the minimal working configuration
 
-'backend':
-  - '**/*.py'
+'bug':
+  - '**/__tests__/**'
