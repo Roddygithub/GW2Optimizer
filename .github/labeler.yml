@@ -1,62 +1,49 @@
-# Label pour les modifications dans le backend
+# Configuration simplifiée pour GitHub Labeler
+# Format: 'label': ['pattern1', 'pattern2', ...]
+
+# Backend changes
 'backend':
-  - changed-files:
-    - any:
-      - 'backend/**'
-      - '**/*.py'
-    exclude:
-      - 'frontend/**'
-      - 'docs/**'
+  - 'backend/**'
+  - '**/*.py'
+  - '!frontend/**'
+  - '!docs/**'
 
-# Label pour les modifications dans le frontend
+# Frontend changes
 'frontend':
-  - changed-files:
-    - any:
-      - 'frontend/**'
-      - '**/*.ts'
-      - '**/*.tsx'
-      - '**/*.js'
-      - '**/*.jsx'
-      - '**/*.css'
-      - '**/*.scss'
-    exclude:
-      - 'backend/**'
-      - 'docs/**'
+  - 'frontend/**'
+  - '**/*.ts'
+  - '**/*.tsx'
+  - '**/*.js'
+  - '**/*.jsx'
+  - '**/*.css'
+  - '**/*.scss'
+  - '!backend/**'
+  - '!docs/**'
 
-# Label pour les modifications dans la CI/CD
+# CI/CD changes
 'ci':
-  - changed-files:
-    - any:
-      - '.github/workflows/**'
-      - '.github/actions/**'
-      - '**/*.yml'
-      - '**/*.yaml'
-    exclude:
-      - '**/node_modules/**'
-      - '**/dist/**'
-      - '**/build/**'
+  - '.github/workflows/**'
+  - '.github/actions/**'
+  - '**/*.yml'
+  - '**/*.yaml'
+  - '!**/node_modules/**'
+  - '!**/dist/**'
+  - '!**/build/**'
 
-# Label pour les modifications dans la documentation
+# Documentation changes
 'docs':
-  - changed-files:
-    - any:
-      - 'docs/**'
-      - 'mkdocs.yml'
-      - '**/*.md'
-    exclude:
-      - '**/node_modules/**'
-      - '**/dist/**'
-      - '**/build/**'
+  - 'docs/**'
+  - 'mkdocs.yml'
+  - '**/*.md'
+  - '!**/node_modules/**'
+  - '!**/dist/**'
+  - '!**/build/**'
 
-# Label pour les tests end-to-end
+# End-to-end tests
 'e2e':
-  - changed-files:
-    - any:
-      - 'frontend/tests/e2e/**'
+  - 'frontend/tests/e2e/**'
 
-# Label pour les modifications liées à la sécurité
+# Security-related changes
 'security':
-  - changed-files:
-    - any:
-      - 'backend/requirements*.txt'
-      - 'frontend/package*.json'
+  - 'backend/requirements*.txt'
+  - 'frontend/package*.json'
