@@ -1,9 +1,42 @@
-# Minimal configuration for GitHub Labeler
-# Format: 'label': ['pattern1', 'pattern2', ...]
+# Configuration for GitHub Labeler
+# See: https://github.com/actions/labeler
 
-'backend': ['backend/**', '**/*.py', '!frontend/**', '!docs/**']
-'frontend': ['frontend/**', '**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx', '**/*.css', '**/*.scss', '!backend/**', '!docs/**']
-'ci': ['.github/workflows/**', '.github/actions/**', '**/*.yml', '**/*.yaml', '!**/node_modules/**', '!**/dist/**', '!**/build/**']
-'docs': ['docs/**', 'mkdocs.yml', '**/*.md', '!**/node_modules/**', '!**/dist/**', '!**/build/**']
-'e2e': ['frontend/tests/e2e/**']
-'security': ['backend/requirements*.txt', 'frontend/package*.json']
+'backend':
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ['backend/**', '**/*.py']
+      - base-branch: ['feat/connector-gw2-v1']
+    exclude: ['frontend/**', 'docs/**']
+
+'frontend':
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ['frontend/**', '**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx', '**/*.css', '**/*.scss']
+      - base-branch: ['feat/connector-gw2-v1']
+    exclude: ['backend/**', 'docs/**']
+
+'ci':
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ['.github/workflows/**', '.github/actions/**', '**/*.yml', '**/*.yaml']
+      - base-branch: ['feat/connector-gw2-v1']
+    exclude: ['**/node_modules/**', '**/dist/**', '**/build/**']
+
+'docs':
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ['docs/**', 'mkdocs.yml', '**/*.md']
+      - base-branch: ['feat/connector-gw2-v1']
+    exclude: ['**/node_modules/**', '**/dist/**', '**/build/**']
+
+'e2e':
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ['frontend/tests/e2e/**']
+      - base-branch: ['feat/connector-gw2-v1']
+
+'security':
+  - any:
+    - changed-files:
+      - any-glob-to-any-file: ['backend/requirements*.txt', 'frontend/package*.json']
+      - base-branch: ['feat/connector-gw2-v1']
