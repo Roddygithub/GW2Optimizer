@@ -1,4 +1,7 @@
 # Configuration for GitHub Labeler v5
-# Simple configuration with direct mapping
+# This is the minimal working configuration
 
-'bug': ['**/__tests__/**']
+- label: 'bug'
+  matcher:
+    changed-files:
+      - any-glob-to-any-file: '**/__tests__/**'
