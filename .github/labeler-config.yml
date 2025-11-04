@@ -1,15 +1,4 @@
-# Minimal configuration for GitHub Labeler v5
-# This is the minimal working configuration
+# Configuration for GitHub Labeler v5
+# Simple configuration with direct mapping
 
-'bug':
-  - '**/__tests__/**'
-  - '**/test/**'
-  - '**/*.test.*'
-  - '**/*.spec.*'
-  - '**/test-*'
-  - '**/*.test'
-  - '**/*.spec'
-  - '**/test.js'
-  - '**/test.ts'
-  - '**/test-*.js'
-  - '**/test-*.ts'
+'bug': ['**/__tests__/**']
