@@ -1,0 +1,5 @@
+# Minimal configuration for GitHub Labeler v5
+# This is the minimal working configuration
+
+'backend':
+  - '**/*.py'
