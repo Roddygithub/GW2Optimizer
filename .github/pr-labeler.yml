@@ -1,6 +1,7 @@
 # Configuration for GitHub Labeler v5
-# This is the minimal working configuration with array format
+# Format: https://github.com/actions/labeler#migrating-to-v5
 
 - label: 'backend'
   matcher:
-    - '**/*.py'
+    changed-files:
+      - any-glob-to-any-file: '**/*.py'
