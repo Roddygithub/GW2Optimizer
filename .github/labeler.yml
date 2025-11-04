@@ -1,49 +1,9 @@
-# Configuration for GitHub Labeler
-# Simple format for actions/labeler@v3
+# Minimal configuration for GitHub Labeler
+# Format: 'label': ['pattern1', 'pattern2', ...]
 
-# Backend files
-'backend':
-  - 'backend/**/*'
-  - '**/*.py'
-  - '!frontend/**'
-  - '!docs/**'
-
-# Frontend files
-'frontend':
-  - 'frontend/**/*'
-  - '**/*.ts'
-  - '**/*.tsx'
-  - '**/*.js'
-  - '**/*.jsx'
-  - '**/*.css'
-  - '**/*.scss'
-  - '!backend/**'
-  - '!docs/**'
-
-# CI/CD files
-'ci':
-  - '.github/workflows/*'
-  - '.github/actions/*'
-  - '**/*.yml'
-  - '**/*.yaml'
-  - '!**/node_modules/**'
-  - '!**/dist/**'
-  - '!**/build/**'
-
-# Documentation
-'docs':
-  - 'docs/**'
-  - 'mkdocs.yml'
-  - '**/*.md'
-  - '!**/node_modules/**'
-  - '!**/dist/**'
-  - '!**/build/**'
-
-# End-to-end tests
-'e2e':
-  - 'frontend/tests/e2e/**'
-
-# Security related files
-'security':
-  - 'backend/requirements*.txt'
-  - 'frontend/package*.json'
+'backend': ['backend/**', '**/*.py', '!frontend/**', '!docs/**']
+'frontend': ['frontend/**', '**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx', '**/*.css', '**/*.scss', '!backend/**', '!docs/**']
+'ci': ['.github/workflows/**', '.github/actions/**', '**/*.yml', '**/*.yaml', '!**/node_modules/**', '!**/dist/**', '!**/build/**']
+'docs': ['docs/**', 'mkdocs.yml', '**/*.md', '!**/node_modules/**', '!**/dist/**', '!**/build/**']
+'e2e': ['frontend/tests/e2e/**']
+'security': ['backend/requirements*.txt', 'frontend/package*.json']
