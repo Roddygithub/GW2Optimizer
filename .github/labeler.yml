@@ -1,14 +1,16 @@
 # Configuration for GitHub Labeler
-# See: https://github.com/actions/labeler
+# Simple format for actions/labeler@v3
 
+# Backend files
 'backend':
-  - 'backend/**'
+  - 'backend/**/*'
   - '**/*.py'
   - '!frontend/**'
   - '!docs/**'
 
+# Frontend files
 'frontend':
-  - 'frontend/**'
+  - 'frontend/**/*'
   - '**/*.ts'
   - '**/*.tsx'
   - '**/*.js'
@@ -18,15 +20,17 @@
   - '!backend/**'
   - '!docs/**'
 
+# CI/CD files
 'ci':
-  - '.github/workflows/**'
-  - '.github/actions/**'
+  - '.github/workflows/*'
+  - '.github/actions/*'
   - '**/*.yml'
   - '**/*.yaml'
   - '!**/node_modules/**'
   - '!**/dist/**'
   - '!**/build/**'
 
+# Documentation
 'docs':
   - 'docs/**'
   - 'mkdocs.yml'
@@ -35,9 +39,11 @@
   - '!**/dist/**'
   - '!**/build/**'
 
+# End-to-end tests
 'e2e':
   - 'frontend/tests/e2e/**'
 
+# Security related files
 'security':
   - 'backend/requirements*.txt'
   - 'frontend/package*.json'
