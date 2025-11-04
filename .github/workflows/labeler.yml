@@ -1,7 +1,7 @@
 name: PR Labeler
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
 
 permissions:
@@ -10,10 +10,10 @@ permissions:
 
 jobs:
   label:
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/labeler@v3
-        with:
-          sync-labels: true
-          configuration-path: .github/labeler.yml
+    - uses: actions/checkout@v4
+    - uses: actions/labeler@v3
+      with:
+        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        sync-labels: true
