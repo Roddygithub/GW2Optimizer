@@ -13,7 +13,7 @@ jobs:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/labeler@v4
+      - uses: actions/labeler@v3
         with:
           sync-labels: true
           configuration-path: .github/labeler.yml
