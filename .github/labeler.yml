@@ -1,5 +1,5 @@
 # Configuration for GitHub Labeler v5
 # This is the minimal working configuration
 
-- label: 'bug'
-  - '**/__tests__/**'
+'bug':
+  - any: ['**/__tests__/**']
