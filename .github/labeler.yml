@@ -1,9 +1,9 @@
 # Minimal configuration for GitHub Labeler
-# Format: 'label': ['pattern1', 'pattern2', ...]
+# Format: 'label': 'pattern'
 
-'backend': ['backend/**', '**/*.py', '!frontend/**', '!docs/**']
-'frontend': ['frontend/**', '**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx', '**/*.css', '**/*.scss', '!backend/**', '!docs/**']
-'ci': ['.github/workflows/**', '.github/actions/**', '**/*.yml', '**/*.yaml', '!**/node_modules/**', '!**/dist/**', '!**/build/**']
-'docs': ['docs/**', 'mkdocs.yml', '**/*.md', '!**/node_modules/**', '!**/dist/**', '!**/build/**']
-'e2e': ['frontend/tests/e2e/**']
-'security': ['backend/requirements*.txt', 'frontend/package*.json']
+'backend': '**/*.py'
+'frontend': '**/*.{ts,tsx,js,jsx,css,scss}'
+'ci': '.github/**/*.{yml,yaml}'
+'docs': '**/*.md'
+'e2e': 'frontend/tests/e2e/**'
+'security': '**/package*.json'
