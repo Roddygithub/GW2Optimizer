@@ -12,10 +12,8 @@ from pathlib import Path
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 logger = logging.getLogger("db_init")
 
@@ -33,11 +31,11 @@ try:
     from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
     from sqlalchemy.orm import sessionmaker
     from sqlalchemy import text
-    
+
     # Import models to ensure they are registered with SQLAlchemy
     from app.db.base_class import Base
     from app.db import models  # noqa: F401
-    
+
     logger.info("✅ Successfully imported SQLAlchemy and models")
 except ImportError as e:
     logger.error(f"❌ Error importing modules: {e}", exc_info=True)
@@ -49,20 +47,18 @@ async def init_db():
     """Create all tables in the test database."""
     database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./gw2optimizer_test.db")
     logger.info(f"🔧 Using database URL: {database_url}")
-    
+
     # Configure engine with explicit SQLite settings
     engine = create_async_engine(
         database_url,
         echo=True,
         future=True,
-        connect_args={"check_same_thread": False} if "sqlite" in database_url else {}
+        connect_args={"check_same_thread": False} if "sqlite" in database_url else {},
     )
-    
+
     # Create async session maker
-    async_session = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
-    )
-    
+    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
     # Remove existing SQLite database if it exists
     if database_url.startswith("sqlite") and "///" in database_url:
         db_path = database_url.split("///")[-1]
@@ -74,7 +70,7 @@ async def init_db():
             except Exception as e:
                 logger.error(f"❌ Failed to remove database file: {e}")
                 return False
-    
+
     try:
         # Create all tables
         logger.info("🔄 Creating database tables...")
@@ -83,27 +79,24 @@ async def init_db():
             await conn.run_sync(Base.metadata.drop_all)
             logger.info("✨ Creating new tables...")
             await conn.run_sync(Base.metadata.create_all)
-        
+
         # Verify the connection and table creation
         async with async_session() as session:
             logger.info("🔍 Verifying database connection...")
-            result = await session.execute(text('SELECT 1'))
+            result = await session.execute(text("SELECT 1"))
             test_result = result.scalar() == 1
             logger.info(f"✅ Database connection test: {test_result}")
-            
+
             # Count the number of tables created
             result = await session.execute(
-                text("""
-                    SELECT count(name) FROM sqlite_master 
-                    WHERE type='table' AND name NOT LIKE 'sqlite_%';
-                """)
+                text("SELECT count(name) FROM sqlite_master " "WHERE type='table' AND name NOT LIKE 'sqlite_%';")
             )
             table_count = result.scalar()
             logger.info(f"📊 Found {table_count} tables in the database")
-        
+
         logger.info("✅ Database initialized successfully")
         return True
-        
+
     except Exception as e:
         logger.error(f"❌ Error initializing database: {e}", exc_info=True)
         return False

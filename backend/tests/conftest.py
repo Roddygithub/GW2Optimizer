@@ -34,10 +34,10 @@ os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 from app.main import app, include_routers
 from app.db.session import get_db
 from app.core.redis import get_redis_client
-from app.db.base import Base
-from app.db.models import UserDB as User  # Import your models here
-from app.models import build as _build_models  # noqa: F401 - ensure build tables are registered
-from app.models import team as _team_models  # noqa: F401 - ensure team tables are registered
+from app.db.base_class import Base
+from app.db.models import UserDB as User, LoginHistory  # Import your models here
+from app.models.build import BuildDB  # noqa: F401 - ensure build tables are registered
+from app.models.team import TeamCompositionDB, TeamSlotDB  # noqa: F401 - ensure team tables are registered
 from app.models.user import UserOut  # Import UserOut from models
 from app.core.security import create_access_token, get_password_hash
 
