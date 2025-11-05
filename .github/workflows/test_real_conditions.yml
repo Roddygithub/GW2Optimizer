@@ -89,21 +89,55 @@ jobs:
       - name: 🗄️ Initialize SQLite database
         working-directory: backend
         env:
-          DATABASE_URL: sqlite+aiosqlite:///./gw2optimizer_test.db
           PYTHONPATH: ${{ github.workspace }}/backend
+          DATABASE_URL: sqlite+aiosqlite:///./gw2optimizer_test.db
+          REDIS_ENABLED: "false"
         run: |
+          # Afficher la version de Python et les variables d'environnement
+          echo "🐍 Python version:"
+          python --version
+          echo "\n📋 Environment variables:"
+          env | sort
+          
           # Installer les dépendances requises
+          echo "\n📦 Installing dependencies..."
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
           pip install sqlalchemy[asyncio] aiosqlite
           
+          # Afficher la structure du répertoire pour le débogage
+          echo "\n📂 Current directory structure:"
+          ls -la
+          
+          # Vérifier que le script d'initialisation existe
+          if [ ! -f "scripts/init_test_db.py" ]; then
+              echo "❌ Error: scripts/init_test_db.py not found!"
+              echo "📂 Content of scripts/ directory:"
+              ls -la scripts/ || true
+              exit 1
+          fi
+          
           # Exécuter le script d'initialisation
+          echo "\n🚀 Running database initialization script..."
           python scripts/init_test_db.py
           
           # Vérifier que la base de données a été créée
           if [ -f "gw2optimizer_test.db" ]; then
-              echo "✅ Database file created successfully"
+              echo "\n✅ Database file created successfully"
               ls -la gw2optimizer_test.db
+              
+              # Vérifier la taille de la base de données
+              echo "\n📊 Database file size:"
+              du -h gw2optimizer_test.db
+              
+              # Vérifier le contenu de la base de données
+              echo "\n🔍 Database content:"
+              sqlite3 gw2optimizer_test.db ".tables" || echo "❌ Failed to list tables"
+              
           else
-              echo "❌ Database file not found!"
+              echo "\n❌ Error: Database file not found!"
+              echo "📂 Current directory content:"
+              ls -la
               exit 1
           fi
 
