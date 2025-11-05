@@ -59,13 +59,13 @@ async def test_real_ai_optimization():
 
         if wvw_data.get("status") == "success":
             log("  ✅ WvW data fetched successfully", Colors.GREEN)
-            log("  - Matches: {}".format(len(wvw_data.get("matches", []))), Colors.NC)
-            log("  - Objectives: {}".format(len(wvw_data.get("objectives", []))), Colors.NC)
+            log(f"  - Matches: {len(wvw_data.get('matches', []))}", Colors.NC)
+            log(f"  - Objectives: {len(wvw_data.get('objectives', []))}", Colors.NC)
         else:
             log("  ⚠️ WvW data fetch failed, using fallback", Colors.YELLOW)
             wvw_data = {}
     except Exception as e:
-        log("  ⚠️ Error fetching WvW data: {}".format(str(e)), Colors.YELLOW)
+        log(f"  ⚠️ Error fetching WvW data: {str(e)}", Colors.YELLOW)
         wvw_data = {}
     finally:
         await gw2_service.close()
@@ -80,12 +80,12 @@ async def test_real_ai_optimization():
         composition = await mistral_service.generate_team_composition(wvw_data=wvw_data, team_size=50, game_mode="zerg")
 
         log("  ✅ Team composition generated", Colors.GREEN)
-        log("  - Name: {}".format(composition.get("name", "Unknown")), Colors.NC)
-        log("  - Size: {} players".format(composition.get("size", 0)), Colors.NC)
-        log("  - Source: {}".format(composition.get("source", "Unknown")), Colors.NC)
-        log("  - Model: {}".format(composition.get("model", "Unknown")), Colors.NC)
+        log(f"  - Name: {composition.get('name', 'Unknown')}", Colors.NC)
+        log(f"  - Size: {composition.get('size', 0)} players", Colors.NC)
+        log(f"  - Source: {composition.get('source', 'Unknown')}", Colors.NC)
+        log(f"  - Model: {composition.get('model', 'Unknown')}", Colors.NC)
     except Exception as e:
-        log("  ❌ Error generating composition: {}".format(str(e)), Colors.RED)
+        log(f"  ❌ Error generating composition: {str(e)}", Colors.RED)
         return 1
     finally:
         await mistral_service.close()
@@ -104,12 +104,12 @@ async def test_real_ai_optimization():
     if validation["errors"]:
         log("  ❌ Errors:", Colors.RED)
         for error in validation["errors"]:
-            log("    - {}".format(error), Colors.RED)
+            log(f"    - {error}", Colors.RED)
 
     if validation["warnings"]:
         log("  ⚠️ Warnings:", Colors.YELLOW)
         for warning in validation["warnings"]:
-            log("    - {}".format(warning), Colors.YELLOW)
+            log(f"    - {warning}", Colors.YELLOW)
 
     log("", Colors.NC)
 
@@ -120,7 +120,7 @@ async def test_real_ai_optimization():
     builds = composition.get("builds", [])
     total_count = sum(build.get("count", 0) for build in builds)
 
-    log("  Total Players: {}/50".format(total_count), Colors.NC)
+    log(f"  Total Players: {total_count}/50", Colors.NC)
     log("", Colors.NC)
 
     log("  Builds:", Colors.YELLOW)
@@ -131,28 +131,29 @@ async def test_real_ai_optimization():
         priority = build.get("priority", "Unknown")
         description = build.get("description", "")
 
-        log("    • {} ({}): {} players - {} priority".format(profession, role, count, priority), Colors.NC)
+        log(f"    • {profession} ({role}): {count} players - {priority} priority", Colors.NC)
         if description:
-            log("      → {}".format(description), Colors.NC)
+            log(f"      → {description}", Colors.NC)
 
     log("", Colors.NC)
 
     # Display strategy
     if "strategy" in composition:
         log("  Strategy:", Colors.YELLOW)
-        log("    {}".format(composition["strategy"]), Colors.NC)
+        log(f"    {composition['strategy']}", Colors.NC)
         log("", Colors.NC)
 
     # Display strengths/weaknesses
     if "strengths" in composition:
         log("  Strengths:", Colors.GREEN)
         for strength in composition["strengths"]:
-            log("    ✓ {}".format(strength), Colors.GREEN)
+            log(f"    ✓ {strength}", Colors.GREEN)
+        log("", Colors.NC)
 
     if "weaknesses" in composition:
         log("  Weaknesses:", Colors.RED)
         for weakness in composition["weaknesses"]:
-            log("    ✗ {}".format(weakness), Colors.RED)
+            log(f"    ✗ {weakness}", Colors.RED)
         log("", Colors.NC)
 
     # Step 5: Calculate metrics
@@ -160,10 +161,10 @@ async def test_real_ai_optimization():
     duration = (end_time - start_time).total_seconds()
 
     log("⏱️ Step 5: Performance Metrics:", Colors.BLUE)
-    log("  - Total Duration: {:.2f}s".format(duration), Colors.NC)
-    log("  - GW2 API: {}".format("Success" if wvw_data else "Fallback"), Colors.NC)
-    log("  - Mistral AI: {}".format(composition.get("source", "Unknown")), Colors.NC)
-    log("  - Validation: {}".format("✅ Valid" if validation["valid"] else "⚠️ Issues"), Colors.NC)
+    log(f"  - Total Duration: {duration:.2f}s", Colors.NC)
+    log(f"  - GW2 API: {'Success' if wvw_data else 'Fallback'}", Colors.NC)
+    log(f"  - Mistral AI: {composition.get('source', 'Unknown')}", Colors.NC)
+    log(f"  - Validation: {'✅ Valid' if validation['valid'] else '⚠️ Issues'}", Colors.NC)
     log("", Colors.NC)
 
     # Step 6: Save report
@@ -197,14 +198,14 @@ async def test_real_ai_optimization():
     with open(json_path, "w") as f:
         json.dump(report_data, f, indent=2)
 
-    log("  ✅ JSON report saved: {}".format(json_path), Colors.GREEN)
+    log(f"  ✅ JSON report saved: {json_path}", Colors.GREEN)
 
     # Save Markdown
     md_path = report_dir / "REAL_AI_TEAM_TEST.md"
     with open(md_path, "w") as f:
         f.write(generate_markdown_report(report_data))
 
-    log("  ✅ Markdown report saved: {}".format(md_path), Colors.GREEN)
+    log(f"  ✅ Markdown report saved: {md_path}", Colors.GREEN)
     log("", Colors.NC)
 
     # Final summary
@@ -214,8 +215,8 @@ async def test_real_ai_optimization():
     log("", Colors.NC)
 
     log("✅ Team composition generated successfully", Colors.GREEN)
-    log("✅ Reports saved to {}".format(report_dir), Colors.GREEN)
-    log("✅ Duration: {:.2f}s".format(duration), Colors.GREEN)
+    log(f"✅ Reports saved to {report_dir}", Colors.GREEN)
+    log(f"✅ Duration: {duration:.2f}s", Colors.GREEN)
 
     return 0
 
@@ -226,28 +227,27 @@ def generate_markdown_report(data: dict) -> str:
     composition = data["composition"]
     validation = data["validation"]
 
-    # Format the base template with .format()
-    md = """# 🔥 TEST RÉEL - MISTRAL AI + GW2 API
+    md = f"""# 🔥 TEST RÉEL - MISTRAL AI + GW2 API
 
-**Date**: {timestamp}
-**Duration**: {duration:.2f}s
-**Status**: {status}
+**Date**: {data['timestamp']}
+**Duration**: {data['duration_seconds']:.2f}s
+**Status**: {'✅ SUCCESS' if validation['valid'] else '⚠️ ISSUES'}
 
 ---
 
 ## 📊 CONFIGURATION
 
-- **Team Size**: {team_size} players
-- **Game Mode**: {game_mode}
-- **Focus**: {focus}
+- **Team Size**: {data['configuration']['team_size']} players
+- **Game Mode**: {data['configuration']['game_mode']}
+- **Focus**: {data['configuration']['focus']}
 
 ---
 
 ## 📡 GW2 API DATA
 
-- **Status**: {gw2_status}
-- **Matches**: {matches_count}
-- **Objectives**: {objectives_count}
+- **Status**: {data['wvw_data']['status']}
+- **Matches**: {data['wvw_data']['matches_count']}
+- **Objectives**: {data['wvw_data']['objectives_count']}
 
 ---
 
@@ -255,142 +255,97 @@ def generate_markdown_report(data: dict) -> str:
 
 ### Overview
 
-- **Name**: {name}
-- **Size**: {size} players
-- **Source**: {source}
-- **Model**: {model}
+- **Name**: {composition.get('name', 'Unknown')}
+- **Size**: {composition.get('size', 0)} players
+- **Source**: {composition.get('source', 'Unknown')}
+- **Model**: {composition.get('model', 'Unknown')}
 
 ### Builds
 
-""".format(
-        timestamp=data["timestamp"],
-        duration=data["duration_seconds"],
-        status="✅ SUCCESS" if validation["valid"] else "⚠️ ISSUES",
-        team_size=data["configuration"]["team_size"],
-        game_mode=data["configuration"]["game_mode"],
-        focus=data["configuration"]["focus"],
-        gw2_status=data["wvw_data"]["status"],
-        matches_count=data["wvw_data"]["matches_count"],
-        objectives_count=data["wvw_data"]["objectives_count"],
-        name=composition.get("name", "Unknown"),
-        size=composition.get("size", 0),
-        source=composition.get("source", "Unknown"),
-        model=composition.get("model", "Unknown"),
-    )
+"""
 
-    # Add builds section
     builds = composition.get("builds", [])
     for build in builds:
-        md += """
-#### {profession} - {role}
+        md += f"""
+#### {build.get('profession', 'Unknown')} - {build.get('role', 'Unknown')}
 
-- **Count**: {count} players
-- **Priority**: {priority}
-- **Description**: {description}
-""".format(
-            profession=build.get("profession", "Unknown"),
-            role=build.get("role", "Unknown"),
-            count=build.get("count", 0),
-            priority=build.get("priority", "Unknown"),
-            description=build.get("description", "N/A"),
-        )
+- **Count**: {build.get('count', 0)} players
+- **Priority**: {build.get('priority', 'Unknown')}
+- **Description**: {build.get('description', 'N/A')}
+"""
 
-    # Add strategy section
-    md += """
+    md += f"""
 ---
 
 ## 📈 STRATEGY
 
-{strategy}
+{composition.get('strategy', 'N/A')}
 
 ### Strengths
 
-""".format(
-        strategy=composition.get("strategy", "N/A")
-    )
+"""
 
-    # Add strengths
     for strength in composition.get("strengths", []):
-        md += "- ✅ {}\n".format(strength)
+        md += f"- ✅ {strength}\n"
 
-    # Add weaknesses
     md += "\n### Weaknesses\n\n"
-    for weakness in composition.get("weaknesses", []):
-        md += "- ⚠️ {}\n".format(weakness)
 
-    # Add validation section
-    md += """
+    for weakness in composition.get("weaknesses", []):
+        md += f"- ⚠️ {weakness}\n"
+
+    md += f"""
 ---
 
 ## ✅ VALIDATION
 
-- **Valid**: {}
-- **Errors**: {}
-- **Warnings**: {}
+- **Valid**: {'✅ Yes' if validation['valid'] else '❌ No'}
+- **Errors**: {len(validation['errors'])}
+- **Warnings**: {len(validation['warnings'])}
 
 ### Checks
 
-""".format(
-        "✅ Yes" if validation["valid"] else "❌ No", len(validation["errors"]), len(validation["warnings"])
-    )
+"""
 
     for check_name, check_data in validation.get("checks", {}).items():
-        md += "#### {}\n\n```json\n{}\n```\n\n".format(check_name, json.dumps(check_data, indent=2))
+        md += f"#### {check_name}\n\n"
+        md += f"```json\n{json.dumps(check_data, indent=2)}\n```\n\n"
 
     if validation["errors"]:
         md += "### Errors\n\n"
         for error in validation["errors"]:
-            md += "- ❌ {}\n".format(error)
+            md += f"- ❌ {error}\n"
         md += "\n"
 
     if validation["warnings"]:
         md += "### Warnings\n\n"
         for warning in validation["warnings"]:
-            md += "- ⚠️ {}\n".format(warning)
+            md += f"- ⚠️ {warning}\n"
         md += "\n"
 
-    # Add performance metrics
-    md += """---
+    md += f"""
+---
 
 ## ⏱️ PERFORMANCE METRICS
 
-- **Total Duration**: {duration:.2f}s
-- **GW2 API Success**: {gw2_status}
-- **Mistral Source**: {mistral_source}
-- **Validation Valid**: {validation_status}""".format(
-        duration=data["metrics"]["total_duration"],
-        gw2_status="✅ Yes" if data["metrics"]["gw2_api_success"] else "❌ No",
-        mistral_source=data["metrics"]["mistral_source"],
-        validation_status="✅ Yes" if data["metrics"]["validation_valid"] else "❌ No",
-    )
+- **Total Duration**: {data['metrics']['total_duration']:.2f}s
+- **GW2 API Success**: {'✅ Yes' if data['metrics']['gw2_api_success'] else '❌ No'}
+- **Mistral Source**: {data['metrics']['mistral_source']}
+- **Validation**: {'✅ Valid' if data['metrics']['validation_valid'] else '⚠️ Issues'}
 
-    # Add conclusion
-    conclusion = (
-        "✅ Test réussi - Composition valide et cohérente"
-        if validation["valid"]
-        else "⚠️ Test complété avec avertissements"
-    )
-    recommendation = (
-        "Déployer en production" if validation["valid"] and not validation["errors"] else "Réviser la composition"
-    )
-
-    md += """
 ---
 
 ## 🎯 CONCLUSION
 
-{conclusion}
+{'✅ Test réussi - Composition valide et cohérente' if validation['valid'] else '⚠️ Test complété avec avertissements'}
 
-**Recommandation**: {recommendation}
+**Recommandation**: {'Déployer en production' if validation['valid'] and not validation['errors'] else 'Réviser la composition'}
 
 ---
 
-**Generated**: {timestamp}
+**Generated**: {datetime.utcnow().isoformat()}
 **Test Type**: Real AI Team Optimization
 **Version**: v3.0.0
-""".format(
-        conclusion=conclusion, recommendation=recommendation, timestamp=datetime.utcnow().isoformat()
-    )
+"""
 
     return md
 

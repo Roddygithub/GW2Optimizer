@@ -6,21 +6,42 @@ on:
       - main
       - dev
   workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *"  # Tous les jours à 4h du matin
 
 jobs:
   e2e-test:
     name: 🚀 Full Real Conditions Test (Mistral + GW2 API)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    # PostgreSQL désactivé temporairement en attendant la résolution des problèmes
+    # services:
+    #   postgres:
+    #     image: postgres:16
+    #     env:
+    #       POSTGRES_USER: postgres
+    #       POSTGRES_PASSWORD: postgres
+    #       POSTGRES_DB: gw2_test
+    #     ports: ["5432:5432"]
+    #     options: >-
+    #       --health-cmd="pg_isready -U postgres -d gw2_test"
+    #       --health-interval=10s
+    #       --health-timeout=5s
+    #       --health-retries=10
 
     env:
-      ENVIRONMENT: production
+      ENVIRONMENT: test
       MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
       GW2_API_KEY: ${{ secrets.GW2_API_KEY }}
+      # Utilisation de SQLite comme solution temporaire
       DATABASE_URL: sqlite+aiosqlite:///./gw2optimizer_test.db
       REDIS_ENABLED: "false"
       SECRET_KEY: test-secret-key-e2e-only
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: "${{ github.workspace }}/backend"
 
     steps:
       # 🧩 1️⃣ Checkout du code
@@ -42,11 +63,19 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      # 📦 4️⃣ Installation des dépendances backend
+      # 🔧 4️⃣ Installation des dépendances système et Python
+      - name: 🔧 Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc python3-dev libpq-dev
+
+      # 📦 5️⃣ Installation des dépendances backend
       - name: 📦 Install backend dependencies
         run: |
           cd backend
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install asyncpg  # Pour le support asynchrone de PostgreSQL
 
       # 🧠 5️⃣ Installation des dépendances frontend
       - name: 📦 Install frontend dependencies
@@ -54,24 +83,63 @@ jobs:
           cd frontend
           npm ci
 
-      # 🗄️ 6️⃣ Initialize database
-      - name: 🗄️ Initialize test database
+      # ⏳ 6️⃣ Initialisation de SQLite (pas d'attente nécessaire)
+
+      # 🗄️ 7️⃣ Initialisation de la base de données SQLite
+      - name: 🗄️ Initialize SQLite database
+        working-directory: backend
+        env:
+          PYTHONPATH: ${{ github.workspace }}/backend
+          DATABASE_URL: sqlite+aiosqlite:///./gw2optimizer_test.db
+          REDIS_ENABLED: "false"
         run: |
-          cd backend
-          python -c "
-          import asyncio
-          from app.db.base import Base, engine
-          from app.db.models import UserDB, LoginHistory
-          from app.models.build import BuildDB
-          from app.models.team import TeamCompositionDB, TeamSlotDB
+          # Afficher la version de Python et les variables d'environnement
+          echo "🐍 Python version:"
+          python --version
+          echo "\n📋 Environment variables:"
+          env | sort
           
-          async def init():
-              async with engine.begin() as conn:
-                  await conn.run_sync(Base.metadata.create_all)
+          # Installer les dépendances requises
+          echo "\n📦 Installing dependencies..."
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install sqlalchemy[asyncio] aiosqlite
           
-          asyncio.run(init())
-          print('✅ Database initialized')
-          "
+          # Afficher la structure du répertoire pour le débogage
+          echo "\n📂 Current directory structure:"
+          ls -la
+          
+          # Vérifier que le script d'initialisation existe
+          if [ ! -f "scripts/init_test_db_simple.py" ]; then
+              echo "❌ Error: scripts/init_test_db_simple.py not found!"
+              echo "📂 Content of scripts/ directory:"
+              ls -la scripts/ || true
+              exit 1
+          fi
+          
+          # Exécuter le script d'initialisation
+          echo "\n🚀 Running database initialization script..."
+          python scripts/init_test_db_simple.py
+          
+          # Vérifier que la base de données a été créée
+          if [ -f "gw2optimizer_test.db" ]; then
+              echo "\n✅ Database file created successfully"
+              ls -la gw2optimizer_test.db
+              
+              # Vérifier la taille de la base de données
+              echo "\n📊 Database file size:"
+              du -h gw2optimizer_test.db
+              
+              # Vérifier le contenu de la base de données
+              echo "\n🔍 Database content:"
+              sqlite3 gw2optimizer_test.db ".tables" || echo "❌ Failed to list tables"
+              
+          else
+              echo "\n❌ Error: Database file not found!"
+              echo "📂 Current directory content:"
+              ls -la
+              exit 1
+          fi
 
       # 🔧 7️⃣ Démarrage des services backend et frontend
       - name: 🔧 Start backend and frontend
