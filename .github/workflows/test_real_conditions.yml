@@ -6,21 +6,40 @@ on:
       - main
       - dev
   workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *"  # Tous les jours à 4h du matin
 
 jobs:
   e2e-test:
     name: 🚀 Full Real Conditions Test (Mistral + GW2 API)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gw2_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U postgres -d gw2_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     env:
-      ENVIRONMENT: production
+      ENVIRONMENT: test
       MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
       GW2_API_KEY: ${{ secrets.GW2_API_KEY }}
-      DATABASE_URL: sqlite+aiosqlite:///./gw2optimizer_test.db
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/gw2_test
       REDIS_ENABLED: "false"
       SECRET_KEY: test-secret-key-e2e-only
       ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      PYTHONUNBUFFERED: "1"
+      PYTHONPATH: "${{ github.workspace }}/backend"
 
     steps:
       # 🧩 1️⃣ Checkout du code
@@ -42,11 +61,19 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      # 📦 4️⃣ Installation des dépendances backend
+      # 🔧 4️⃣ Installation des dépendances système et Python
+      - name: 🔧 Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc python3-dev libpq-dev
+
+      # 📦 5️⃣ Installation des dépendances backend
       - name: 📦 Install backend dependencies
         run: |
           cd backend
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install asyncpg  # Pour le support asynchrone de PostgreSQL
 
       # 🧠 5️⃣ Installation des dépendances frontend
       - name: 📦 Install frontend dependencies
@@ -54,23 +81,53 @@ jobs:
           cd frontend
           npm ci
 
-      # 🗄️ 6️⃣ Initialize database
-      - name: 🗄️ Initialize test database
+      # ⏳ 6️⃣ Attente de la base de données
+      - name: ⏳ Wait for PostgreSQL
         run: |
-          cd backend
+          for i in {1..30}; do
+            if pg_isready -h localhost -p 5432 -U postgres -d gw2_test; then
+              echo "✅ PostgreSQL is ready"
+              exit 0
+            fi
+            echo "⏳ Waiting for PostgreSQL to be ready... (attempt $i/30)"
+            sleep 2
+          done
+          echo "❌ PostgreSQL not ready after 60 seconds"
+          exit 1
+
+      # 🗄️ 7️⃣ Initialisation de la base de données
+      - name: 🗄️ Initialize test database
+        working-directory: backend
+        run: |
           python -c "
           import asyncio
-          from app.db.base import Base, engine
-          from app.db.models import UserDB, LoginHistory
-          from app.models.build import BuildDB
-          from app.models.team import TeamCompositionDB, TeamSlotDB
+          import os
+          from sqlalchemy import text
+          from sqlalchemy.ext.asyncio import create_async_engine
           
-          async def init():
-              async with engine.begin() as conn:
+          DATABASE_URL = os.getenv('DATABASE_URL')
+          
+          async def init_db():
+              # Création des tables avec SQLAlchemy
+              from app.db.base import Base
+              from app.db.session import async_engine
+              
+              print('🔄 Creating database tables...')
+              async with async_engine.begin() as conn:
+                  await conn.run_sync(Base.metadata.drop_all)
                   await conn.run_sync(Base.metadata.create_all)
+              
+              # Vérification de la connexion
+              async with async_engine.connect() as conn:
+                  result = await conn.execute(text('SELECT 1'))
+                  print(f'✅ Database connection test: {result.scalar() == 1}')
           
-          asyncio.run(init())
-          print('✅ Database initialized')
+          try:
+              asyncio.run(init_db())
+              print('✅ Database initialized successfully')
+          except Exception as e:
+              print(f'❌ Database initialization failed: {str(e)}')
+              raise
           "
 
       # 🔧 7️⃣ Démarrage des services backend et frontend
