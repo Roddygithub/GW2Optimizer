@@ -240,17 +240,61 @@ jobs:
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
-  build-docker:
-    name: Build Docker Image
+  docker-build:
+    name: Build Docker Image(s)
     runs-on: ubuntu-latest
     needs: [test-backend, frontend-unit]
-    if: ${{ github.event_name == 'push' }}
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Build image (no push)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
+
+      - name: Detect Dockerfile and context
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+          present="false"
+          file=""
+          context=""
+          tag=""
+
+          if [ -f Dockerfile ]; then
+            present="true"
+            file="Dockerfile"
+            context="."
+            tag="gw2optimizer:ci-root"
+          elif [ -f backend/Dockerfile ]; then
+            present="true"
+            file="backend/Dockerfile"
+            context="backend"
+            tag="gw2optimizer:ci-backend"
+          else
+            file="$(ls -1 docker/**/Dockerfile 2>/dev/null | head -n1 || true)"
+            if [ -n "$file" ]; then
+              present="true"
+              context="$(dirname "$file")"
+              name="$(basename "$context" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9-' '-')"
+              tag="gw2optimizer:ci-$name"
+            fi
+          fi
+
+          echo "present=$present" >> "$GITHUB_OUTPUT"
+          if [ "$present" = "true" ]; then
+            echo "file=$file" >> "$GITHUB_OUTPUT"
+            echo "context=$context" >> "$GITHUB_OUTPUT"
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "present=$present"
+          echo "file=${file:-none}"
+          echo "context=${context:-none}"
+
+      - name: Build image
+        if: steps.detect.outputs.present == 'true'
+        run: |
+          docker build -f "${{ steps.detect.outputs.file }}" \
+            -t "${{ steps.detect.outputs.tag }}" \
+            "${{ steps.detect.outputs.context }}"
+
+      - name: No Dockerfile found (skip)
+        if: steps.detect.outputs.present != 'true'
+        run: echo "No Dockerfile found. Skipping Docker build."
