@@ -16,11 +16,9 @@ from app.models.team import (
     TeamCompositionCreate,
     TeamCompositionDB,
     TeamCompositionUpdate,
-    TeamResponse,
     TeamSlot,
     TeamSynergy,
 )
-from app.models.build import Build
 from app.db.models import UserDB
 from app.services.team_service_db import TeamService
 from app.api.builds_db import build_db_to_pydantic

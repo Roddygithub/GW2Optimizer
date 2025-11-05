@@ -1,7 +1,6 @@
 """Storage management for automatic cleanup."""
 
-import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import List
 

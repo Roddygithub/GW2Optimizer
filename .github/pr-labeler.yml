@@ -2,4 +2,4 @@
 # This is the minimal working configuration
 
 'bug':
-  - any: ['**/__tests__/**']
+  - '**/__tests__/**'

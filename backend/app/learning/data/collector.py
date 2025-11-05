@@ -5,9 +5,7 @@ Collects anonymous user interactions with builds and teams for future ML trainin
 All data is stored locally and can be automatically purged.
 """
 
-import json
 from datetime import datetime
-from pathlib import Path
 from typing import Any, Dict, Optional
 from uuid import uuid4
 

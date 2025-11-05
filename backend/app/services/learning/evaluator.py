@@ -1,7 +1,6 @@
 """Automatic evaluation service for builds and teams."""
 
 from datetime import datetime
-from typing import Dict
 
 from app.core.logging import logger
 from app.models.learning import QualityScore, TrainingDatapoint
@@ -47,7 +46,7 @@ class Evaluator:
 
     async def _evaluate_build(self, datapoint: TrainingDatapoint) -> QualityScore:
         """Evaluate a single build."""
-        build_data = datapoint.data
+        # datapoint.data contains the build data for future use
 
         # Prepare evaluation prompt
         prompt = f"""Evaluate this Guild Wars 2 {datapoint.game_mode} build:

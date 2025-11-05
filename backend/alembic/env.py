@@ -1,4 +1,3 @@
-import os
 import sys
 from logging.config import fileConfig
 from pathlib import Path
@@ -29,7 +28,6 @@ if config.config_file_name is not None:
 from app.db.base_class import Base
 
 # Import all models to ensure they are registered with SQLAlchemy
-from app.models.user import UserDB
 
 # Set the metadata for Alembic to use
 target_metadata = Base.metadata

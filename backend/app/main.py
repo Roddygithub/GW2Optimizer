@@ -6,13 +6,10 @@ and includes all API routers.
 """
 
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import AsyncGenerator
 
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -50,8 +47,6 @@ from app.api import (
     meta,
     scraper,
     teams,
-    builds_db,
-    teams_db,
     websocket_mcm,
     sentry_debug,
 )
@@ -223,6 +218,9 @@ def include_routers(app: FastAPI) -> None:
     api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 
     # Protected routes (require authentication)
+    from app.api import sync
+
+    api_router.include_router(sync.router, prefix="/sync", tags=["Sync"])
     api_router.include_router(ai.router, prefix="/ai", tags=["AI"])
     api_router.include_router(ai_optimizer.router, prefix="/ai-optimizer", tags=["AI Optimizer"])
     api_router.include_router(builds.router, tags=["Builds"])

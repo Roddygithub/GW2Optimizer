@@ -1,12 +1,8 @@
 """Automatic scheduler for learning pipeline."""
 
-import asyncio
-from datetime import datetime
-
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from app.core.config import settings
 from app.core.logging import logger
 from app.models.learning import FineTuningConfig, StorageConfig
 from app.services.learning.pipeline import LearningPipeline

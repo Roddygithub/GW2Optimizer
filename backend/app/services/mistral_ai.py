@@ -5,7 +5,7 @@ Uses Mistral AI to generate optimal team compositions based on WvW data
 
 import httpx
 import json
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 from datetime import datetime
 
 from app.core.logging import logger
@@ -81,7 +81,7 @@ class MistralAIService:
             # Parse AI response
             composition = self._parse_ai_response(content, team_size, game_mode)
 
-            logger.info(f"✅ Team composition generated successfully")
+            logger.info("✅ Team composition generated successfully")
             return composition
 
         except Exception as e:

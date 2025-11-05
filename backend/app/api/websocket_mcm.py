@@ -4,7 +4,7 @@ WebSocket endpoint for McM (Mists of Castrum Marinum) Analytics.
 This module provides real-time analytics data for World vs World combat.
 """
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from typing import Dict, List, Set
 import asyncio
 import json

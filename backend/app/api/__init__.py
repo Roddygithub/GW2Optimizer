@@ -18,6 +18,7 @@ from . import (  # noqa: F401
     learning,
     meta,
     scraper,
+    sync,
     teams,
     builds_db,
     teams_db,
