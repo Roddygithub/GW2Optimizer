@@ -8,7 +8,6 @@ Mission v2.7.0: PostgreSQL transaction isolation + auto-fix complet
 import subprocess
 import time
 import sys
-import os
 import re
 from pathlib import Path
 from datetime import datetime
@@ -130,7 +129,7 @@ def generate_report(cycle, metrics, fixes, duration):
     else:
         report += "- None ✅\n"
 
-    report += f"\n### Auto-Fixes Applied\n"
+    report += "\n### Auto-Fixes Applied\n"
     if fixes:
         for fix in fixes:
             report += f"- {fix}\n"
@@ -145,7 +144,7 @@ def main():
     log("=" * 60, Colors.BLUE)
     log(" 🚀 CI SUPERVISOR v2.7.0 - AUTO-FIX MISSION", Colors.BLUE)
     log("=" * 60, Colors.BLUE)
-    log(f"Target: 79/79 backend tests GREEN", Colors.GREEN)
+    log("Target: 79/79 backend tests GREEN", Colors.GREEN)
     log(f"Max cycles: {MAX_CYCLES}", Colors.BLUE)
     log(f"Backend dir: {BACKEND_DIR}", Colors.BLUE)
 
@@ -175,7 +174,7 @@ def main():
         if metrics["failed"] == 0 and metrics["errors"] == 0:
             log(f"\n✅ SUCCESS: {metrics['passed']}/{metrics['total']} tests passed!", Colors.GREEN)
             full_report += generate_report(cycle, metrics, [], duration)
-            full_report += f"\n\n## ✅ MISSION ACCOMPLISHED\n\n"
+            full_report += "\n\n## ✅ MISSION ACCOMPLISHED\n\n"
             full_report += f"All {metrics['passed']} backend tests are GREEN!\n"
 
             # Save report
@@ -204,9 +203,9 @@ def main():
     log(f"\n⚠️ Max cycles ({MAX_CYCLES}) reached", Colors.RED)
     log(f"   Final: {metrics['passed']}/{metrics['total']} tests passing", Colors.YELLOW)
 
-    full_report += f"\n\n## ⚠️ MAX CYCLES REACHED\n\n"
+    full_report += "\n\n## ⚠️ MAX CYCLES REACHED\n\n"
     full_report += f"Final status: {metrics['passed']}/{metrics['total']} tests passing\n"
-    full_report += f"\n### Remaining Issues\n\n"
+    full_report += "\n### Remaining Issues\n\n"
     for test, reason in metrics["failures"]:
         full_report += f"- `{test}`: {reason}\n"
 

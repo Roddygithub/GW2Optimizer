@@ -1,16 +1,15 @@
 """GW2Skill URL parser - Complete implementation."""
 
-import json
 import re
-from typing import Dict, List, Optional, Tuple
-from urllib.parse import parse_qs, urlparse, unquote
+from typing import Dict, List, Optional
+from urllib.parse import parse_qs, urlparse
 
 import httpx
 from bs4 import BeautifulSoup
 
 from app.core.logging import logger
 from app.models.build import Build, GameMode, Profession, Role, TraitLine, Skill, Equipment
-from app.services.parser.gw2_data import SPECIALIZATIONS, STAT_COMBOS, EQUIPMENT_SLOTS
+from app.services.parser.gw2_data import STAT_COMBOS, EQUIPMENT_SLOTS
 
 
 class GW2SkillParser:
@@ -52,9 +51,9 @@ class GW2SkillParser:
             url = self._normalize_url(url)
             logger.info(f"Parsing GW2Skill URL: {url}")
 
-            # Parse URL components
+            # Parse URL components (parse_qs result not used in current implementation)
             parsed = urlparse(url)
-            params = parse_qs(parsed.query)
+            _ = parse_qs(parsed.query)  # Result not used, but parsing for future use
 
             # Extract profession from URL path
             profession = self._extract_profession(url)

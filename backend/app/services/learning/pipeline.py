@@ -1,6 +1,6 @@
 """Automatic learning pipeline orchestrator."""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict
 
 from app.core.logging import logger

@@ -213,7 +213,6 @@ class SynergyAgent(BaseAgent):
         Returns:
             Prompt formaté pour Mistral
         """
-        profession_list = ", ".join(professions)
         profession_counts = {}
         for prof in professions:
             profession_counts[prof] = profession_counts.get(prof, 0) + 1

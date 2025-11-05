@@ -3,11 +3,11 @@
 import re
 import json
 import asyncio
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional
 
 from app.core.logging import logger
 from app.core.circuit_breaker import circuit_breaker, CircuitBreakerError, chat_service_circuit_breaker, CircuitBreaker
-from app.models.chat import ChatRequest, ChatResponse, BuildSuggestion, MessageRole
+from app.models.chat import ChatRequest, ChatResponse, BuildSuggestion
 from app.services.ai.ollama_service import OllamaService
 
 # Constants
