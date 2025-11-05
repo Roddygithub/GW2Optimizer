@@ -1,6 +1,9 @@
 # Python
 __pycache__/
+**/__pycache__/
+**/pycache/
 *.py[cod]
+**/*.pyc
 *$py.class
 *.so
 .Python
@@ -44,6 +47,7 @@ cython_debug/
 venv/
 ENV/
 env/
+.venv/
 .venv
 
 # Node.js
@@ -95,16 +99,19 @@ temp/
 
 # Tests
 test-results/
+
+# Coverage and test artifacts
+frontend/coverage/
+frontend/playwright-report/
+backend/data/learning/generated/
+bin/
+.coverage.json
+.playwright.json
 playwright-report/
 playwright/.cache/
 backend/test.db
 backend/test_*.db
 backend/coverage.xml
-frontend/coverage/
-.coverage.json
-.playwright.json
-backend/data/learning/generated/
-bin/
 
 # CI/CD
 .github/secrets/

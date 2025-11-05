@@ -351,13 +351,11 @@ class SynergyModel:
             self.train([feedback])
             return
 
-        # Scaler
-        features_scaled = self.scaler.transform(features)
-
-        # Update (warm start)
+        # Scale features (result not used in current implementation)
         # Note: GradientBoostingRegressor ne supporte pas partial_fit
         # On simule avec un re-fit sur données récentes
         # Pour production, utiliser SGDRegressor ou online learning library
+        self.scaler.transform(features)  # Scale features but don't store result
 
         # Pour l'instant, on stocke et re-fit périodiquement
         self.metadata["n_updates"] += 1

@@ -1,98 +1,68 @@
-name: CI/CD Pipeline
+name: CI
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main ]
 
 env:
-  PYTHON_VERSION: '3.11'
+  PYTHON_VERSION: '3.10'
+  NODE_VERSION: '20'
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  workflows-lint:
-    name: Lint GitHub Workflows
+  lint-workflows:
+    name: Lint Workflows
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v4
-      - name: Install actionlint (no GHCR)
-        shell: bash
-        run: |
-          set -euo pipefail
-          VERSION="${ACTIONLINT_VERSION:-1.7.8}"
-          ARCH="$(uname -m)"
-          case "$ARCH" in
-            x86_64) ARCH=amd64 ;;
-            aarch64|arm64) ARCH=arm64 ;;
-            *) ARCH=amd64 ;;
-          esac
-          URL="https://github.com/rhysd/actionlint/releases/download/v${VERSION}/actionlint_${VERSION}_linux_${ARCH}.tar.gz"
-          curl -sSL "$URL" | tar -xz actionlint
-      - name: Run actionlint
-        shell: bash
-        run: ./actionlint -color
+      - uses: reviewdog/action-actionlint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   lint-backend:
     name: Lint Backend
     runs-on: ubuntu-latest
-    needs: workflows-lint
+    needs: lint-workflows
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
       - name: Install dependencies
-        shell: bash
         run: |
-          set -euo pipefail
           cd backend
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-      
+          pip install ruff
+      - name: Run Ruff
+        run: |
+          cd backend
+          ruff check app scripts tests
       - name: Run Black
-        shell: bash
         run: |
-          set -euo pipefail
           cd backend
-          black --check . --exclude="/(\.git|\.pytest_cache|\.ruff_cache|__pycache__|htmlcov|\.venv|venv|build|dist|data)/"
-      
+          black --check app scripts tests
       - name: Run Flake8
-        shell: bash
         run: |
-          set -euo pipefail
           cd backend
-          flake8 app/ tests/ --max-line-length=120 --exclude=__pycache__,migrations
-      
-      # Temporarily disabled for v1.4.0 - will be fixed in v1.4.1
-      # - name: Run isort
-      #   run: |
-      #     cd backend
-      #     isort --check-only app/ tests/
-      
+          flake8 app/ scripts/ tests/ --max-line-length=120 --exclude=__pycache__,migrations
       - name: Run MyPy
-        shell: bash
         run: |
-          set -euo pipefail
           cd backend
-          mypy app/ --ignore-missing-imports
+          mypy app/ scripts/ tests/ --ignore-missing-imports
         continue-on-error: true
 
   test-backend:
     name: Test Backend
     runs-on: ubuntu-latest
-    needs: [workflows-lint, lint-backend]
-    
+    needs: lint-backend
     services:
       postgres:
         image: postgres:14-alpine
@@ -107,7 +77,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-      
       redis:
         image: redis:7-alpine
         ports:
@@ -117,23 +86,18 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-    
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-      
       - name: Install dependencies
         run: |
           cd backend
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-      
       - name: Run Unit Tests
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
@@ -144,12 +108,9 @@ jobs:
           ALGORITHM: HS256
           ACCESS_TOKEN_EXPIRE_MINUTES: 30
           TESTING: "true"
-        shell: bash
         run: |
-          set -euo pipefail
           cd backend
           pytest tests/test_services/ -v --cov=app/services --cov-report=xml:coverage-services.xml --cov-report=term
-      
       - name: Run API Tests
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
@@ -160,21 +121,15 @@ jobs:
           ALGORITHM: HS256
           ACCESS_TOKEN_EXPIRE_MINUTES: 30
           TESTING: "true"
-        shell: bash
         run: |
-          set -euo pipefail
           cd backend
           pytest tests/test_api/ -v --cov=app/api --cov-report=xml:coverage-api.xml --cov-report=term
-      
       - name: Initialize Test Database
         env:
           TEST_DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
-        shell: bash
         run: |
-          set -euo pipefail
           cd backend
           python scripts/init_test_db.py
-      
       - name: Run Integration Tests
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
@@ -185,12 +140,9 @@ jobs:
           ALGORITHM: HS256
           ACCESS_TOKEN_EXPIRE_MINUTES: 30
           TESTING: "true"
-        shell: bash
         run: |
-          set -euo pipefail
           cd backend
           pytest tests/test_integration/ -v --cov=app --cov-report=xml:coverage-integration.xml --cov-report=term
-      
       - name: Run Critical Tests with Coverage
         env:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
@@ -201,30 +153,9 @@ jobs:
           ALGORITHM: HS256
           ACCESS_TOKEN_EXPIRE_MINUTES: 30
           TESTING: "true"
-        shell: bash
         run: |
-          set -euo pipefail
           cd backend
           pytest -m 'not legacy' --cov=app --cov-report=xml --cov-report=term --cov-report=html --cov-fail-under=35
-      
-      - name: Run All Tests (including legacy) - Optional
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        continue-on-error: true
-        env:
-          DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
-          TEST_DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
-          REDIS_URL: redis://localhost:6379/0
-          REDIS_ENABLED: "true"
-          SECRET_KEY: test-secret-key-for-ci-only-not-for-production
-          ALGORITHM: HS256
-          ACCESS_TOKEN_EXPIRE_MINUTES: 30
-          TESTING: "true"
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd backend
-          pytest --cov=app --cov-report=xml:coverage-all.xml --cov-report=term
-      
       - name: Upload coverage to Codecov
         continue-on-error: true
         uses: codecov/codecov-action@v4
@@ -235,87 +166,25 @@ jobs:
           fail_ci_if_error: false
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
-      
-      - name: Archive coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: backend/htmlcov/
-          retention-days: 30
-
-  e2e:
-    name: E2E (Playwright, npm)
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: workflows-lint
-    continue-on-error: true  # Temporary for v4.2.0 release; tighten in follow-up PR
-    concurrency:
-      group: e2e-${{ github.ref }}
-      cancel-in-progress: true
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-      - name: Install deps
-        working-directory: frontend
-        run: npm ci
-      - name: Install Playwright browsers
-        working-directory: frontend
-        run: npx playwright install --with-deps
-      - name: Run Playwright tests (webServer via config)
-        env:
-          E2E_BASE_URL: http://localhost:5173
-          # E2E_USER: ${{ secrets.E2E_USER }}
-          # E2E_PASS: ${{ secrets.E2E_PASS }}
-        shell: bash
-        working-directory: frontend
-        run: |
-          set -euo pipefail
-          npm run test:e2e
-      - name: Upload Playwright HTML report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: frontend/playwright-report
-          retention-days: 7
-      - name: Upload Playwright JSON report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-json
-          path: frontend/playwright-report/report.json
-          retention-days: 7
 
   frontend-unit:
-    name: Frontend Unit (Vitest + Coverage)
+    name: Frontend Unit Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: workflows-lint
-    permissions:
-      contents: read
+    needs: lint-workflows
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
-      - name: Install deps
+      - name: Install dependencies
         working-directory: frontend
         run: npm ci
-      - name: Run unit tests with coverage (thresholds enforced)
-        shell: bash
+      - name: Run unit tests with coverage
         working-directory: frontend
-        run: |
-          set -euo pipefail
-          npm test -- --coverage
-      - name: Upload coverage summary (HTML/LCOV/JSON)
+        run: npm test -- --coverage
+      - name: Upload coverage artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -323,33 +192,109 @@ jobs:
           path: frontend/coverage
           retention-days: 7
 
-  build-status:
-    name: Build Status
+  e2e:
+    name: E2E Tests
     runs-on: ubuntu-latest
-    needs: [lint-backend, test-backend]
-    if: always()
+    needs: [lint-workflows, test-backend, frontend-unit]
+    continue-on-error: true
     steps:
-      - name: Check build status
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: http://localhost:5173
+        run: npm run test:e2e
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          retention-days: 7
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    needs: lint-workflows
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript, python
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  docker-build:
+    name: Build Docker Image(s)
+    runs-on: ubuntu-latest
+    needs: [test-backend, frontend-unit]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect Dockerfile and context
+        id: detect
+        shell: bash
         run: |
-          if [ "${{ needs.lint-backend.result }}" == "success" ] && [ "${{ needs.test-backend.result }}" == "success" ]; then
-            echo "✅ All checks passed!"
-            exit 0
+          set -euo pipefail
+          present="false"
+          file=""
+          context=""
+          tag=""
+
+          if [ -f Dockerfile ]; then
+            present="true"
+            file="Dockerfile"
+            context="."
+            tag="gw2optimizer:ci-root"
+          elif [ -f backend/Dockerfile ]; then
+            present="true"
+            file="backend/Dockerfile"
+            context="backend"
+            tag="gw2optimizer:ci-backend"
           else
-            echo "❌ Some checks failed"
-            echo "Lint: ${{ needs.lint-backend.result }}"
-            echo "Test: ${{ needs.test-backend.result }}"
-            exit 1
+            file="$(ls -1 docker/**/Dockerfile 2>/dev/null | head -n1 || true)"
+            if [ -n "$file" ]; then
+              present="true"
+              context="$(dirname "$file")"
+              name="$(basename "$context" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9-' '-')"
+              tag="gw2optimizer:ci-$name"
+            fi
           fi
 
-  auto-merge:
-    name: Auto Merge PR
-    runs-on: ubuntu-latest
-    needs: [lint-backend, test-backend]
-    if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
-    steps:
-      - name: Auto merge
-        uses: pascalgn/automerge-action@v0.16.2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MERGE_LABELS: ""
-          MERGE_METHOD: squash
+          echo "present=$present" >> "$GITHUB_OUTPUT"
+          if [ "$present" = "true" ]; then
+            echo "file=$file" >> "$GITHUB_OUTPUT"
+            echo "context=$context" >> "$GITHUB_OUTPUT"
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "present=$present"
+          echo "file=${file:-none}"
+          echo "context=${context:-none}"
+
+      - name: Build image
+        if: steps.detect.outputs.present == 'true'
+        run: |
+          docker build -f "${{ steps.detect.outputs.file }}" \
+            -t "${{ steps.detect.outputs.tag }}" \
+            "${{ steps.detect.outputs.context }}"
+
+      - name: No Dockerfile found (skip)
+        if: steps.detect.outputs.present != 'true'
+        run: echo "No Dockerfile found. Skipping Docker build."

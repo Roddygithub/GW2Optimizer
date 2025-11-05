@@ -18,5 +18,5 @@ async def trigger_error():
 
     **WARNING**: Only use this in development/testing environments.
     """
-    division_by_zero = 1 / 0
+    1 / 0  # Intentionally cause division by zero for Sentry testing
     return {"status": "This should never be reached"}

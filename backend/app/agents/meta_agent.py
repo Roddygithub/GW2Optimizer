@@ -6,8 +6,7 @@ Analyse les tendances, détecte les changements de méta, et propose des adaptat
 """
 
 from typing import Any, Dict, List, Optional
-from datetime import datetime, timedelta
-import asyncio
+from datetime import datetime
 
 from app.agents.base import BaseAgent
 from app.core.logging import logger

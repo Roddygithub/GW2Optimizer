@@ -1,7 +1,6 @@
 """SQLAlchemy models for database tables."""
 
 from sqlalchemy import Boolean, Column, String, DateTime, Integer, Text, JSON
-from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 

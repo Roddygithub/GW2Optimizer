@@ -12,6 +12,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app.core.logging import logger
+from app.services.gw2_api import get_gw2_api_service
+from app.services.mistral_ai import get_mistral_service
 
 router = APIRouter()
 
@@ -75,7 +77,7 @@ async def optimize_team(request: TeamOptimizationRequest):
             gw2_service = get_gw2_api_service()
             try:
                 wvw_data = await gw2_service.fetch_live_wvw_data(request.world_id)
-                logger.info(f"✅ WvW data fetched successfully")
+                logger.info("✅ WvW data fetched successfully")
             except Exception as e:
                 logger.warning(f"⚠️ Failed to fetch WvW data: {str(e)}")
                 wvw_data = {"status": "unavailable", "error": str(e)}
@@ -83,14 +85,14 @@ async def optimize_team(request: TeamOptimizationRequest):
                 await gw2_service.close()
 
         # 2. Generate team composition with Mistral AI
-        logger.info(f"🤖 Generating team composition with Mistral AI")
+        logger.info("🤖 Generating team composition with Mistral AI")
         mistral_service = get_mistral_service()
 
         try:
             composition = await mistral_service.generate_team_composition(
                 wvw_data=wvw_data or {}, team_size=request.team_size, game_mode=request.game_mode
             )
-            logger.info(f"✅ Team composition generated successfully")
+            logger.info("✅ Team composition generated successfully")
         finally:
             await mistral_service.close()
 

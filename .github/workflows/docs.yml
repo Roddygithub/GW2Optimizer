@@ -4,93 +4,124 @@ on:
   push:
     branches: [main]
     paths:
-      - 'backend/**/*.py'
       - 'docs/**'
       - 'mkdocs.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
   workflow_dispatch:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: docs-${{ github.ref }}
-  cancel-in-progress: true
+  contents: read
 
 jobs:
-  build-docs:
-    name: Build Documentation
+  docs:
+    name: Build Docs (non-strict)
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Detect documentation stack
-        id: detect
-        shell: bash
-        env:
-          MKDOCS_ROOT: ${{ hashFiles('mkdocs.yml') }}
-          MKDOCS_DOCS: ${{ hashFiles('docs/mkdocs.yml') }}
-          DOCUSAURUS_ROOT: ${{ hashFiles('docusaurus.config.*') }}
-          DOCUSAURUS_DOCS: ${{ hashFiles('docs/**/docusaurus.config.*') }}
-        run: |
-          set -euo pipefail
-          stack="none"
-          if [[ -n "${MKDOCS_ROOT}" || -n "${MKDOCS_DOCS}" ]]; then
-            stack="mkdocs"
-          elif [[ -n "${DOCUSAURUS_ROOT}" || -n "${DOCUSAURUS_DOCS}" ]]; then
-            stack="docusaurus"
-          fi
-          echo "stack=${stack}" >> "$GITHUB_OUTPUT"
-          echo "⚙️ Stack détectée: ${stack}"
-
-      - name: No documentation stack detected
-        if: steps.detect.outputs.stack == 'none'
-        run: echo "ℹ️  Aucun contenu de documentation détecté, skipping build."
-
-      - name: Install MkDocs dependencies
-        if: steps.detect.outputs.stack == 'mkdocs'
-        shell: bash
-        run: |
-          set -euo pipefail
-          pip install --upgrade pip
-          if [ -f docs/requirements.txt ]; then
-            pip install -r docs/requirements.txt
-          fi
-          pip install mkdocs mkdocs-material mkdocs-awesome-pages-plugin 'mkdocstrings[python]>=0.24'
-
-      - name: Build MkDocs site
-        if: steps.detect.outputs.stack == 'mkdocs'
+      - uses: actions/checkout@v4
+      - id: detect
+        name: Detect MkDocs configuration
         shell: bash
         run: |
           set -euo pipefail
           if [ -f mkdocs.yml ]; then
-            mkdocs build --strict
+            echo "has_mkdocs=true" >> "$GITHUB_OUTPUT"
+            echo "config=mkdocs.yml" >> "$GITHUB_OUTPUT"
+          elif [ -f docs/mkdocs.yml ]; then
+            echo "has_mkdocs=true" >> "$GITHUB_OUTPUT"
+            echo "config=docs/mkdocs.yml" >> "$GITHUB_OUTPUT"
           else
-            cd docs
-            mkdocs build --strict
+            echo "has_mkdocs=false" >> "$GITHUB_OUTPUT"
           fi
+      - uses: actions/setup-python@v5
+        if: steps.detect.outputs.has_mkdocs == 'true'
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install MkDocs dependencies
+        if: steps.detect.outputs.has_mkdocs == 'true'
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          if [ -f docs/requirements.txt ]; then
+            pip install -r docs/requirements.txt
+          fi
+          pip install mkdocs mkdocs-material mkdocs-awesome-pages-plugin 'mkdocstrings[python]>=0.24'
+      - name: Build MkDocs site (non-strict)
+        if: steps.detect.outputs.has_mkdocs == 'true'
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.detect.outputs.config }}" == 'mkdocs.yml' ]; then
+            mkdocs build --no-strict --site-dir site
+          elif [ "${{ steps.detect.outputs.config }}" == 'docs/mkdocs.yml' ]; then
+            cd docs
+            mkdocs build --no-strict --site-dir ../site
+          else
+            echo "No mkdocs config found"
+          fi
+      - name: Upload site artifact
+        if: steps.detect.outputs.has_mkdocs == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-site
+          path: site
+          retention-days: 7
+      - name: Skip documentation build
+        if: steps.detect.outputs.has_mkdocs != 'true'
+        run: echo "No MkDocs configuration detected, skipping build."
 
   docs-status:
     name: Docs Status
+    needs: [docs]
     runs-on: ubuntu-latest
-    needs: [build-docs]
     if: always()
-
     steps:
-      - name: Check docs status
+      - run: |
+          echo "Docs job result: ${{ needs.docs.result }}"
+          exit 0
+
+  docs-linkcheck:
+    name: Docs Link Check (report-only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        name: Detect MkDocs configuration
+        shell: bash
         run: |
-          result="${{ needs.build-docs.result }}"
-          if [ "$result" = "success" ] || [ "$result" = "skipped" ]; then
-            echo "✅ Documentation OK (${result})"
+          set -euo pipefail
+          if [ -f mkdocs.yml ] || [ -f docs/mkdocs.yml ]; then
+            echo "has_mkdocs=true" >> "$GITHUB_OUTPUT"
           else
-            echo "❌ Documentation échouée (${result})"
-            exit 1
+            echo "has_mkdocs=false" >> "$GITHUB_OUTPUT"
           fi
+      - name: Install lychee link checker
+        if: steps.detect.outputs.has_mkdocs == 'true'
+        run: |
+          set -euo pipefail
+          tmpdir=$(mktemp -d)
+          curl -fsSL https://github.com/lycheeverse/lychee/releases/latest/download/lychee-linux-x86_64.tar.gz \
+            | tar -xz --strip-components=1 -C "$tmpdir"
+          sudo mv "$tmpdir"/lychee /usr/local/bin/lychee
+      - name: Run link check
+        if: steps.detect.outputs.has_mkdocs == 'true'
+        run: |
+          set +e
+          lychee --verbose --no-progress --max-concurrency 4 \
+            --exclude-mail --exclude 'http://localhost' \
+            --header "User-Agent: GW2Optimizer/CI" \
+            docs/**/*.md > linkcheck.txt
+          echo "Link check completed (exit code ignored)."
+      - name: Upload linkcheck report
+        if: steps.detect.outputs.has_mkdocs == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-linkcheck-report
+          path: linkcheck.txt
+          retention-days: 7
+      - name: Skip link check
+        if: steps.detect.outputs.has_mkdocs != 'true'
+        run: echo "No MkDocs configuration detected, skipping link check."

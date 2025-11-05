@@ -8,7 +8,7 @@ and receiving responses with build suggestions and recommendations.
 import time
 from typing import Dict, Any
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Request, status
 from fastapi.responses import JSONResponse
 
 from app.core.logging import logger

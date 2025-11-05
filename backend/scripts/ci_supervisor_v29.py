@@ -8,7 +8,6 @@ Mission v2.9.0: Production-ready avec monitoring et test E2E réel
 import subprocess
 import time
 import sys
-import os
 import json
 from pathlib import Path
 from datetime import datetime
@@ -31,7 +30,7 @@ class Colors:
 
 def log(message, color=Colors.NC):
     """Log with color"""
-    print(f"{color}{message}{Colors.NC}")
+    print("{}{}{}".format(color, message, Colors.NC))
 
 
 def run_tests():
@@ -50,7 +49,7 @@ def run_tests():
 
     # Save logs
     with open(LOG_FILE, "w") as f:
-        f.write(f"=== TEST RUN {datetime.now()} ===\n\n")
+        f.write("=== TEST RUN {} ===\n\n".format(datetime.now()))
         f.write(output)
 
     return result.returncode, output
@@ -140,15 +139,15 @@ def run_real_e2e():
     # Save YAML report
     yaml_path = E2E_REPORT_DIR / f"team_report_{timestamp.replace(':', '-')}.yaml"
     with open(yaml_path, "w") as f:
-        f.write(f"# GW2Optimizer E2E Real Conditions Report\n")
+        f.write("# GW2Optimizer E2E Real Conditions Report\n")
         f.write(f"# Generated: {timestamp}\n\n")
         f.write(f"timestamp: {timestamp}\n")
-        f.write(f"test_type: E2E Real Conditions\n")
-        f.write(f"status: simulated\n\n")
-        f.write(f"team_composition:\n")
-        f.write(f"  name: Simulated Zerg Team\n")
-        f.write(f"  size: 50\n")
-        f.write(f"  builds:\n")
+        f.write("test_type: E2E Real Conditions\n")
+        f.write("status: simulated\n\n")
+        f.write("team_composition:\n")
+        f.write("  name: Simulated Zerg Team\n")
+        f.write("  size: 50\n")
+        f.write("  builds:\n")
         for build in e2e_data["team_composition"]["builds"]:
             f.write(f"    - profession: {build['profession']}\n")
             f.write(f"      role: {build['role']}\n")
@@ -189,47 +188,46 @@ def main():
     """Main CI supervisor loop"""
     log("=" * 70, Colors.BLUE)
     log(" 🚀 CI SUPERVISOR v2.9.0 - PRODUCTION READY + E2E REAL", Colors.BLUE)
-    log("=" * 70, Colors.BLUE)
-    log(f"Target: 79/79 critical tests GREEN", Colors.GREEN)
-    log(f"E2E: Real conditions test with GW2 API + Mistral AI", Colors.MAGENTA)
-    log(f"Max cycles: {MAX_CYCLES}", Colors.BLUE)
+    log(" " + "=" * 70, Colors.BLUE)
+    log("\n🚀 Starting CI Supervisor v2.9.0 - {}\n".format(datetime.now()), Colors.BLUE)
+    log("📁 Backend directory: {}".format(BACKEND_DIR), Colors.BLUE)
+    log("📝 Log file: {}".format(LOG_FILE), Colors.BLUE)
+    log("📊 Report file: {}".format(REPORT_FILE), Colors.BLUE)
+    log("🔄 Max cycles: {}\n".format(MAX_CYCLES), Colors.BLUE)
 
-    full_report = f"""# CI Supervisor Report - v2.9.0
+    full_report = """# CI Supervisor Report - v2.9.0
 
 **Mission**: Production-Ready + E2E Real Conditions
-**Start**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-
----
-
-## Backend Critical Tests
-
-"""
+**Start**: {}
+""".format(
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
 
     # Run test cycles
     for cycle in range(1, MAX_CYCLES + 1):
-        log(f"\n{'='*70}", Colors.BLUE)
-        log(f" CYCLE {cycle}/{MAX_CYCLES}", Colors.BLUE)
-        log(f"{'='*70}", Colors.BLUE)
+        log("\n{}".format("=" * 70), Colors.BLUE)
+        log(" CYCLE {}/{}".format(cycle, MAX_CYCLES), Colors.BLUE)
+        log("{}".format("=" * 70), Colors.BLUE)
 
         start_time = time.time()
         exit_code, logs = run_tests()
         duration = time.time() - start_time
 
         if exit_code == 0:
-            log(f"\n✅ SUCCESS: All critical tests passed!", Colors.GREEN)
-            full_report += f"### Cycle {cycle} - ✅ SUCCESS\n\n"
-            full_report += f"- Duration: {duration:.2f}s\n"
-            full_report += f"- All critical tests GREEN\n\n"
+            log("\n✅ SUCCESS: All critical tests passed!", Colors.GREEN)
+            full_report += "### Cycle {} - ✅ SUCCESS\n\n".format(cycle)
+            full_report += "- Duration: {:.2f}s\n".format(duration)
+            full_report += "- All critical tests GREEN\n\n"
             break
         else:
-            log(f"\n❌ Cycle {cycle}: Tests failed", Colors.RED)
+            log("\n❌ Cycle {}: Tests failed".format(cycle), Colors.RED)
             fixes = auto_fix(logs)
-            full_report += f"### Cycle {cycle} - ❌ FAILED\n\n"
-            full_report += f"- Duration: {duration:.2f}s\n"
-            full_report += f"- Fixes applied: {', '.join(fixes) if fixes else 'None'}\n\n"
+            full_report += "### Cycle {} - ❌ FAILED\n\n".format(cycle)
+            full_report += "- Duration: {:.2f}s\n".format(duration)
+            full_report += "- Fixes applied: {}\n\n".format(", ".join(fixes) if fixes else "None")
 
             if cycle < MAX_CYCLES:
-                log(f"\n⏳ Waiting 5s before cycle {cycle + 1}...", Colors.YELLOW)
+                log("\n⏳ Waiting 5s before cycle {}...".format(cycle + 1), Colors.YELLOW)
                 time.sleep(5)
 
     # Run E2E Real Conditions Test
@@ -237,24 +235,24 @@ def main():
 
     try:
         json_path, yaml_path = run_real_e2e()
-        full_report += f"✅ **E2E Test Executed**\n\n"
-        full_report += f"- JSON Report: `{json_path}`\n"
-        full_report += f"- YAML Report: `{yaml_path}`\n"
-        full_report += f"- Timestamp: {datetime.utcnow().isoformat()}\n\n"
-        full_report += f"### E2E Test Details\n\n"
-        full_report += f"- GW2 API: Ready for integration\n"
-        full_report += f"- Mistral AI: Ready for integration\n"
-        full_report += f"- Team Composition: Simulated (50 players)\n\n"
+        full_report += "✅ **E2E Test Executed**\n\n"
+        full_report += "- JSON Report: `{}`\n".format(json_path)
+        full_report += "- YAML Report: `{}`\n".format(yaml_path)
+        full_report += "- Timestamp: {}\n\n".format(datetime.utcnow().isoformat())
+        full_report += "### E2E Test Details\n\n"
+        full_report += "- GW2 API: Ready for integration\n"
+        full_report += "- Mistral AI: Ready for integration\n"
+        full_report += "- Team Composition: Simulated (50 players)\n\n"
     except Exception as e:
-        log(f"\n❌ E2E test failed: {e}", Colors.RED)
-        full_report += f"❌ **E2E Test Failed**\n\n"
-        full_report += f"- Error: {str(e)}\n\n"
+        log("\n❌ E2E test failed: {}".format(e), Colors.RED)
+        full_report += "❌ **E2E Test Failed**\n\n"
+        full_report += "- Error: {}\n\n".format(str(e))
 
     # Save final report
     with open(REPORT_FILE, "w") as f:
         f.write(full_report)
 
-    log(f"\n📊 Report saved: {REPORT_FILE}", Colors.GREEN)
+    log("\n📝 Full report saved to: {}".format(REPORT_FILE), Colors.GREEN)
 
     return 0 if exit_code == 0 else 1
 

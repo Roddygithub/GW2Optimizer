@@ -7,7 +7,7 @@ des modifications pour améliorer les performances.
 
 import httpx
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from app.agents.base import BaseAgent
 from app.agents.synergy_agent import SynergyAgent
@@ -74,7 +74,7 @@ class OptimizerAgent(BaseAgent):
         self._client = httpx.AsyncClient(timeout=self.timeout)
         self._synergy_agent = SynergyAgent(model=self.model, host=self.host, timeout=self.timeout)
         await self._synergy_agent.initialize()
-        logger.info(f"Optimizer agent initialized with synergy analysis capability")
+        logger.info("Optimizer agent initialized with synergy analysis capability")
 
     async def _cleanup_impl(self) -> None:
         """Ferme le client HTTP et nettoie l'agent de synergie."""

@@ -33,6 +33,6 @@ async def send_password_reset_email(email_to: str, token: str):
     reset_link = f"http://{server_host}/reset-password?token={token}"
     logger.info("---- SENDING PASSWORD RESET EMAIL (SIMULATED) ----")
     logger.info(f"To: {email_to}")
-    logger.info(f"Subject: GW2Optimizer - Password Reset Request")
+    logger.info("Subject: GW2Optimizer - Password Reset Request")
     logger.info(f"Body: Please reset your password by clicking here: {reset_link}")
     logger.info("--------------------------------------------------")

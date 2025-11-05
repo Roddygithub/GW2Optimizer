@@ -1,9 +1,8 @@
 """Advanced synergy analysis for builds and teams."""
 
-from typing import Dict, List, Tuple
+from typing import Dict, List
 from enum import Enum
 
-from app.core.logging import logger
 from app.models.build import Build, Profession, Role
 from app.models.team import TeamComposition, TeamSynergy
 

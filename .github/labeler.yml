@@ -1,33 +1,5 @@
-backend:
-  changed-files:
-    any-glob-to-any-file: "backend/**"
+# Configuration for GitHub Labeler v5
+# This is the minimal working configuration
 
-frontend:
-  changed-files:
-    any-glob-to-any-file: "frontend/**"
-
-ci:
-  changed-files:
-    any-glob-to-any-file: ".github/workflows/**"
-
-docs:
-  changed-files:
-    any-glob-to-any-file:
-      - "docs/**"
-      - "mkdocs.yml"
-
-e2e:
-  changed-files:
-    any-glob-to-any-file: "frontend/tests/e2e/**"
-
-security:
-  changed-files:
-    any-glob-to-any-file:
-      - "backend/requirements*.txt"
-      - "frontend/package*.json"
-
-technical-debt:
-  changed-files:
-    any-glob-to-any-file:
-      - "audit-reports/**"
-      - "**/*.md"
+'bug':
+  - any: ['**/__tests__/**']

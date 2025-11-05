@@ -1,19 +1,18 @@
 """Team composition models for GW2Optimizer."""
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import Dict, List, Optional, TYPE_CHECKING
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, JSON, String, Text
+from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base_class import Base
 from app.db.types import GUID
-from app.models.build import Build, GameMode, team_builds
+from app.models.build import Build, GameMode
 
 if TYPE_CHECKING:
-    from app.models.user import UserDB
     from app.models.build import BuildDB
 
 
