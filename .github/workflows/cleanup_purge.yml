@@ -38,10 +38,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const DRY   = core.getInput('dry_run') === 'true';
-            const PURGE = core.getInput('purge_all') === 'true';
-            const CLOSE_PRS = core.getInput('close_prs') === 'true';
-            const CLOSE_ISS = core.getInput('close_issues') === 'true';
+            const DRY        = core.getBooleanInput('dry_run');
+            const PURGE      = core.getBooleanInput('purge_all');
+            const CLOSE_PRS  = core.getBooleanInput('close_prs');
+            const CLOSE_ISS  = core.getBooleanInput('close_issues');
 
             const owner = context.repo.owner;
             const repo  = context.repo.repo;
