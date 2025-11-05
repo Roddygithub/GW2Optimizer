@@ -96,19 +96,19 @@ jobs:
           # Afficher la version de Python et les variables d'environnement
           echo "🐍 Python version:"
           python --version
-          echo "\n📋 Environment variables:"
+          printf '\n📋 Environment variables:\n'
           env | sort
-          
+
           # Installer les dépendances requises
-          echo "\n📦 Installing dependencies..."
+          printf '\n📦 Installing dependencies...\n'
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
           pip install sqlalchemy[asyncio] aiosqlite
-          
+
           # Afficher la structure du répertoire pour le débogage
-          echo "\n📂 Current directory structure:"
+          printf '\n📂 Current directory structure:\n'
           ls -la
-          
+
           # Vérifier que le script d'initialisation existe
           if [ ! -f "scripts/init_test_db_simple.py" ]; then
               echo "❌ Error: scripts/init_test_db_simple.py not found!"
@@ -116,26 +116,26 @@ jobs:
               ls -la scripts/ || true
               exit 1
           fi
-          
+
           # Exécuter le script d'initialisation
-          echo "\n🚀 Running database initialization script..."
+          printf '\n🚀 Running database initialization script...\n'
           python scripts/init_test_db_simple.py
-          
+
           # Vérifier que la base de données a été créée
           if [ -f "gw2optimizer_test.db" ]; then
-              echo "\n✅ Database file created successfully"
+              printf '\n✅ Database file created successfully\n'
               ls -la gw2optimizer_test.db
-              
+
               # Vérifier la taille de la base de données
-              echo "\n📊 Database file size:"
+              printf '\n📊 Database file size:\n'
               du -h gw2optimizer_test.db
-              
+
               # Vérifier le contenu de la base de données
-              echo "\n🔍 Database content:"
+              printf '\n🔍 Database content:\n'
               sqlite3 gw2optimizer_test.db ".tables" || echo "❌ Failed to list tables"
-              
+
           else
-              echo "\n❌ Error: Database file not found!"
+              printf '\n❌ Error: Database file not found!\n'
               echo "📂 Current directory content:"
               ls -la
               exit 1
