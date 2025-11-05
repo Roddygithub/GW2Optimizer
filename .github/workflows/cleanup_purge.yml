@@ -1,0 +1,184 @@
+name: Repository Cleanup (Purge)
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Report only (no merge/close/delete)"
+        type: boolean
+        default: true
+      purge_all:
+        description: "Delete ALL remote branches except 'main', even if unmerged"
+        type: boolean
+        default: false
+      close_prs:
+        description: "Close all non-clean PRs to main"
+        type: boolean
+        default: false
+      close_issues:
+        description: "Close all open issues"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  actions: read
+
+jobs:
+  purge:
+    name: Cleanup PRs / Branches / Issues
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run cleanup purge (github-script)
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const DRY   = core.getInput('dry_run') === 'true';
+            const PURGE = core.getInput('purge_all') === 'true';
+            const CLOSE_PRS = core.getInput('close_prs') === 'true';
+            const CLOSE_ISS = core.getInput('close_issues') === 'true';
+
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+
+            async function listOpenPRs() {
+              return (await github.rest.pulls.list({ owner, repo, state: 'open', per_page: 100 })).data;
+            }
+            async function listOpenIssues() {
+              return (await github.rest.issues.listForRepo({ owner, repo, state: 'open', per_page: 100 })).data
+                .filter(i => !i.pull_request);
+            }
+            async function listBranches() {
+              return await github.paginate(github.rest.repos.listBranches, { owner, repo, per_page: 100 });
+            }
+            async function getMainSha() {
+              const main = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
+              return main.data.commit.sha;
+            }
+            async function createTagAndBackup() {
+              const sha = await getMainSha();
+              const date = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
+              const tagName = `pre-cleanup-${date}`;
+              const backupBranch = `backup/cleanup-${date}`;
+              try { if (!DRY) await github.rest.git.createRef({ owner, repo, ref: `refs/tags/${tagName}`, sha }); } catch {}
+              try { if (!DRY) await github.rest.git.createRef({ owner, repo, ref: `refs/heads/${backupBranch}`, sha }); } catch {}
+              core.info(`Snapshot: tag=${tagName}, branch=${backupBranch}`);
+              return { tagName, backupBranch };
+            }
+
+            async function mergeOrHandlePRs(prs) {
+              const merged = [], labeled = [], closed = [];
+              for (const pr of prs) {
+                if (pr.base.ref !== 'main' || pr.draft) continue;
+                const prView = (await github.rest.pulls.get({ owner, repo, pull_number: pr.number })).data;
+                const clean = prView.mergeable_state === 'clean';
+                if (clean) {
+                  if (DRY) {
+                    core.info(`[DRY] Would merge PR #${pr.number}: ${pr.title}`);
+                  } else {
+                    try {
+                      await github.rest.pulls.merge({ owner, repo, pull_number: pr.number, merge_method: 'squash' });
+                      merged.push(pr.number);
+                      if (pr.head?.repo?.full_name === `${owner}/${repo}`) {
+                        try { await github.rest.git.deleteRef({ owner, repo, ref: `heads/${pr.head.ref}` }); } catch {}
+                      }
+                    } catch (e) {
+                      core.warning(`Merge failed #${pr.number}: ${e.message}`);
+                    }
+                  }
+                } else if (CLOSE_PRS) {
+                  if (DRY) {
+                    core.info(`[DRY] Would close PR #${pr.number}`);
+                  } else {
+                    try {
+                      await github.rest.issues.createComment({ owner, repo, issue_number: pr.number, body: `Closing per cleanup request. Please reopen if still relevant.` });
+                      await github.rest.pulls.update({ owner, repo, pull_number: pr.number, state: 'closed' });
+                      closed.push(pr.number);
+                    } catch (e) {
+                      core.warning(`Close PR failed #${pr.number}: ${e.message}`);
+                    }
+                  }
+                } else {
+                  if (DRY) {
+                    core.info(`[DRY] Would label/comment PR #${pr.number}`);
+                  } else {
+                    try {
+                      await github.rest.issues.addLabels({ owner, repo, issue_number: pr.number, labels: ['cleanup:pending'] }).catch(()=>{});
+                      await github.rest.issues.createComment({ owner, repo, issue_number: pr.number, body: `Automated cleanup: PR non mergeable (state=${prView.mergeable_state}). Rebase sur main + relance CI.` });
+                      labeled.push(pr.number);
+                    } catch (e) {
+                      core.warning(`Label/comment failed #${pr.number}: ${e.message}`);
+                    }
+                  }
+                }
+              }
+              return { merged, labeled, closed };
+            }
+
+            async function deleteBranches(all) {
+              const deleted = [], skipped = [];
+              for (const b of all) {
+                const name = b.name;
+                if (name === 'main' || name === 'gh-pages' || name.startsWith('release/')) { skipped.push(name); continue; }
+                if (!PURGE) { skipped.push(name); continue; }
+                if (DRY) { core.info(`[DRY] Would delete branch ${name}`); continue; }
+                try {
+                  await github.rest.git.deleteRef({ owner, repo, ref: `heads/${name}` });
+                  deleted.push(name);
+                } catch (e) {
+                  core.warning(`Delete branch ${name} failed: ${e.message}`);
+                }
+              }
+              return { deleted, skipped };
+            }
+
+            async function closeIssues(issues) {
+              const closed = [];
+              for (const is of issues) {
+                if (DRY || !CLOSE_ISS) { core.info(`[DRY] Would close issue #${is.number}`); continue; }
+                try {
+                  await github.rest.issues.createComment({ owner, repo, issue_number: is.number, body: `Closing per cleanup request. Please reopen if still relevant.` });
+                  await github.rest.issues.update({ owner, repo, issue_number: is.number, state: 'closed' });
+                  closed.push(is.number);
+                } catch (e) {
+                  core.warning(`Close issue failed #${is.number}: ${e.message}`);
+                }
+              }
+              return { closed };
+            }
+
+            const snap = await createTagAndBackup();
+
+            const prs = await listOpenPRs();
+            const prRes = await mergeOrHandlePRs(prs);
+
+            const branches = await listBranches();
+            const brRes = await deleteBranches(branches);
+
+            const issues = await listOpenIssues();
+            const isRes = await closeIssues(issues);
+
+            core.summary
+              .addHeading('Repository Cleanup — Purge Summary')
+              .addTable([
+                [{data:'Dry run', header:true},{data:String(DRY)}],
+                [{data:'Snapshot tag', header:true},{data:snap.tagName || '(see logs)'}],
+                [{data:'Backup branch', header:true},{data:snap.backupBranch || '(see logs)'}],
+                [{data:'Merged PRs', header:true},{data:(prRes.merged||[]).join(', ') || 'none'}],
+                [{data:'Closed PRs', header:true},{data:(prRes.closed||[]).join(', ') || 'none'}],
+                [{data:'Labeled PRs', header:true},{data:(prRes.labeled||[]).join(', ') || 'none'}],
+                [{data:'Deleted branches', header:true},{data:(brRes.deleted||[]).join(', ') || 'none'}],
+                [{data:'Closed issues', header:true},{data:(isRes.closed||[]).join(', ') || 'none'}],
+              ])
+              .addHeading('Notes')
+              .addList([
+                'Protected branches (main/release/*/gh-pages) are never deleted.',
+                'Non-clean PRs are either closed (close_prs=true) or labeled cleanup:pending.',
+                'No auto-conflict resolution; everything is traceable in Actions.',
+              ])
+              .write();
