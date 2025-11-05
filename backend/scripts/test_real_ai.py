@@ -58,11 +58,11 @@ async def test_real_ai_optimization():
         wvw_data = await gw2_service.fetch_live_wvw_data()
 
         if wvw_data.get("status") == "success":
-            log(f"  ✅ WvW data fetched successfully", Colors.GREEN)
+            log("  ✅ WvW data fetched successfully", Colors.GREEN)
             log(f"  - Matches: {len(wvw_data.get('matches', []))}", Colors.NC)
             log(f"  - Objectives: {len(wvw_data.get('objectives', []))}", Colors.NC)
         else:
-            log(f"  ⚠️ WvW data fetch failed, using fallback", Colors.YELLOW)
+            log("  ⚠️ WvW data fetch failed, using fallback", Colors.YELLOW)
             wvw_data = {}
     except Exception as e:
         log(f"  ⚠️ Error fetching WvW data: {str(e)}", Colors.YELLOW)
@@ -79,7 +79,7 @@ async def test_real_ai_optimization():
     try:
         composition = await mistral_service.generate_team_composition(wvw_data=wvw_data, team_size=50, game_mode="zerg")
 
-        log(f"  ✅ Team composition generated", Colors.GREEN)
+        log("  ✅ Team composition generated", Colors.GREEN)
         log(f"  - Name: {composition.get('name', 'Unknown')}", Colors.NC)
         log(f"  - Size: {composition.get('size', 0)} players", Colors.NC)
         log(f"  - Source: {composition.get('source', 'Unknown')}", Colors.NC)
@@ -97,17 +97,17 @@ async def test_real_ai_optimization():
     validation = validate_composition(composition, 50)
 
     if validation["valid"]:
-        log(f"  ✅ Composition is valid", Colors.GREEN)
+        log("  ✅ Composition is valid", Colors.GREEN)
     else:
-        log(f"  ⚠️ Composition has issues", Colors.YELLOW)
+        log("  ⚠️ Composition has issues", Colors.YELLOW)
 
     if validation["errors"]:
-        log(f"  ❌ Errors:", Colors.RED)
+        log("  ❌ Errors:", Colors.RED)
         for error in validation["errors"]:
             log(f"    - {error}", Colors.RED)
 
     if validation["warnings"]:
-        log(f"  ⚠️ Warnings:", Colors.YELLOW)
+        log("  ⚠️ Warnings:", Colors.YELLOW)
         for warning in validation["warnings"]:
             log(f"    - {warning}", Colors.YELLOW)
 
@@ -139,19 +139,19 @@ async def test_real_ai_optimization():
 
     # Display strategy
     if "strategy" in composition:
-        log(f"  Strategy:", Colors.YELLOW)
+        log("  Strategy:", Colors.YELLOW)
         log(f"    {composition['strategy']}", Colors.NC)
         log("", Colors.NC)
 
     # Display strengths/weaknesses
     if "strengths" in composition:
-        log(f"  Strengths:", Colors.GREEN)
+        log("  Strengths:", Colors.GREEN)
         for strength in composition["strengths"]:
             log(f"    ✓ {strength}", Colors.GREEN)
         log("", Colors.NC)
 
     if "weaknesses" in composition:
-        log(f"  Weaknesses:", Colors.RED)
+        log("  Weaknesses:", Colors.RED)
         for weakness in composition["weaknesses"]:
             log(f"    ✗ {weakness}", Colors.RED)
         log("", Colors.NC)
@@ -214,7 +214,7 @@ async def test_real_ai_optimization():
     log("=" * 80, Colors.BLUE)
     log("", Colors.NC)
 
-    log(f"✅ Team composition generated successfully", Colors.GREEN)
+    log("✅ Team composition generated successfully", Colors.GREEN)
     log(f"✅ Reports saved to {report_dir}", Colors.GREEN)
     log(f"✅ Duration: {duration:.2f}s", Colors.GREEN)
 
