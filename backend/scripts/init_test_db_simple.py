@@ -2,6 +2,7 @@
 Initialize the test database with all tables.
 This script is used in CI to create tables before running tests.
 """
+
 import asyncio
 import os
 import sys
@@ -20,6 +21,7 @@ from app.db.base_class import Base
 from app.db.base import engine
 from app.db import models  # noqa: F401
 
+
 async def init_db():
     """Initialize the database by dropping and creating all tables."""
     print("🔧 Initializing test database...")
@@ -29,6 +31,7 @@ async def init_db():
         print("✨ Creating new tables...")
         await conn.run_sync(Base.metadata.create_all)
     print("✅ Database initialized successfully")
+
 
 if __name__ == "__main__":
     asyncio.run(init_db())
