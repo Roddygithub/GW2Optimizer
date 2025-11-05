@@ -96,7 +96,7 @@ jobs:
           pip install sqlalchemy[asyncio] aiosqlite
           
           # Exécuter le script d'initialisation
-          python init_sqlite_db.py
+          python scripts/init_test_db.py
           
           # Vérifier que la base de données a été créée
           if [ -f "gw2optimizer_test.db" ]; then
