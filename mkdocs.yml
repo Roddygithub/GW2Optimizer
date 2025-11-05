@@ -3,6 +3,8 @@ site_description: Guild Wars 2 Build Optimizer & Meta Analysis Tool
 site_author: GW2Optimizer Team
 site_url: https://gw2optimizer.dev
 
+strict: false
+
 repo_name: Roddygithub/GW2Optimizer
 repo_url: https://github.com/Roddygithub/GW2Optimizer
 
