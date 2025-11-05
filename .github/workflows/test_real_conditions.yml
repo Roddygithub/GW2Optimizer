@@ -108,18 +108,24 @@ jobs:
           DATABASE_URL = os.getenv('DATABASE_URL')
           
           async def init_db():
-              # Création des tables avec SQLAlchemy
-              from app.db.base import Base
-              from app.db.session import async_engine
+              # Configuration de la base de données
+              from app.db.base_class import Base
+              from app.db.base import engine, get_db
+              from app.db.session import async_session_maker
+              
+              # Importer tous les modèles
+              from app.db import models  # noqa: F401
               
               print('🔄 Creating database tables...')
-              async with async_engine.begin() as conn:
+              
+              # Création des tables
+              async with engine.begin() as conn:
                   await conn.run_sync(Base.metadata.drop_all)
                   await conn.run_sync(Base.metadata.create_all)
               
               # Vérification de la connexion
-              async with async_engine.connect() as conn:
-                  result = await conn.execute(text('SELECT 1'))
+              async with async_session_maker() as session:
+                  result = await session.execute(text('SELECT 1'))
                   print(f'✅ Database connection test: {result.scalar() == 1}')
           
           try:
@@ -127,6 +133,8 @@ jobs:
               print('✅ Database initialized successfully')
           except Exception as e:
               print(f'❌ Database initialization failed: {str(e)}')
+              import traceback
+              traceback.print_exc()
               raise
           "
 
