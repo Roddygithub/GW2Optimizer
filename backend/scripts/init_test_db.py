@@ -89,12 +89,7 @@ async def init_db():
 
             # Count the number of tables created
             result = await session.execute(
-                text(
-                    """
-                    SELECT count(name) FROM sqlite_master 
-                    WHERE type='table' AND name NOT LIKE 'sqlite_%';
-                """
-                )
+                text("SELECT count(name) FROM sqlite_master " "WHERE type='table' AND name NOT LIKE 'sqlite_%';")
             )
             table_count = result.scalar()
             logger.info(f"📊 Found {table_count} tables in the database")
