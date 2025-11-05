@@ -89,18 +89,19 @@ jobs:
       - name: 🗄️ Initialize SQLite database
         working-directory: backend
         run: |
-          python -c "
+          # Créer un script Python temporaire
+          cat > init_db.py << 'EOL'
           import asyncio
           import os
           from sqlalchemy import text
           
-          # Configuration pour SQLite
-          db_path = './gw2optimizer_test.db'
-          if os.path.exists(db_path):
-              os.remove(db_path)
-              print(f'🗑️  Removed existing database at {db_path}')
-          
           async def init_db():
+              # Configuration pour SQLite
+              db_path = './gw2optimizer_test.db'
+              if os.path.exists(db_path):
+                  os.remove(db_path)
+                  print(f'🗑️  Removed existing database at {db_path}')
+          
               # Importation différée pour éviter les problèmes de boucle d'import
               from app.db.base_class import Base
               from app.db.session import async_engine
@@ -120,15 +121,28 @@ jobs:
                   result = await conn.execute(text('SELECT 1'))
                   print(f'✅ SQLite connection test: {result.scalar() == 1}')
           
-          try:
-              asyncio.run(init_db())
-              print('✅ SQLite database initialized successfully')
-          except Exception as e:
-              print(f'❌ SQLite database initialization failed: {str(e)}')
-              import traceback
-              traceback.print_exc()
-              raise
-          "
+          if __name__ == "__main__":
+              try:
+                  asyncio.run(init_db())
+                  print('✅ SQLite database initialized successfully')
+              except Exception as e:
+                  print(f'❌ SQLite database initialization failed: {str(e)}')
+                  import traceback
+                  traceback.print_exc()
+                  exit(1)
+          EOL
+          
+          # Exécuter le script
+          python init_db.py
+          
+          # Vérifier que la base de données a été créée
+          if [ -f "gw2optimizer_test.db" ]; then
+              echo "✅ Database file created successfully"
+              ls -la gw2optimizer_test.db
+          else
+              echo "❌ Database file not found!"
+              exit 1
+          fi
 
       # 🔧 7️⃣ Démarrage des services backend et frontend
       - name: 🔧 Start backend and frontend
