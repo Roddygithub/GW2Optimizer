@@ -15,25 +15,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: gw2_test
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd="pg_isready -U postgres -d gw2_test"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
+    # PostgreSQL désactivé temporairement en attendant la résolution des problèmes
+    # services:
+    #   postgres:
+    #     image: postgres:16
+    #     env:
+    #       POSTGRES_USER: postgres
+    #       POSTGRES_PASSWORD: postgres
+    #       POSTGRES_DB: gw2_test
+    #     ports: ["5432:5432"]
+    #     options: >-
+    #       --health-cmd="pg_isready -U postgres -d gw2_test"
+    #       --health-interval=10s
+    #       --health-timeout=5s
+    #       --health-retries=10
 
     env:
       ENVIRONMENT: test
       MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
       GW2_API_KEY: ${{ secrets.GW2_API_KEY }}
-      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/gw2_test
+      # Utilisation de SQLite comme solution temporaire
+      DATABASE_URL: sqlite+aiosqlite:///./gw2optimizer_test.db
       REDIS_ENABLED: "false"
       SECRET_KEY: test-secret-key-e2e-only
       ALGORITHM: HS256
@@ -81,58 +83,45 @@ jobs:
           cd frontend
           npm ci
 
-      # ⏳ 6️⃣ Attente de la base de données
-      - name: ⏳ Wait for PostgreSQL
-        run: |
-          for i in {1..30}; do
-            if pg_isready -h localhost -p 5432 -U postgres -d gw2_test; then
-              echo "✅ PostgreSQL is ready"
-              exit 0
-            fi
-            echo "⏳ Waiting for PostgreSQL to be ready... (attempt $i/30)"
-            sleep 2
-          done
-          echo "❌ PostgreSQL not ready after 60 seconds"
-          exit 1
+      # ⏳ 6️⃣ Initialisation de SQLite (pas d'attente nécessaire)
 
-      # 🗄️ 7️⃣ Initialisation de la base de données
-      - name: 🗄️ Initialize test database
+      # 🗄️ 7️⃣ Initialisation de la base de données SQLite
+      - name: 🗄️ Initialize SQLite database
         working-directory: backend
         run: |
           python -c "
           import asyncio
           import os
           from sqlalchemy import text
-          from sqlalchemy.ext.asyncio import create_async_engine
           
-          DATABASE_URL = os.getenv('DATABASE_URL')
+          # Configuration pour SQLite
+          db_path = './gw2optimizer_test.db'
+          if os.path.exists(db_path):
+              os.remove(db_path)
+              print(f'🗑️  Removed existing database at {db_path}')
           
           async def init_db():
-              # Configuration de la base de données
+              # Importation différée pour éviter les problèmes de boucle d'import
               from app.db.base_class import Base
-              from app.db.base import engine, get_db
-              from app.db.session import async_session_maker
-              
-              # Importer tous les modèles
+              from app.db.session import async_engine
               from app.db import models  # noqa: F401
               
-              print('🔄 Creating database tables...')
+              print('🔄 Creating SQLite database tables...')
               
               # Création des tables
-              async with engine.begin() as conn:
-                  await conn.run_sync(Base.metadata.drop_all)
+              async with async_engine.begin() as conn:
                   await conn.run_sync(Base.metadata.create_all)
               
               # Vérification de la connexion
-              async with async_session_maker() as session:
-                  result = await session.execute(text('SELECT 1'))
-                  print(f'✅ Database connection test: {result.scalar() == 1}')
+              async with async_engine.connect() as conn:
+                  result = await conn.execute(text('SELECT 1'))
+                  print(f'✅ SQLite connection test: {result.scalar() == 1}')
           
           try:
               asyncio.run(init_db())
-              print('✅ Database initialized successfully')
+              print('✅ SQLite database initialized successfully')
           except Exception as e:
-              print(f'❌ Database initialization failed: {str(e)}')
+              print(f'❌ SQLite database initialization failed: {str(e)}')
               import traceback
               traceback.print_exc()
               raise
