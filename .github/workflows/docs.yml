@@ -103,9 +103,17 @@ jobs:
         run: |
           set -euo pipefail
           tmpdir=$(mktemp -d)
-          curl -fsSL https://github.com/lycheeverse/lychee/releases/latest/download/lychee-linux-x86_64.tar.gz \
-            | tar -xz --strip-components=1 -C "$tmpdir"
-          sudo mv "$tmpdir"/lychee /usr/local/bin/lychee
+          archive="$tmpdir/lychee.tar.gz"
+          download_url=$(curl -fsSL https://api.github.com/repos/lycheeverse/lychee/releases/latest \
+            | jq -r '.assets[] | select(.name | test("x86_64-unknown-linux-gnu\\.tar\\.gz$")) | .browser_download_url' \
+            | head -n1)
+          if [ -z "$download_url" ]; then
+            echo "Failed to resolve lychee download URL" >&2
+            exit 1
+          fi
+          curl -fsSL "$download_url" -o "$archive"
+          tar -xzf "$archive" -C "$tmpdir"
+          sudo install "$tmpdir"/lychee /usr/local/bin/lychee
       - name: Run link check
         if: steps.detect.outputs.has_mkdocs == 'true'
         run: |
