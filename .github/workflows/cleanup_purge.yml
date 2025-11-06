@@ -38,10 +38,18 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const DRY        = core.getBooleanInput('dry_run');
-            const PURGE      = core.getBooleanInput('purge_all');
-            const CLOSE_PRS  = core.getBooleanInput('close_prs');
-            const CLOSE_ISS  = core.getBooleanInput('close_issues');
+            const parseBool = (name) => {
+              const value = core.getInput(name).trim().toLowerCase();
+              if (['true', ''].includes(value)) return true;
+              if (['false'].includes(value)) return false;
+              core.warning(`Unexpected boolean input value "${value}" for ${name}; defaulting to false.`);
+              return false;
+            };
+
+            const DRY        = parseBool('dry_run');
+            const PURGE      = parseBool('purge_all');
+            const CLOSE_PRS  = parseBool('close_prs');
+            const CLOSE_ISS  = parseBool('close_issues');
 
             const owner = context.repo.owner;
             const repo  = context.repo.repo;
