@@ -7,21 +7,27 @@ In a production environment, this should be replaced with a real email sending s
 """
 
 from app.core.logging import logger
-from app.core.config import settings
+
+
+def _mask_token(token: str) -> str:
+    """Return a masked representation to avoid logging sensitive tokens."""
+
+    if not token:
+        return "<empty>"
+
+    # Preserve only the last 4 characters to aid debugging if needed
+    visible_suffix = token[-4:] if len(token) > 4 else token
+    return f"***{visible_suffix}"
 
 
 async def send_verification_email(email_to: str, username: str, verification_token: str = ""):
     """
     Simulates sending a verification email to a new user.
     """
-    # In a real app, you would generate a verification token and a URL
-    token = verification_token or "some_verification_token"
-    server_host = getattr(settings, "SERVER_HOST", "localhost:8000")
-    verification_link = f"http://{server_host}/verify?token={token}"
     logger.info("---- SENDING VERIFICATION EMAIL (SIMULATED) ----")
     logger.info(f"To: {email_to}")
     logger.info(f"Subject: Welcome to GW2Optimizer, {username}!")
-    logger.info(f"Body: Please verify your email by clicking here: {verification_link}")
+    logger.info("Body: Verification link generated; token omitted from logs")
     logger.info("-------------------------------------------------")
 
 
@@ -29,10 +35,8 @@ async def send_password_reset_email(email_to: str, token: str):
     """
     Simulates sending a password reset email.
     """
-    server_host = getattr(settings, "SERVER_HOST", "localhost:8000")
-    reset_link = f"http://{server_host}/reset-password?token={token}"
     logger.info("---- SENDING PASSWORD RESET EMAIL (SIMULATED) ----")
     logger.info(f"To: {email_to}")
     logger.info("Subject: GW2Optimizer - Password Reset Request")
-    logger.info(f"Body: Please reset your password by clicking here: {reset_link}")
+    logger.info("Body: Password reset link generated; token omitted from logs")
     logger.info("--------------------------------------------------")

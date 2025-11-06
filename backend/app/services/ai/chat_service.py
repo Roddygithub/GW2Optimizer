@@ -4,6 +4,7 @@ import re
 import json
 import asyncio
 from typing import List, Dict, Optional
+from urllib.parse import urlparse, urlunparse
 
 from app.core.logging import logger
 from app.core.circuit_breaker import circuit_breaker, CircuitBreakerError, chat_service_circuit_breaker, CircuitBreaker
@@ -200,37 +201,64 @@ Be concise, practical, and always meta-aware."""
         if not text:
             return []
 
-        # Match various GW2Skill URL formats
         patterns = [
-            r"http[s]?://(?:www\.)?gw2skills\.net/editor/[^\s]+",
-            r"http[s]?://(?:en\.)?gw2skills\.net/editor/[^\s]+",
-            r"gw2skills\.net/editor/[^\s]+",
+            r"(?<![A-Za-z0-9.-])(https?://(?:www\.)?gw2skills\.net/editor/[^\s]+)",
+            r"(?<![A-Za-z0-9.-])(https?://(?:en\.)?gw2skills\.net/editor/[^\s]+)",
+            r"(?<![A-Za-z0-9.-])(//gw2skills\.net/editor/[^\s]+)",
+            r"(?<![A-Za-z0-9.-])(gw2skills\.net/editor/[^\s]+)",
         ]
 
-        urls = []
+        candidates = []
         for pattern in patterns:
-            urls.extend(re.findall(pattern, text, re.IGNORECASE))
+            candidates.extend(match.group(1) for match in re.finditer(pattern, text, re.IGNORECASE))
 
-        # Remove duplicates and normalize URLs
-        normalized_urls = []
+        sanitized_urls: List[str] = []
         seen = set()
-        for url in urls:
-            # Remove any trailing punctuation that might have been included
-            clean_url = re.sub(r"[^\w\-~.:/#?&;=%]+$", "", url)
-            normalized = clean_url
-            # Ensure URLs include schema to satisfy validation
-            if normalized.startswith("gw2skills.net"):
-                normalized = f"https://{normalized}"
-            elif normalized.startswith("//gw2skills.net"):
-                normalized = f"https:{normalized}"
-            elif normalized.startswith("http://"):
-                normalized = normalized.replace("http://", "https://", 1)
+        for candidate in candidates:
+            sanitized = self._sanitize_gw2skill_url(candidate)
+            if sanitized and sanitized not in seen:
+                seen.add(sanitized)
+                sanitized_urls.append(sanitized)
 
-            if normalized not in seen:
-                seen.add(normalized)
-                normalized_urls.append(normalized)
+        return sanitized_urls
 
-        return normalized_urls
+    def _sanitize_gw2skill_url(self, url: str) -> Optional[str]:
+        """Return a normalized GW2Skill URL if the host is trusted, else None."""
+
+        if not url:
+            return None
+
+        clean_url = re.sub(r"[^\w\-~.:/#?&;=%]+$", "", url.strip())
+        if not clean_url:
+            return None
+
+        lowered = clean_url.lower()
+        if lowered.startswith("//"):
+            candidate = f"https:{clean_url}"
+        elif lowered.startswith("http://") or lowered.startswith("https://"):
+            candidate = clean_url
+        else:
+            candidate = f"https://{clean_url}"
+
+        parsed = urlparse(candidate)
+        hostname = (parsed.hostname or "").lower()
+        if not hostname:
+            return None
+
+        if hostname != "gw2skills.net" and not hostname.endswith(".gw2skills.net"):
+            return None
+
+        if not (parsed.path or "").lower().startswith("/editor/"):
+            return None
+
+        scheme = "https"
+        netloc = parsed.netloc.lower()
+        if ":" in netloc:
+            host, _, port = netloc.partition(":")
+            netloc = f"{host.lower()}:{port}"
+
+        normalized = urlunparse((scheme, netloc, parsed.path, "", parsed.query, parsed.fragment))
+        return normalized
 
     def _extract_suggestions(self, text: str, max_length: int = 100) -> List[str]:
         """

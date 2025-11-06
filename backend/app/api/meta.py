@@ -86,9 +86,9 @@ async def analyze_meta(request: MetaAnalysisRequest):
         logger.error(f"Invalid input for meta analysis: {e}")
         raise HTTPException(status_code=400, detail=str(e))
 
-    except Exception as e:
-        logger.error(f"Meta analysis failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Meta analysis failed: {str(e)}")
+    except Exception:
+        logger.exception("Meta analysis failed")
+        raise HTTPException(status_code=500, detail="Meta analysis failed")
 
 
 @router.get("/snapshot/{game_mode}")
@@ -135,9 +135,9 @@ async def get_meta_snapshot(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    except Exception as e:
-        logger.error(f"Failed to get meta snapshot: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to get meta snapshot: {str(e)}")
+    except Exception:
+        logger.exception("Failed to get meta snapshot")
+        raise HTTPException(status_code=500, detail="Failed to get meta snapshot")
 
 
 @router.post("/import-gw2-data")
@@ -197,9 +197,9 @@ async def import_gw2_data(request: GW2DataImportRequest):
 
         return {"success": True, "stats": stats, "data": imported_data}
 
-    except Exception as e:
-        logger.error(f"GW2 data import failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Data import failed: {str(e)}")
+    except Exception:
+        logger.exception("GW2 data import failed")
+        raise HTTPException(status_code=500, detail="Data import failed")
 
 
 @router.get("/gw2-api/professions")
@@ -216,9 +216,9 @@ async def get_gw2_professions():
 
         return {"success": True, "professions": professions, "count": len(professions)}
 
-    except Exception as e:
-        logger.error(f"Failed to fetch professions: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch professions: {str(e)}")
+    except Exception:
+        logger.exception("Failed to fetch professions")
+        raise HTTPException(status_code=500, detail="Failed to fetch professions")
 
 
 @router.get("/gw2-api/profession/{profession_id}")
@@ -238,9 +238,9 @@ async def get_gw2_profession(profession_id: str):
 
         return {"success": True, "profession": profession}
 
-    except Exception as e:
-        logger.error(f"Failed to fetch profession {profession_id}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch profession: {str(e)}")
+    except Exception:
+        logger.exception("Failed to fetch profession %s", profession_id)
+        raise HTTPException(status_code=500, detail="Failed to fetch profession")
 
 
 @router.get("/cache/stats")
@@ -257,9 +257,9 @@ async def get_cache_stats():
 
         return {"success": True, "cache_stats": stats}
 
-    except Exception as e:
-        logger.error(f"Failed to get cache stats: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to get cache stats: {str(e)}")
+    except Exception:
+        logger.exception("Failed to get cache stats")
+        raise HTTPException(status_code=500, detail="Failed to get cache stats")
 
 
 @router.post("/cache/clear")
@@ -276,6 +276,6 @@ async def clear_cache():
 
         return {"success": True, "message": "Cache cleared successfully"}
 
-    except Exception as e:
-        logger.error(f"Failed to clear cache: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to clear cache: {str(e)}")
+    except Exception:
+        logger.exception("Failed to clear cache")
+        raise HTTPException(status_code=500, detail="Failed to clear cache")

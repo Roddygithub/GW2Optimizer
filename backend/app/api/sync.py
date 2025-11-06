@@ -39,6 +39,11 @@ async def trigger_gw2_sync(
 ) -> dict[str, Any]:
     """Trigger the GW2 data synchronisation pipeline."""
 
-    result = await sync_all(session)
+    try:
+        result = await sync_all(session)
+    except Exception:
+        logger.exception("GW2 synchronisation failed")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="GW2 synchronisation failed")
+
     logger.info("GW2 synchronisation triggered via API: %s", result)
     return {"status": "accepted", "result": result}
