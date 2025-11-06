@@ -38,18 +38,22 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const parseBool = (name) => {
-              const value = core.getInput(name).trim().toLowerCase();
-              if (['true', ''].includes(value)) return true;
-              if (['false'].includes(value)) return false;
+            const inputKeys = ['dry_run', 'purge_all', 'close_prs', 'close_issues'];
+            const rawInputs = Object.fromEntries(inputKeys.map((key) => [key, core.getInput(key)]));
+            core.info(`cleanup_purge raw inputs: ${JSON.stringify(rawInputs)}`);
+
+            const parseBool = (rawValue, name) => {
+              const value = (rawValue || '').trim().toLowerCase();
+              if (['true', '1', 'yes', 'y', 'on'].includes(value)) return true;
+              if (['false', '0', 'no', 'n', 'off', ''].includes(value)) return false;
               core.warning(`Unexpected boolean input value "${value}" for ${name}; defaulting to false.`);
               return false;
             };
 
-            const DRY        = parseBool('dry_run');
-            const PURGE      = parseBool('purge_all');
-            const CLOSE_PRS  = parseBool('close_prs');
-            const CLOSE_ISS  = parseBool('close_issues');
+            const DRY        = parseBool(rawInputs['dry_run'], 'dry_run');
+            const PURGE      = parseBool(rawInputs['purge_all'], 'purge_all');
+            const CLOSE_PRS  = parseBool(rawInputs['close_prs'], 'close_prs');
+            const CLOSE_ISS  = parseBool(rawInputs['close_issues'], 'close_issues');
 
             const owner = context.repo.owner;
             const repo  = context.repo.repo;
