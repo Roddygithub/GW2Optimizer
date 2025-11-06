@@ -5,23 +5,23 @@ on:
       dry_run:
         description: "Report only (no merge/close/delete)"
         type: choice
-        options: [true, false]
-        default: true
+        options: ["true", "false"]
+        default: "true"
       purge_all:
         description: "Delete ALL remote branches except 'main', even if unmerged"
         type: choice
-        options: [true, false]
-        default: false
+        options: ["true", "false"]
+        default: "false"
       close_prs:
         description: "Close all non-clean PRs to main"
         type: choice
-        options: [true, false]
-        default: false
+        options: ["true", "false"]
+        default: "false"
       close_issues:
         description: "Close all open issues"
         type: choice
-        options: [true, false]
-        default: false
+        options: ["true", "false"]
+        default: "false"
 
 permissions:
   contents: write
