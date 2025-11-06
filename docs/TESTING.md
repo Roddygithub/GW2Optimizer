@@ -43,7 +43,7 @@ backend/tests/
 
 - Python 3.11+
 - PostgreSQL 14+ (optionnel, SQLite utilisé par défaut pour les tests)
-- Redis 6+ (optionnel, fakeredis utilisé par défaut)
+- Redis 6+ (requis pour les tests ; service réel ou conteneur Docker)
 - Docker (recommandé pour les services)
 
 ### Installation des dépendances
@@ -66,6 +66,10 @@ cp .env.example .env.test
 
 # Éditer .env.test avec vos paramètres de test
 # Pour les tests locaux, SQLite en mémoire est utilisé par défaut
+# Démarrer Redis localement (si vous n'utilisez pas Docker/CI)
+# docker run --rm -p 6379:6379 redis:7-alpine
+# export TEST_REDIS_URL="redis://127.0.0.1:6379/15"
+# export REDIS_URL="redis://127.0.0.1:6379/0"
 ```
 
 ## Exécution des tests

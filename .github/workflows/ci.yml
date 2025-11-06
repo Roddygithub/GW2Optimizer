@@ -103,6 +103,7 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
           TEST_DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
           REDIS_URL: redis://localhost:6379/0
+          TEST_REDIS_URL: redis://localhost:6379/15
           REDIS_ENABLED: "true"
           SECRET_KEY: test-secret-key-for-ci-only-not-for-production
           ALGORITHM: HS256
@@ -116,6 +117,7 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
           TEST_DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
           REDIS_URL: redis://localhost:6379/0
+          TEST_REDIS_URL: redis://localhost:6379/15
           REDIS_ENABLED: "true"
           SECRET_KEY: test-secret-key-for-ci-only-not-for-production
           ALGORITHM: HS256
@@ -135,6 +137,7 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
           TEST_DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
           REDIS_URL: redis://localhost:6379/0
+          TEST_REDIS_URL: redis://localhost:6379/15
           REDIS_ENABLED: "true"
           SECRET_KEY: test-secret-key-for-ci-only-not-for-production
           ALGORITHM: HS256
@@ -148,6 +151,7 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
           TEST_DATABASE_URL: postgresql+asyncpg://test:test@localhost:5432/gw2optimizer_test
           REDIS_URL: redis://localhost:6379/0
+          TEST_REDIS_URL: redis://localhost:6379/15
           REDIS_ENABLED: "true"
           SECRET_KEY: test-secret-key-for-ci-only-not-for-production
           ALGORITHM: HS256
