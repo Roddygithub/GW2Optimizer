@@ -272,7 +272,7 @@ jobs:
             context="backend"
             tag="gw2optimizer:ci-backend"
           else
-            file="$(ls -1 docker/**/Dockerfile 2>/dev/null | head -n1 || true)"
+            file="$(find docker -type f -name Dockerfile -print -quit 2>/dev/null || true)"
             if [ -n "$file" ]; then
               present="true"
               context="$(dirname "$file")"
@@ -281,12 +281,14 @@ jobs:
             fi
           fi
 
-          echo "present=$present" >> "$GITHUB_OUTPUT"
-          if [ "$present" = "true" ]; then
-            echo "file=$file" >> "$GITHUB_OUTPUT"
-            echo "context=$context" >> "$GITHUB_OUTPUT"
-            echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          fi
+          {
+            echo "present=$present"
+            if [ "$present" = "true" ]; then
+              echo "file=$file"
+              echo "context=$context"
+              echo "tag=$tag"
+            fi
+          } >> "$GITHUB_OUTPUT"
 
           echo "present=$present"
           echo "file=${file:-none}"
