@@ -25,6 +25,26 @@ npm --prefix frontend test
 npm --prefix frontend run test:e2e   # optionnel (Playwright)
 ```
 
+## Maintenance
+
+### Déclencher le workflow de nettoyage (`cleanup_purge.yml`)
+
+```bash
+# Dry-run (rapport uniquement, aucune suppression)
+gh workflow run ".github/workflows/cleanup_purge.yml" \
+  -f dry_run=true \
+  -f purge_all=false \
+  -f close_prs=false \
+  -f close_issues=false
+
+# Purge réelle (attention : supprime branches, ferme PRs et issues)
+gh workflow run ".github/workflows/cleanup_purge.yml" \
+  -f dry_run=false \
+  -f purge_all=true \
+  -f close_prs=true \
+  -f close_issues=true
+```
+
 ## Liens utiles
 - [ROADMAP](ROADMAP.md)
 - [ARCHITECTURE](docs/ARCHITECTURE.md)
