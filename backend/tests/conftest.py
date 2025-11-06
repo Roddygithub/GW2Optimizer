@@ -12,11 +12,11 @@ from typing import AsyncGenerator, Dict
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
+from redis.asyncio import Redis, from_url as redis_from_url
 from sqlalchemy import event, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-import fakeredis.aioredis
 
 # Ensure the application uses the same database URL as the test engine
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
@@ -31,15 +31,46 @@ if TEST_DATABASE_URL.startswith("sqlite+aiosqlite:///:memory"):
 
 os.environ["DATABASE_URL"] = TEST_DATABASE_URL
 
+TEST_REDIS_URL = os.environ.get("TEST_REDIS_URL", "redis://127.0.0.1:6379/15")
+
 from app.main import app, include_routers
 from app.db.session import get_db
-from app.core.redis import get_redis_client
+from app.core import redis as redis_module
 from app.db.base_class import Base
 from app.db.models import UserDB as User, LoginHistory  # Import your models here
 from app.models.build import BuildDB  # noqa: F401 - ensure build tables are registered
 from app.models.team import TeamCompositionDB, TeamSlotDB  # noqa: F401 - ensure team tables are registered
 from app.models.user import UserOut  # Import UserOut from models
 from app.core.security import create_access_token, get_password_hash
+
+
+REDIS_DEPENDENCY_CANDIDATES = [
+    (redis_module, "get_redis_client"),
+    (redis_module, "get_redis"),
+]
+
+try:
+    from app.core import cache as cache_module
+
+    REDIS_DEPENDENCY_CANDIDATES.extend(
+        (
+            (cache_module, "get_redis_client"),
+            (cache_module, "get_redis"),
+        )
+    )
+except Exception:  # pragma: no cover - cache module optional
+    cache_module = None  # type: ignore
+
+
+def _resolve_redis_dependency():
+    for module, attr in REDIS_DEPENDENCY_CANDIDATES:
+        dep = getattr(module, attr, None) if module else None
+        if dep is not None:
+            return module, attr, dep
+    return None, None, None
+
+
+_redis_dep_module, _redis_dep_attr, _redis_dep_callable = _resolve_redis_dependency()
 
 
 # Main engine for unit/API tests
@@ -83,20 +114,61 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest_asyncio.fixture()
-async def redis_client() -> AsyncGenerator[fakeredis.aioredis.FakeRedis, None]:
-    """Yield a fake Redis client for tests."""
-    client = fakeredis.aioredis.FakeRedis()
-    yield client
-    await client.flushall()
+async def redis_client() -> AsyncGenerator[Redis, None]:
+    """Yield a real Redis client for tests (requires external service)."""
+
+    try:
+        client = redis_from_url(TEST_REDIS_URL, encoding="utf-8", decode_responses=True)
+    except Exception as exc:  # pragma: no cover - misconfigured redis library
+        pytest.skip(f"Redis client unavailable: {exc}")
+
+    try:
+        await client.ping()
+    except Exception as exc:
+        pytest.skip(f"Redis server not reachable: {exc}")
+
+    await client.flushdb()
+
+    try:
+        yield client
+    finally:
+        try:
+            await client.flushdb()
+        finally:
+            await client.aclose()
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def _override_redis_dependency(redis_client: Redis):
+    if _redis_dep_callable is None:
+        yield
+        return
+
+    app.dependency_overrides[_redis_dep_callable] = lambda: redis_client
+
+    modules_with_attr = []
+    previous_clients = {}
+
+    for module in {redis_module, cache_module, _redis_dep_module}:
+        if module is None or not hasattr(module, "redis_client"):
+            continue
+        modules_with_attr.append(module)
+        previous_clients[module] = getattr(module, "redis_client", None)
+        setattr(module, "redis_client", redis_client)
+
+    try:
+        yield
+    finally:
+        app.dependency_overrides.pop(_redis_dep_callable, None)
+        for module in modules_with_attr:
+            setattr(module, "redis_client", previous_clients.get(module))
 
 
 @pytest_asyncio.fixture
-async def client(
-    db_session: AsyncSession, redis_client: fakeredis.aioredis.FakeRedis
-) -> AsyncGenerator[AsyncClient, None]:
+async def client(db_session: AsyncSession, redis_client: Redis) -> AsyncGenerator[AsyncClient, None]:
     """Yield an HTTP client for the API, with overridden dependencies (unit/API tests)."""
     # Ensure the API router is included
-    include_routers(app)
+    # include_routers(app)  # Routers already included by app startup; avoid duplicates in tests
 
     # Create a test client with the app and base URL
     async with AsyncClient(
@@ -105,7 +177,6 @@ async def client(
     ) as client:
         # Override dependencies
         app.dependency_overrides[get_db] = lambda: db_session
-        app.dependency_overrides[get_redis_client] = lambda: redis_client
 
         # Create tables if they don't exist
         async with engine.begin() as conn:
@@ -114,12 +185,12 @@ async def client(
         yield client
 
         # Clean up
-        app.dependency_overrides.clear()
+        app.dependency_overrides.pop(get_db, None)
 
 
 @pytest_asyncio.fixture()
 async def integration_client(
-    redis_client: fakeredis.aioredis.FakeRedis,
+    redis_client: Redis,
 ) -> AsyncGenerator[AsyncClient, None]:
     """Yield an HTTP client for integration tests with independent sessions per request.
 
@@ -159,12 +230,11 @@ async def integration_client(
                     raise
 
         app.dependency_overrides[get_db] = get_test_db
-        app.dependency_overrides[get_redis_client] = lambda: redis_client
 
         async with AsyncClient(app=app, base_url="http://test") as c:
             yield c
 
-        app.dependency_overrides.clear()
+        app.dependency_overrides.pop(get_db, None)
 
         # Clean up data after test using DELETE (safer than TRUNCATE)
         async with test_engine.begin() as conn:
@@ -207,12 +277,11 @@ async def integration_client(
                     raise
 
         app.dependency_overrides[get_db] = get_test_db
-        app.dependency_overrides[get_redis_client] = lambda: redis_client
 
         async with AsyncClient(app=app, base_url="http://test") as c:
             yield c
 
-        app.dependency_overrides.clear()
+        app.dependency_overrides.pop(get_db, None)
 
         # Clean up data between integration tests
         async with test_engine.begin() as conn:

@@ -437,17 +437,36 @@ async def test_security_headers_are_present(client: AsyncClient):
     # assert "Strict-Transport-Security" in headers
 
 
-@patch("fakeredis.aioredis.FakeRedis.sismember")
-async def test_redis_unavailability_on_auth(mock_sismember, client: AsyncClient, auth_headers: dict):
+async def test_redis_unavailability_on_auth(monkeypatch, client: AsyncClient, auth_headers: dict):
     """Redis failures while checking token revocation must fail closed with 401."""
     from redis.exceptions import ConnectionError
+    from app.main import app
+    from app.core.redis import get_redis_client
 
-    mock_sismember.side_effect = ConnectionError("Simulated Redis is down")
+    class FailingRedis:
+        async def sismember(self, *args, **kwargs):  # type: ignore[override]
+            raise ConnectionError("Simulated Redis is down")
 
-    response = await client.get("/api/v1/auth/me", headers=auth_headers)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json()["detail"] == "Unable to verify token revocation"
-    assert response.headers.get("www-authenticate") == "Bearer"
+    failing_redis = FailingRedis()
+    previous_override = app.dependency_overrides.get(get_redis_client)
+
+    async def _override():
+        return failing_redis
+
+    app.dependency_overrides[get_redis_client] = _override
+
+    monkeypatch.setattr("app.core.redis.redis_client", failing_redis, raising=False)
+
+    try:
+        response = await client.get("/api/v1/auth/me", headers=auth_headers)
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        assert response.json()["detail"] == "Unable to verify token revocation"
+        assert response.headers.get("www-authenticate") == "Bearer"
+    finally:
+        if previous_override is not None:
+            app.dependency_overrides[get_redis_client] = previous_override
+        else:
+            app.dependency_overrides.pop(get_redis_client, None)
 
 
 @patch("app.core.circuit_breaker.time.time")
