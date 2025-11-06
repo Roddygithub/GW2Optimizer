@@ -42,22 +42,21 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const inputKeys = ['dry_run', 'purge_all', 'close_prs', 'close_issues'];
-            const rawInputs = Object.fromEntries(inputKeys.map((key) => [key, core.getInput(key)]));
-            core.info(`cleanup_purge raw inputs: ${JSON.stringify(rawInputs)}`);
-
-            const parseBool = (rawValue, name) => {
-              const value = (rawValue || '').trim().toLowerCase();
-              if (['true', '1', 'yes', 'y', 'on'].includes(value)) return true;
-              if (['false', '0', 'no', 'n', 'off', ''].includes(value)) return false;
-              core.warning(`Unexpected boolean input value "${value}" for ${name}; defaulting to false.`);
-              return false;
+            // Read workflow_dispatch inputs directly from context.payload.inputs (core.getInput returns empty strings here).
+            const raw = (context.payload && context.payload.inputs) ? context.payload.inputs : {};
+            const toBool = (value, fallback = false) => {
+              if (value === undefined || value === null || value === '') return fallback;
+              const str = String(value).trim().toLowerCase();
+              return ['true', '1', 'yes', 'y', 'on'].includes(str);
             };
 
-            const DRY        = parseBool(rawInputs['dry_run'], 'dry_run');
-            const PURGE      = parseBool(rawInputs['purge_all'], 'purge_all');
-            const CLOSE_PRS  = parseBool(rawInputs['close_prs'], 'close_prs');
-            const CLOSE_ISS  = parseBool(rawInputs['close_issues'], 'close_issues');
+            const DRY        = toBool(raw.dry_run, true);
+            const PURGE      = toBool(raw.purge_all, false);
+            const CLOSE_PRS  = toBool(raw.close_prs, false);
+            const CLOSE_ISS  = toBool(raw.close_issues, false);
+
+            core.info(`cleanup_purge raw inputs: ${JSON.stringify(raw)}`);
+            core.info(`parsed: dry_run=${DRY} purge_all=${PURGE} close_prs=${CLOSE_PRS} close_issues=${CLOSE_ISS}`);
 
             const owner = context.repo.owner;
             const repo  = context.repo.repo;
@@ -76,15 +75,15 @@ jobs:
               const main = await github.rest.repos.getBranch({ owner, repo, branch: 'main' });
               return main.data.commit.sha;
             }
-            async function createTagAndBackup() {
+            async function createSnapshot() {
               const sha = await getMainSha();
-              const date = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
-              const tagName = `pre-cleanup-${date}`;
-              const backupBranch = `backup/cleanup-${date}`;
+              const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
+              const tagName = `pre-cleanup-${stamp}`;
+              const backup = `backup/cleanup-${stamp}`;
               try { if (!DRY) await github.rest.git.createRef({ owner, repo, ref: `refs/tags/${tagName}`, sha }); } catch {}
-              try { if (!DRY) await github.rest.git.createRef({ owner, repo, ref: `refs/heads/${backupBranch}`, sha }); } catch {}
-              core.info(`Snapshot: tag=${tagName}, branch=${backupBranch}`);
-              return { tagName, backupBranch };
+              try { if (!DRY) await github.rest.git.createRef({ owner, repo, ref: `refs/heads/${backup}`, sha }); } catch {}
+              core.info(`Snapshot: tag=${tagName}, branch=${backup}`);
+              return { tagName, backup };
             }
 
             async function mergeOrHandlePRs(prs) {
@@ -168,7 +167,7 @@ jobs:
               return { closed };
             }
 
-            const snap = await createTagAndBackup();
+            const snap = await createSnapshot();
 
             const prs = await listOpenPRs();
             const prRes = await mergeOrHandlePRs(prs);
@@ -184,7 +183,7 @@ jobs:
               .addTable([
                 [{data:'Dry run', header:true},{data:String(DRY)}],
                 [{data:'Snapshot tag', header:true},{data:snap.tagName || '(see logs)'}],
-                [{data:'Backup branch', header:true},{data:snap.backupBranch || '(see logs)'}],
+                [{data:'Backup branch', header:true},{data:snap.backup || '(see logs)'}],
                 [{data:'Merged PRs', header:true},{data:(prRes.merged||[]).join(', ') || 'none'}],
                 [{data:'Closed PRs', header:true},{data:(prRes.closed||[]).join(', ') || 'none'}],
                 [{data:'Labeled PRs', header:true},{data:(prRes.labeled||[]).join(', ') || 'none'}],
@@ -196,5 +195,6 @@ jobs:
                 'Protected branches (main/release/*/gh-pages) are never deleted.',
                 'Non-clean PRs are either closed (close_prs=true) or labeled cleanup:pending.',
                 'No auto-conflict resolution; everything is traceable in Actions.',
+                'Inputs parsed via context.payload.inputs to avoid empty values from core.getInput.',
               ])
               .write();
