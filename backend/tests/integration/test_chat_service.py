@@ -63,6 +63,27 @@ class TestChatServiceIntegration:
         assert "gw2skills.net" in response.builds[0].gw2skills_url
         assert response.action_required == "parse_build"
 
+    def test_extract_gw2skill_url_normalizes_scheme(self, chat_service):
+        """URLs without https should be normalized securely."""
+
+        urls = chat_service._extract_gw2skill_urls("Check http://gw2skills.net/editor/abc123")
+
+        assert urls == ["https://gw2skills.net/editor/abc123"]
+
+    def test_extract_gw2skill_url_accepts_subdomains(self, chat_service):
+        """Trusted subdomains should be allowed."""
+
+        urls = chat_service._extract_gw2skill_urls("Try https://en.gw2skills.net/editor/xyz")
+
+        assert urls == ["https://en.gw2skills.net/editor/xyz"]
+
+    def test_extract_gw2skill_url_rejects_malicious_host(self, chat_service):
+        """Ensure lookalike hostnames do not bypass sanitization."""
+
+        urls = chat_service._extract_gw2skill_urls("Beware https://gw2skills.net.evil/editor/phish")
+
+        assert urls == []
+
     @pytest.mark.asyncio
     async def test_circuit_breaker_integration(self, chat_service):
         """Test circuit breaker integration with the chat service."""
