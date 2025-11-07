@@ -104,6 +104,7 @@ test-results/
 frontend/coverage/
 frontend/playwright-report/
 backend/data/learning/generated/
+backend/data/learning/feedback/
 bin/
 .coverage.json
 .playwright.json

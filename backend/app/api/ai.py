@@ -3,7 +3,6 @@ AI API endpoints for agents and workflows.
 
 v4.1.0 Updates:
     - /compose: New endpoint for AI Core team composition
-    - /feedback: Collect user feedback for ML training
     - /context: Get current meta and trends
     - Legacy endpoints marked as deprecated
 """
@@ -41,14 +40,6 @@ class ComposeRequest(BaseModel):
     game_mode: str = Field(..., description="Game mode: zerg, raid, fractals, roaming, strikes")
     team_size: Optional[int] = Field(None, description="Team size (auto-adapted if null)")
     preferences: Optional[Dict[str, Any]] = Field(None, description="User preferences")
-
-
-class FeedbackRequest(BaseModel):
-    """Request model for /feedback endpoint"""
-
-    composition_id: str = Field(..., description="Composition ID")
-    rating: int = Field(..., ge=1, le=10, description="Rating 1-10")
-    comments: Optional[str] = Field(None, description="Optional comments")
 
 
 @router.post(
@@ -122,75 +113,6 @@ async def compose_team(
     except Exception as e:
         logger.error(f"❌ Composition generation failed: {str(e)}", extra={"request_id": request_id, "error": str(e)})
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"AI Core error: {str(e)}")
-
-
-@router.post(
-    "/feedback",
-    response_model=Dict[str, str],
-    summary="[v4.1.0] Submit Composition Feedback",
-    description="Submit feedback for ML training (Phase 2)",
-    tags=["AI Core v4.1.0"],
-)
-async def submit_feedback(
-    feedback_req: FeedbackRequest, current_user: User = Depends(get_current_active_user)
-) -> Dict[str, str]:
-    """
-    Submit feedback on a composition for ML training.
-
-    Phase 2 Implementation:
-        - Stores feedback in database
-        - Triggers ML retraining (if enabled)
-        - Improves future compositions
-
-    Note: ML training is feature-flagged (ML_TRAINING_ENABLED)
-    """
-    logger.info(
-        "📝 Feedback received",
-        extra={
-            "user_id": current_user.id,
-            "composition_id": feedback_req.composition_id,
-            "rating": feedback_req.rating,
-        },
-    )
-
-    try:
-        # Phase 2: Record feedback and trigger ML training
-        from app.ai.feedback import get_feedback_handler, FeedbackType
-        from app.ai.trainer import get_ai_trainer
-
-        feedback_handler = get_feedback_handler()
-
-        # Record feedback
-        feedback_id = feedback_handler.record_feedback(
-            composition_id=feedback_req.composition_id,
-            user_id=str(current_user.id),
-            feedback_type=FeedbackType.EXPLICIT_RATING,
-            rating=feedback_req.rating,
-            comments=feedback_req.comments,
-        )
-
-        # Trigger ML training if enabled
-        if settings.ML_TRAINING_ENABLED:
-            logger.info("🧠 ML training triggered", extra={"composition_id": feedback_req.composition_id})
-
-            trainer = get_ai_trainer()
-
-            # Online learning (incremental update)
-            trainer.train_online(
-                feedback={"composition": {"id": feedback_req.composition_id}, "rating": feedback_req.rating},
-                save_checkpoint=False,  # Save checkpoints periodically, not on every feedback
-            )
-
-        return {
-            "status": "success",
-            "message": "Feedback received and will be used for ML training",
-            "composition_id": feedback_req.composition_id,
-            "feedback_id": feedback_id,
-        }
-
-    except Exception as e:
-        logger.error(f"❌ Feedback submission failed: {str(e)}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Feedback error: {str(e)}")
 
 
 @router.get(

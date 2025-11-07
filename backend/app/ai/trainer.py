@@ -83,7 +83,11 @@ class AITrainer:
             raise ImportError("numpy is required for AITrainer operations. Please install numpy to use this feature.")
 
     def train_batch(
-        self, min_rating: float = 5.0, max_samples: Optional[int] = None, save_checkpoint: bool = True
+        self,
+        min_rating: float = 5.0,
+        max_samples: Optional[int] = None,
+        save_checkpoint: bool = True,
+        data: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """
         Entraîne le modèle sur un batch de données.
@@ -96,17 +100,33 @@ class AITrainer:
         Returns:
             Training metrics
         """
-        self._ensure_numpy()
-        logger.info("Starting batch training", extra={"min_rating": min_rating, "max_samples": max_samples})
+        logger.info(
+            "Starting batch training",
+            extra={"min_rating": min_rating, "max_samples": max_samples, "provided_data": bool(data)},
+        )
 
         start_time = datetime.utcnow()
 
         # Charger training data
-        training_data = self.feedback_handler.get_training_data(min_rating=min_rating, max_samples=max_samples)
+        training_data = data or self.feedback_handler.get_training_data(min_rating=min_rating, max_samples=max_samples)
 
         if not training_data:
             logger.warning("No training data available")
             return {"status": "no_data", "n_samples": 0}
+
+        # Ensure optional dependencies are present only when necessary
+        try:
+            self._ensure_numpy()
+        except ImportError as exc:
+            logger.warning("Skipping ML batch training due to missing dependencies", extra={"error": str(exc)})
+            metrics = {
+                "status": "skipped",
+                "reason": "missing_dependencies",
+                "n_samples": len(training_data),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+            self.metrics_history.append(metrics)
+            return metrics
 
         # Score avant entraînement
         score_before = self._evaluate_model(training_data)
@@ -162,6 +182,12 @@ class AITrainer:
         """
         logger.info("Online learning update")
 
+        try:
+            self._ensure_numpy()
+        except ImportError as exc:
+            logger.warning("Skipping online training due to missing dependencies", extra={"error": str(exc)})
+            return {"status": "skipped", "reason": "missing_dependencies"}
+
         # Update model
         self.model.update(feedback)
 
@@ -191,7 +217,12 @@ class AITrainer:
         Returns:
             Validation metrics
         """
-        self._ensure_numpy()
+        try:
+            self._ensure_numpy()
+        except ImportError as exc:
+            logger.warning("Skipping validation due to missing dependencies", extra={"error": str(exc)})
+            return {"status": "skipped", "reason": "missing_dependencies"}
+
         # Si pas de validation data, split training data
         if validation_data is None:
             all_data = self.feedback_handler.get_training_data(min_rating=0.0)
@@ -396,3 +427,35 @@ def get_ai_trainer() -> AITrainer:
         _ai_trainer = AITrainer()
 
     return _ai_trainer
+
+
+def trigger_incremental_training(current_settings: settings.__class__ | None = None) -> None:
+    """Trigger incremental training if feature flag enabled.
+
+    This helper is intentionally light-weight and safe to call from background tasks.
+    """
+
+    cfg = current_settings or settings
+
+    try:
+        enabled = bool(getattr(cfg, "ML_TRAINING_ENABLED", False))
+    except Exception:  # pragma: no cover - defensive guard
+        enabled = False
+
+    if not enabled:
+        logger.debug("ML training disabled; skipping incremental trigger")
+        return
+
+    try:
+        from app.learning.models.synergy_model import incremental_update  # type: ignore
+    except Exception as import_error:  # pragma: no cover - optional dependency absent
+        logger.debug("Incremental update unavailable", extra={"error": str(import_error)})
+        return
+
+    base_dir = getattr(cfg, "LEARNING_DATA_DIR", "backend/data/learning/feedback")
+
+    try:
+        incremental_update(base_dir)  # type: ignore
+        logger.info("Incremental training triggered", extra={"base_dir": base_dir})
+    except Exception as exc:  # pragma: no cover - model edge case should not break request flow
+        logger.warning("Incremental training failed", extra={"error": str(exc), "base_dir": base_dir})
