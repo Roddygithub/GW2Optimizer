@@ -15,7 +15,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.core.config import settings
 from app.core.logging import logger
-from app.middleware import add_security_middleware
+from app.middleware import add_security_middleware, StripServerHeaderMiddleware
 from app.core.redis import connect_to_redis, get_redis_client
 from app.exceptions import add_exception_handlers
 
@@ -135,6 +135,9 @@ def create_application() -> FastAPI:
     # Configure CORS
     configure_cors(app)
 
+    # Strip server-identifying headers
+    app.add_middleware(StripServerHeaderMiddleware)
+
     # Add security middleware
     add_security_middleware(app, settings)
 
@@ -175,16 +178,18 @@ def create_application() -> FastAPI:
 
 def configure_cors(app: FastAPI) -> None:
     """Configure CORS middleware."""
-    origins = [str(origin).strip("/") for origin in settings.ALLOWED_ORIGINS]
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=origins,
+        allow_origins=settings.ALLOWED_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    logger.info("🌐 CORS configured for origins: %s", ", ".join(origins) or "none")
+    logger.info(
+        "🌐 CORS configured for origins: %s",
+        ", ".join(settings.ALLOWED_ORIGINS) or "none",
+    )
 
 
 def include_routers(app: FastAPI) -> None:
