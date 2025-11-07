@@ -1,8 +1,10 @@
 """Application configuration."""
 
+import json
 import os
-from typing import List
+from typing import List, Optional
 
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -31,6 +33,7 @@ class Settings(BaseSettings):
     API_VERSION: str = "v1"
     API_V1_STR: str = "/api/v1"
     API_PREFIX: str = "/api/v1"
+    BASE_URL_BACKEND: str = "http://localhost:8000"
 
     # Authentication
     SECRET_KEY: str = "your-secret-key-change-in-production"
@@ -49,14 +52,16 @@ class Settings(BaseSettings):
     REGISTRATION_RATE_LIMIT_COUNT: int = 10
     REGISTRATION_RATE_LIMIT_WINDOW_SECONDS: int = 3600
     PASSWORD_RECOVERY_RATE_LIMIT: str = "5/hour"
+    DEFAULT_RATE_LIMIT: str = "60/minute"
 
-    # CORS
-    CORS_ORIGINS: List[str] = [
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-    ]
+    # CORS / Frontend Origins
+    ALLOWED_ORIGINS: List[str] = Field(default_factory=lambda: ["http://localhost:5173"])
+
+    # Cookie configuration (dev defaults; harden in production via env)
+    COOKIE_DOMAIN: Optional[str] = None
+    COOKIE_SECURE: bool = False
+    COOKIE_SAMESITE: str = "lax"
+    COOKIE_MAX_AGE: Optional[int] = None
 
     # AI Configuration
     AI_MODEL_NAME: str = "gpt-4"
@@ -104,6 +109,43 @@ class Settings(BaseSettings):
         case_sensitive=True,
         extra="ignore",
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _hydrate_allowed_origins(cls, values: dict) -> dict:
+        if values.get("ALLOWED_ORIGINS"):
+            return values
+
+        legacy = values.get("CORS_ORIGINS") or values.get("BACKEND_CORS_ORIGINS")
+        if not legacy:
+            return values
+
+        if isinstance(legacy, str):
+            items = [item.strip() for item in legacy.split(",") if item.strip()]
+        else:
+            items = list(legacy)
+
+        values["ALLOWED_ORIGINS"] = items
+        return values
+
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def _coerce_origins(cls, value):
+        if isinstance(value, str):
+            try:
+                parsed = json.loads(value)
+                if isinstance(parsed, list):
+                    return [str(item).strip("/") for item in parsed]
+            except json.JSONDecodeError:
+                return [item.strip() for item in value.split(",") if item.strip()]
+        if isinstance(value, (tuple, list)):
+            return [str(item).strip("/") for item in value]
+        return value
+
+    @field_validator("COOKIE_SAMESITE", mode="after")
+    @classmethod
+    def _normalize_samesite(cls, value: str) -> str:
+        return (value or "lax").lower()
 
 
 settings = Settings()

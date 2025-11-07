@@ -69,7 +69,7 @@ def rate_limit_key(request: Request) -> str:
     return get_remote_address(request)
 
 
-limiter = Limiter(key_func=rate_limit_key)
+limiter = Limiter(key_func=rate_limit_key, default_limits=[settings.DEFAULT_RATE_LIMIT])
 _test_rate_state = defaultdict(deque)
 
 
@@ -138,7 +138,78 @@ def rate_limit(limit: Optional[str]):
     return limiter.limit(limit)
 
 
+def _cookie_options(max_age: int | None = None) -> dict:
+    """Build standard cookie options based on settings."""
+
+    options: dict[str, object] = {
+        "httponly": True,
+        "secure": settings.COOKIE_SECURE,
+        "samesite": settings.COOKIE_SAMESITE.lower(),
+    }
+
+    if settings.COOKIE_DOMAIN:
+        options["domain"] = settings.COOKIE_DOMAIN
+
+    if max_age is not None:
+        options["max_age"] = max_age
+    elif settings.COOKIE_MAX_AGE is not None:
+        options["max_age"] = settings.COOKIE_MAX_AGE
+
+    return options
+
+
+def _set_auth_cookie(response: Response, value: str, max_age: int | None) -> None:
+    """Apply standard auth cookie settings."""
+
+    response.set_cookie(
+        key=settings.ACCESS_TOKEN_COOKIE_NAME,
+        value=value,
+        **_cookie_options(max_age=max_age),
+    )
+
+
+def _clear_auth_cookie(response: Response) -> None:
+    """Clear the auth cookie using the configured options."""
+
+    options = _cookie_options(max_age=0)
+    cookie_parts: list[str] = [
+        f"{settings.ACCESS_TOKEN_COOKIE_NAME}=",
+        "Path=/",
+        'expires="Thu, 01 Jan 1970 00:00:00 GMT"',
+        "Max-Age=0",
+    ]
+
+    if options.pop("httponly", False):
+        cookie_parts.append("HttpOnly")
+
+    samesite = options.pop("samesite", None)
+    if isinstance(samesite, str) and samesite:
+        cookie_parts.append(f"SameSite={samesite.capitalize()}")
+
+    if options.pop("secure", False):
+        cookie_parts.append("Secure")
+
+    domain = options.pop("domain", None)
+    if isinstance(domain, str) and domain:
+        cookie_parts.append(f"Domain={domain}")
+
+    # max_age already captured above
+    options.pop("max_age", None)
+
+    existing_vary = response.headers.get("Vary")
+    if existing_vary:
+        vary_values = [value.strip() for value in existing_vary.split(",") if value.strip()]
+        if not any(value.lower() == "set-cookie" for value in vary_values):
+            vary_values.append("set-cookie")
+            response.headers["Vary"] = ", ".join(vary_values)
+    else:
+        response.headers["Vary"] = "set-cookie"
+    response.headers.append("set-cookie", "; ".join(cookie_parts))
+
+
 # Password validation
+#
+# The following endpoints handle user registration, email verification, login, and token refresh.
 
 
 @router.post(
@@ -302,14 +373,7 @@ async def login_for_access_token(
     )
     refresh_token = create_refresh_token(subject=str(user.id))
 
-    response.set_cookie(
-        key=settings.ACCESS_TOKEN_COOKIE_NAME,
-        value=access_token,
-        httponly=True,
-        max_age=int(access_token_expires.total_seconds()),
-        secure=not settings.DEBUG,
-        samesite="lax",
-    )
+    _set_auth_cookie(response, access_token, int(access_token_expires.total_seconds()))
 
     logger.info(
         "User logged in successfully",
@@ -388,14 +452,7 @@ async def refresh_token(
     )
     new_refresh_token = create_refresh_token(subject=str(user.id))
 
-    response.set_cookie(
-        key=settings.ACCESS_TOKEN_COOKIE_NAME,
-        value=new_access_token,
-        httponly=True,
-        max_age=int(access_token_expires.total_seconds()),
-        secure=not settings.DEBUG,
-        samesite="lax",
-    )
+    _set_auth_cookie(response, new_access_token, int(access_token_expires.total_seconds()))
 
     logger.info(f"Token refreshed for user: {user.email} (ID: {user.id})")
     return Token(access_token=new_access_token, refresh_token=new_refresh_token, token_type="bearer")
@@ -535,20 +592,6 @@ async def logout(
         # Log if a token without jti is somehow used for logout
         logger.warning(f"Logout attempt with a token without JTI for user {current_user.email}")
 
-    if "set-cookie" in response.headers:
-        del response.headers["set-cookie"]
-
-    cookie_parts = [
-        f"{settings.ACCESS_TOKEN_COOKIE_NAME}=",
-        "Path=/",
-        'expires="Thu, 01 Jan 1970 00:00:00 GMT"',
-        "Max-Age=0",
-        "HttpOnly",
-        "SameSite=Lax",
-    ]
-    if not settings.DEBUG:
-        cookie_parts.append("Secure")
-
-    response.headers.append("set-cookie", "; ".join(cookie_parts))
+    _clear_auth_cookie(response)
     logger.info(f"User logged out: {current_user.email} (ID: {current_user.id})")
     return

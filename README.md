@@ -25,6 +25,17 @@ npm --prefix frontend test
 npm --prefix frontend run test:e2e   # optionnel (Playwright)
 ```
 
+## Configuration backend (local par défaut)
+- `BASE_URL_BACKEND` : URL externe publiée par l'API (défaut `http://localhost:8000`).
+- `ALLOWED_ORIGINS` : origines autorisées via CORS (JSON ou liste séparée par des virgules, défaut `http://localhost:5173`).
+- `COOKIE_DOMAIN` : domaine appliqué aux cookies d'auth (laisser vide en local).
+- `COOKIE_SECURE` : `false` en dev, `true` derrière HTTPS en prod.
+- `COOKIE_SAMESITE` : `lax` en dev (`none` si SPA + cookies cross-site via HTTPS).
+- `COOKIE_MAX_AGE` : durée personnalisée (en secondes) pour les cookies auth.
+- `DEFAULT_RATE_LIMIT` : limite SlowAPI globale (défaut `60/minute`).
+
+Voir `docs/RUNBOOKS/backend.md` pour les détails d'exploitation et `docs/RUNBOOKS/ci.md` pour la CI.
+
 ## Maintenance
 
 ### Déclencher le workflow de nettoyage (`cleanup_purge.yml`)

@@ -8,7 +8,7 @@ and includes all API routers.
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
 
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -174,15 +174,7 @@ def create_application() -> FastAPI:
 
 def configure_cors(app: FastAPI) -> None:
     """Configure CORS middleware."""
-    # En développement, on autorise toutes les origines
-    origins = ["*"]
-
-    # En production, on utilise les origines spécifiées dans les variables d'environnement
-    if settings.ENVIRONMENT == "production":
-        if hasattr(settings, "BACKEND_CORS_ORIGINS") and settings.BACKEND_CORS_ORIGINS:
-            origins = [str(origin).strip("/") for origin in settings.BACKEND_CORS_ORIGINS]
-        elif hasattr(settings, "CORS_ORIGINS") and settings.CORS_ORIGINS:
-            origins = [str(origin).strip("/") for origin in settings.CORS_ORIGINS]
+    origins = [str(origin).strip("/") for origin in settings.ALLOWED_ORIGINS]
 
     app.add_middleware(
         CORSMiddleware,
@@ -190,17 +182,8 @@ def configure_cors(app: FastAPI) -> None:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=["*"],
-        max_age=600,  # Cache des pré-requêtes CORS pendant 10 minutes
     )
-    logger.info(f"🌐 CORS configured for origins: {', '.join(origins) if origins else 'all'}")
-
-    # Ajout d'un middleware pour logger les requêtes
-    @app.middleware("http")
-    async def log_requests(request: Request, call_next):
-        logger.info(f"Incoming request: {request.method} {request.url}")
-        response = await call_next(request)
-        return response
+    logger.info("🌐 CORS configured for origins: %s", ", ".join(origins) or "none")
 
 
 def include_routers(app: FastAPI) -> None:
