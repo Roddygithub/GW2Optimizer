@@ -16,6 +16,7 @@ pip install -r backend/requirements.txt -r backend/requirements-dev.txt
 uvicorn app.main:app --app-dir backend/app --host 0.0.0.0 --port 8000
 
 # Frontend
+cp frontend/.env.development.example frontend/.env.development   # puis ajuster VITE_API_BASE_URL si besoin
 npm --prefix frontend install
 npm --prefix frontend run dev
 
@@ -33,8 +34,36 @@ npm --prefix frontend run test:e2e   # optionnel (Playwright)
 - `COOKIE_SAMESITE` : `lax` en dev (`none` si SPA + cookies cross-site via HTTPS).
 - `COOKIE_MAX_AGE` : durée personnalisée (en secondes) pour les cookies auth.
 - `DEFAULT_RATE_LIMIT` : limite SlowAPI globale (défaut `60/minute`).
+- `ML_TRAINING_ENABLED` : active le déclenchement incrémental du modèle de synergie lorsque des feedbacks sont reçus (false par défaut).
+- `LEARNING_DATA_DIR` : répertoire où les feedbacks sont stockés en JSON lors du fallback (`backend/data/learning/feedback`).
+- `SERVER_HEADER` : laissez vide pour s'en remettre au proxy (recommandé) ou définissez une valeur custom; éviter d'exposer la stack (ex.: via Traefik/Nginx `proxy_hide_header Server`).
 
 Voir `docs/RUNBOOKS/backend.md` pour les détails d'exploitation et `docs/RUNBOOKS/ci.md` pour la CI.
+
+## Boucle de feedback IA & entraînement incrémental
+
+- **Endpoint** : `POST /api/v1/ai/feedback` (payload minimal : `target_id`, `rating`, optionnel `comment`/`meta`).
+- **Persistance** : la couche `FeedbackHandler` traite le feedback. En cas d'échec, un fallback JSON est écrit dans `LEARNING_DATA_DIR`.
+- **Déclencheur ML** : si `ML_TRAINING_ENABLED=true`, l'API planifie une tâche de fond qui appelle `trigger_incremental_training` (asynchrone, non bloquant pour l'appelant).
+- **Metrics Prometheus** (soft) :
+  - `ai_feedback_total{result="ok|fallback|error"}`
+  - `ai_training_triggers_total{result="scheduled|disabled|error"}`
+- **Authentification** : l'endpoint accepte les utilisateurs authentifiés ou anonymes; l'ID utilisateur est injecté si disponible.
+
+Pour tester localement :
+
+```bash
+curl -X POST http://localhost:8000/api/v1/ai/feedback \
+  -H "Content-Type: application/json" \
+  -d '{"target_id":"comp-42","rating":9,"comment":"Très bon"}'
+```
+
+Activer l'entraînement incrémental en exportant `ML_TRAINING_ENABLED=true` (ou via `.env`).
+
+## Frontend Phase 2 (auth + dashboards)
+- `VITE_API_BASE_URL` : base API utilisée par Axios (`frontend/.env.development`).
+- Store global (Zustand) pour l'état d'auth (`frontend/src/store/auth.ts`).
+- Intercepteurs Axios (401 → hooks store à venir) et tests unitaires (`npm -C frontend test`).
 
 ## Maintenance
 
@@ -61,6 +90,8 @@ gh workflow run ".github/workflows/cleanup_purge.yml" \
 - [ARCHITECTURE](docs/ARCHITECTURE.md)
 - [SECURITY](SECURITY.md)
 - [audit / rapports sécurité](audit-reports/audit.md)
+- [docs/RUNBOOKS/backend.md](docs/RUNBOOKS/backend.md)
+- [docs/RUNBOOKS/ci.md](docs/RUNBOOKS/ci.md)
 
 ## Stack actuelle
 - **Backend** : FastAPI, SQLAlchemy, Pydantic, PostgreSQL, Redis.
