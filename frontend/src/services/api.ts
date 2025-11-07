@@ -1,35 +1,17 @@
 import axios from 'axios';
 import type { AuthResponse, Build, TeamComposition, User, ChatResponse } from '../types';
 
-const API_BASE_URL = 'http://127.0.0.1:8001/api/v1';
-
 export const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1',
   withCredentials: true,
+  timeout: 15_000,
 });
 
-// Request interceptor for adding auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Response interceptor for handling errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('access_token');
-      window.location.href = '/login';
+    if (error?.response?.status === 401) {
+      // TODO: dispatch logout once Zustand store wiring is in place
     }
     return Promise.reject(error);
   }

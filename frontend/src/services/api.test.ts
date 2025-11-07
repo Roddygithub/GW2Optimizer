@@ -1,13 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { authAPI, buildsAPI, teamsAPI } from './api';
+import { api, authAPI, buildsAPI, teamsAPI } from './api';
 
 // Mock axios
 const mockAxiosInstance = vi.hoisted(() => ({
   interceptors: {
-    request: {
-      use: vi.fn(),
-      eject: vi.fn()
-    },
     response: {
       use: vi.fn(),
       eject: vi.fn()
@@ -18,21 +14,23 @@ const mockAxiosInstance = vi.hoisted(() => ({
   put: vi.fn(),
   delete: vi.fn(),
   defaults: {
-    headers: {
-      common: {}
-    }
+    baseURL: 'http://localhost:8000/api/v1',
+    withCredentials: true,
   }
 }));
 
-vi.mock('axios', async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...actual as object,
-    default: {
-      create: vi.fn(() => mockAxiosInstance)
-    }
-  };
-});
+vi.mock('axios', () => ({
+  default: {
+    create: vi.fn((config: Record<string, unknown> = {}) => {
+      const baseURL = config.baseURL as string | undefined;
+      if (typeof baseURL === 'string') {
+        mockAxiosInstance.defaults.baseURL = baseURL;
+      }
+      mockAxiosInstance.defaults.withCredentials = Boolean(config.withCredentials);
+      return mockAxiosInstance;
+    })
+  }
+}));
 
 // Mock des réponses API
 const mockAuthResponse = {
@@ -108,6 +106,11 @@ describe('API Services', () => {
 
   afterEach(() => {
     localStorageMock.clear();
+  });
+
+  it('exposes api client with configured baseURL', () => {
+    expect(api.defaults.baseURL).toBeDefined();
+    expect(api.defaults.withCredentials).toBeTruthy();
   });
 
   describe('authAPI', () => {
