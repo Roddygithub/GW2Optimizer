@@ -9,6 +9,7 @@ are properly registered with the FastAPI application.
 # Import all routers to ensure they're registered
 from . import (  # noqa: F401
     ai,
+    ai_feedback,
     ai_optimizer,
     auth,
     builds,
@@ -39,6 +40,7 @@ __all__ = [
     # Module exports
     "ai",
     "ai_optimizer",
+    "ai_feedback",
     "auth",
     "builds",
     "chat",

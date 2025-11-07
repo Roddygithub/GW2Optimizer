@@ -32,6 +32,8 @@ class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
             try:
                 authorization = await super().__call__(request)
             except HTTPException as e:
+                if not self.auto_error and e.status_code == status.HTTP_401_UNAUTHORIZED:
+                    return None
                 if e.status_code == status.HTTP_401_UNAUTHORIZED:
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,

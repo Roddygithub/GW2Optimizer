@@ -91,7 +91,7 @@ class Settings(BaseSettings):
     ENABLE_HTTPS_REDIRECT: bool = False
 
     # Learning Configuration
-    LEARNING_DATA_DIR: str = "./data/learning"
+    LEARNING_DATA_DIR: str = "backend/data/learning/feedback"
     MAX_LEARNING_ITEMS: int = 10000
     LEARNING_ENABLED: bool = True
 
