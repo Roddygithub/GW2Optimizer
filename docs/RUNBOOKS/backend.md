@@ -23,6 +23,8 @@ This runbook documents the actions required to bootstrap, operate, and troublesh
 | `LOGIN_RATE_LIMIT` | `50/minute` | Per-endpoint rate limit for login/token endpoints. |
 | `REGISTRATION_RATE_LIMIT` | `10/hour` | Per-endpoint rate limit for account registration. |
 | `PASSWORD_RECOVERY_RATE_LIMIT` | `5/hour` | Rate limit for password recovery endpoint. |
+| `ML_TRAINING_ENABLED` | `false` | Active le déclenchement incrémental du modèle de synergie après un feedback. |
+| `LEARNING_DATA_DIR` | `backend/data/learning/feedback` | Répertoire utilisé pour le fallback JSON des feedbacks quand le handler principal échoue. |
 
 ### Recommended dev values
 ```
@@ -52,12 +54,18 @@ poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - **Redis state**: ensure `REDIS_ENABLED=true` for token revocation. Toggle off via `.env` for local testing.
 - **Learning scheduler**: automatically starts on app lifespan; inspect logs for `⏰ Learning pipeline scheduler activated`.
 - **Rate limiting**: SlowAPI enforces rates using Redis when available. In tests (`PYTEST_CURRENT_TEST`), an in-memory bucket is used per test.
+- **Rate limit verification**: from another shell, run `http --follow --timeout 2.0 GET :8000/api/v1/health` in a loop (or `ab`) to observe `429 Too Many Requests` once `DEFAULT_RATE_LIMIT` is exceeded; reset by waiting for the Sliding Window.
+- **AI feedback loop**:
+  - Endpoint: `POST /api/v1/ai/feedback` (payload `target_id`, `rating`, `comment?`, `meta?`).
+  - Persistance primaire via `FeedbackHandler`; fallback vers fichiers JSON datés dans `LEARNING_DATA_DIR`.
+  - En production, activer `ML_TRAINING_ENABLED=true` pour que chaque feedback programme `trigger_incremental_training` depuis les tâches de fond de FastAPI.
+  - Surveiller les compteurs Prometheus facultatifs `ai_feedback_total{result="ok|fallback|error"}` et `ai_training_triggers_total{result="scheduled|disabled|error"}` si l'exporter est configuré.
 
 ## Troubleshooting
 | Symptom | Checks |
 | --- | --- |
 | `429 Too Many Requests` unexpectedly | Confirm bucket reset, inspect `DEFAULT_RATE_LIMIT` config, verify Redis availability. |
-| Auth cookie missing | Ensure frontend origin is allowed, cookies not blocked (Secure + HTTPS mismatch), and path/domain align with expected host. |
+| Auth cookie missing / 401 fail-closed | Ensure frontend origin is allowed, cookies not blocked (Secure + HTTPS mismatch), and path/domain align with expected host. If Redis is down and `REDIS_ENABLED=true`, the token validator fails closed; set `REDIS_ENABLED=false` only for local debugging. |
 | CORS blocked in browser | Inspect `ALLOWED_ORIGINS` normalization; values must include scheme and match frontend origin exactly. |
 | Redis connection failures | Validate `REDIS_URL`, confirm service reachable, or set `REDIS_ENABLED=false` for fallback (tokens will not persist). |
 
@@ -67,6 +75,16 @@ cd backend
 poetry run pytest -q
 poetry run ruff check
 ```
+
+## HTTP headers hardening
+- Application: le middleware `StripServerHeaderMiddleware` supprime automatiquement `Server` et `X-Powered-By` de toutes les réponses FastAPI.
+- Nginx (reverse proxy) :
+  - `server_tokens off;`
+  - `proxy_hide_header Server;`
+  - `more_clear_headers Server X-Powered-By;`
+- Caddy :
+  - `header -Server`
+  - `header -X-Powered-By`
 
 ## References
 - `backend/app/core/config.py` for configuration schema.

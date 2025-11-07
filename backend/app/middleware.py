@@ -81,6 +81,17 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class StripServerHeaderMiddleware(BaseHTTPMiddleware):
+    """Middleware that removes Server and X-Powered-By headers from responses."""
+
+    async def dispatch(self, request: Request, call_next) -> Response:
+        response = await call_next(request)
+        for header in ("server", "Server", "x-powered-by", "X-Powered-By"):
+            if header in response.headers:
+                del response.headers[header]
+        return response
+
+
 def add_security_middleware(app, settings):
     """
     Adds all security-related middleware to the FastAPI app.
