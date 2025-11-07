@@ -1,4 +1,7 @@
-import axios from 'axios';
+import axios, { type AxiosError, type AxiosRequestConfig } from 'axios';
+import { useAuthStore } from '../store/auth';
+import { navigate } from '../lib/navigation';
+import { refresh } from './auth';
 import type { AuthResponse, Build, TeamComposition, User, ChatResponse } from '../types';
 
 export const api = axios.create({
@@ -7,15 +10,31 @@ export const api = axios.create({
   timeout: 15_000,
 });
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error?.response?.status === 401) {
-      // TODO: dispatch logout once Zustand store wiring is in place
+type RetriableConfig = AxiosRequestConfig & { __isRetry?: boolean };
+
+export async function onResponseError(error: AxiosError) {
+  const status = error.response?.status;
+  const config = (error.config ?? {}) as RetriableConfig;
+
+  if (status === 401 && !config.__isRetry) {
+    try {
+      config.__isRetry = true;
+      await refresh();
+      return api.request(config);
+    } catch (refreshError) {
+      try {
+        useAuthStore.getState().logout();
+      } finally {
+        navigate('/login');
+      }
+      return Promise.reject(refreshError);
     }
-    return Promise.reject(error);
   }
-);
+
+  return Promise.reject(error);
+}
+
+api.interceptors.response.use((response) => response, onResponseError);
 
 // Auth API
 export const authAPI = {
