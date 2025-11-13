@@ -1,15 +1,14 @@
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import BuildsPage from '../Builds';
-import * as buildsService from '../../services/builds';
-import type { SuggestBuildResponse, BuildSuggestionHistoryItem } from '../../services/builds';
-
-vi.mock('../../services/builds', () => ({
+vi.mock('@/services/builds', () => ({
   suggestBuild: vi.fn(),
   listBuilds: vi.fn(),
   saveBuildSuggestion: vi.fn(),
 }));
+import * as buildsService from '@/services/builds';
+import type { SuggestBuildResponse, BuildSuggestionHistoryItem } from '@/services/builds';
+import BuildsPage from '../Builds';
 
 describe('BuildsPage', () => {
   beforeEach(() => {
@@ -63,11 +62,8 @@ describe('BuildsPage', () => {
     });
 
     expect(screen.getByTestId('result')).toHaveTextContent('Celestial Tempest');
-    await waitFor(() => {
-      expect(saveBuildSuggestionMock).toHaveBeenCalled();
-    });
-    expect(screen.getByTestId('history-list')).toBeInTheDocument();
-    expect(screen.getByText('Elementalist • DPS')).toBeInTheDocument();
+    await screen.findByTestId('history-item-history-1');
+    await screen.findByText('Elementalist • DPS');
   });
 
   it('displays error message when request fails', async () => {
@@ -97,10 +93,7 @@ describe('BuildsPage', () => {
 
     render(<BuildsPage />);
 
-    await waitFor(() => {
-      expect(listBuildsMock).toHaveBeenCalled();
-    });
-
+    await screen.findByTestId('history-error');
     expect(screen.getByTestId('history-error')).toHaveTextContent('Failed to load history');
   });
 });
