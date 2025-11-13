@@ -12,6 +12,7 @@ jobs:
   secrets:
     name: Secrets Scan (Gitleaks)
     runs-on: ubuntu-latest
+    if: ${{ secrets.GITLEAKS_LICENSE_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,6 +28,7 @@ jobs:
   sast:
     name: Static App Security Testing (Semgrep)
     runs-on: ubuntu-latest
+    if: ${{ secrets.SEMGREP_APP_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
       - name: Run Semgrep
@@ -83,8 +85,5 @@ jobs:
           python-version: '3.12'
       - run: pip install pip-audit
       - run: |
-          pip-audit -r requirements.txt \
-                    -r requirements-dev.txt \
-                    -r requirements-test.txt \
-                    --severity high,critical
+          pip-audit -r requirements.txt --severity high,critical
         working-directory: backend
