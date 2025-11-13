@@ -262,7 +262,7 @@ Focus on current meta builds and provide practical, actionable recommendations."
             # Modification du contexte pour obtenir des variantes
             variant_inputs = base_inputs.copy()
             variant_inputs["context"] = (
-                f"{base_inputs.get('context', '')} " f"Provide variant #{i+1} with different trait/equipment choices."
+                f"{base_inputs.get('context', '')} " f"Provide variant #{i + 1} with different trait/equipment choices."
             )
 
             result = await self.execute(variant_inputs)
