@@ -22,7 +22,7 @@ describe('RegisterPage', () => {
     const registerMock = vi.mocked(authService.register);
     const navigateMock = vi.mocked(navigation.navigate);
 
-    registerMock.mockResolvedValue({} as any);
+    registerMock.mockResolvedValue({});
 
     render(<RegisterPage />);
 

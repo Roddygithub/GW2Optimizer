@@ -28,7 +28,7 @@ describe('LoginPage', () => {
       access_token: 'token',
       token_type: 'bearer',
       user: { id: '1', email: 'user@example.com' },
-    } as any);
+    });
 
     render(<LoginPage />);
 

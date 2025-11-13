@@ -15,7 +15,7 @@ describe('ResetPage', () => {
 
   it('submits reset and shows success message', async () => {
     const resetMock = vi.mocked(authService.reset);
-    resetMock.mockResolvedValue({} as any);
+    resetMock.mockResolvedValue({});
 
     render(<ResetPage />);
 
