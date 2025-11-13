@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { login } from '../services/auth';
 import { useAuthStore } from '../store/auth';
-import { navigate } from '@/lib/navigation';
+import { navigate } from '@/lib/navigation.ts';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
