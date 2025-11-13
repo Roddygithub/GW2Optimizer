@@ -73,6 +73,7 @@ class UserLogin(BaseModel):
 
     email: EmailStr = Field(..., description="User's email address")
     password: str = Field(..., description="User's password")
+    username: Optional[str] = Field(None, description="User's username (optional)")
 
 
 class UserUpdate(BaseModel):

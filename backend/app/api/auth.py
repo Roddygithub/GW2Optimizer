@@ -10,7 +10,7 @@ from datetime import timedelta
 from functools import wraps
 import os
 import time
-from typing import Optional
+from typing import Optional, Callable, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
@@ -21,7 +21,7 @@ from slowapi.util import get_remote_address
 
 from app.core.config import settings
 from app.core.logging import logger
-from jose import JWTError
+from jwt import InvalidTokenError as JWTError
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -70,7 +70,7 @@ def rate_limit_key(request: Request) -> str:
 
 
 limiter = Limiter(key_func=rate_limit_key, default_limits=[settings.DEFAULT_RATE_LIMIT])
-_test_rate_state = defaultdict(deque)
+_test_rate_state: defaultdict[tuple[str, str], deque[float]] = defaultdict(deque)
 
 
 def _parse_rate_limit(limit: str) -> tuple[int, float]:
@@ -95,16 +95,16 @@ def _parse_rate_limit(limit: str) -> tuple[int, float]:
     return count, window
 
 
-def rate_limit(limit: Optional[str]):
+def rate_limit(limit: Optional[str]) -> Callable[[Callable], Callable]:
     if limit is None:
         return lambda func: func
 
     if _is_testing():
         count, window = _parse_rate_limit(limit)
 
-        def decorator(func):
+        def decorator(func: Callable) -> Callable:
             @wraps(func)
-            async def wrapper(*args, **kwargs):
+            async def wrapper(*args: Any, **kwargs: Any) -> Any:
                 request: Optional[Request] = kwargs.get("request")
                 if request is None:
                     for arg in args:
@@ -283,14 +283,14 @@ async def register(
 
     # In a real app, this would send an email with a verification link
     verification_token = create_access_token(subject=user.email, expires_delta=timedelta(days=1))
-    await send_verification_email(user.email, user.username, verification_token)
+    await send_verification_email(str(user.email), str(user.username), verification_token)
 
     logger.info(f"New user registered: {user.email} (ID: {user.id})")
     return user
 
 
 @router.get("/verify-email/{token}", status_code=status.HTTP_200_OK, summary="Verify user email")
-async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
+async def verify_email(token: str, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     """
     Verify a user's email address using the token sent upon registration.
     """
@@ -347,7 +347,7 @@ async def login_for_access_token(
             "Failed login attempt",
             extra={
                 "email": form_data.username,
-                "ip": request.client.host,
+                "ip": request.client.host if request.client else "unknown",
                 "user_agent": request.headers.get("user-agent"),
             },
         )
@@ -358,12 +358,12 @@ async def login_for_access_token(
             "Login attempt for inactive/locked user",
             extra={
                 "email": user.email,
-                "ip": request.client.host,
+                "ip": request.client.host if request.client else "unknown",
             },
         )
         raise AccountLockedException()
 
-    await user_service.reset_failed_login_attempts(user.email)
+    await user_service.reset_failed_login_attempts(str(user.email))
     await user_service.log_login_history(user, request)
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -380,7 +380,7 @@ async def login_for_access_token(
         extra={
             "email": user.email,
             "user_id": str(user.id),
-            "ip": request.client.host,
+            "ip": request.client.host if request.client else "unknown",
         },
     )
     return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
@@ -407,7 +407,7 @@ async def login_alias(
     db: AsyncSession = Depends(get_db),
 ) -> Token:
     """Login endpoint alias - calls the same logic as /token."""
-    return await login_for_access_token(response, request, form_data, db)
+    return await login_for_access_token(response, request, form_data, db)  # type: ignore[no-any-return]
 
 
 @router.post(
@@ -460,7 +460,7 @@ async def refresh_token(
 
 @router.post("/password-recovery/{email}", status_code=status.HTTP_202_ACCEPTED)
 @rate_limit(settings.PASSWORD_RECOVERY_RATE_LIMIT)
-async def recover_password(email: str, request: Request, db: AsyncSession = Depends(get_db)):
+async def recover_password(email: str, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     """
     Send a password recovery email with a reset token.
     """
@@ -468,7 +468,7 @@ async def recover_password(email: str, request: Request, db: AsyncSession = Depe
     user = await user_service.get_by_email(email)
     if user:
         password_reset_token = create_access_token(subject=user.email, expires_delta=timedelta(hours=1))
-        await send_password_reset_email(email_to=user.email, token=password_reset_token)
+        await send_password_reset_email(email_to=str(user.email), token=password_reset_token)
         logger.info(f"Password recovery email sent to {email}")
     else:
         logger.warning(f"Password recovery attempt for non-existent email: {email}")
@@ -480,7 +480,7 @@ async def recover_password(email: str, request: Request, db: AsyncSession = Depe
 async def reset_password(
     body: PasswordReset,
     db: AsyncSession = Depends(get_db),
-):
+) -> None:
     """
     Reset user password using a token from the recovery email.
     """
@@ -566,7 +566,7 @@ async def get_login_history(
     if not history:
         await user_service.log_login_history(current_user, request)
         history = await user_service.get_login_history(current_user)
-    return history
+    return [LoginHistoryOut.model_validate(h) for h in history]
 
 
 @router.post(

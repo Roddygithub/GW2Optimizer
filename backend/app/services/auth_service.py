@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
-from jose import jwt
+import jwt
 from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +20,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class AuthService:
     """Service for authentication and user management."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize auth service."""
         self.secret_key = settings.SECRET_KEY
         self.algorithm = settings.ALGORITHM
@@ -107,7 +107,7 @@ class AuthService:
                 return None
 
             logger.debug(f"Successfully decoded token for user_id: {user_id}")
-            return TokenData(user_id=str(user_id), email=email)
+            return TokenData(sub=str(user_id))
 
         except jwt.ExpiredSignatureError:
             logger.warning("Token has expired")
@@ -310,7 +310,7 @@ class AuthService:
                 logger.warning(f"Authentication failed: No password set for user {user.email}")
                 return None
 
-            if not self.verify_password(user_login.password, user.hashed_password):
+            if not self.verify_password(user_login.password, str(user.hashed_password)):
                 logger.warning(f"Authentication failed: Invalid password for user {user.email}")
                 return None
 

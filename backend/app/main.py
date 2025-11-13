@@ -41,6 +41,7 @@ from app.api import (
     ai_optimizer,
     auth,
     builds,
+    builds_history,
     chat,
     export,
     health,
@@ -127,7 +128,7 @@ def create_application() -> FastAPI:
     # Add rate limiting (disabled in testing mode)
     if not settings.TESTING:
         app.state.limiter = auth_limiter
-        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
     else:
         # Disable rate limiting in tests
         logger.info("⚠️  Rate limiting DISABLED (TESTING=True)")
@@ -183,8 +184,9 @@ def configure_cors(app: FastAPI) -> None:
         CORSMiddleware,
         allow_origins=settings.ALLOWED_ORIGINS,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
+        expose_headers=["Content-Disposition"],
     )
     logger.info(
         "🌐 CORS configured for origins: %s",
@@ -214,6 +216,7 @@ def include_routers(app: FastAPI) -> None:
     api_router.include_router(ai_feedback.router, prefix="/ai", tags=["AI Feedback"])
     api_router.include_router(ai_optimizer.router, prefix="/ai-optimizer", tags=["AI Optimizer"])
     api_router.include_router(builds.router, tags=["Builds"])
+    api_router.include_router(builds_history.router, prefix="/builds", tags=["Build Suggestions"])
     api_router.include_router(teams.router, tags=["Teams"])
     api_router.include_router(chat.router, prefix="/chat", tags=["Chat"])
     api_router.include_router(export.router, prefix="/export", tags=["Export"])

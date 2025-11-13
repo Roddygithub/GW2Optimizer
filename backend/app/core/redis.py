@@ -21,7 +21,7 @@ async def get_redis_client() -> Optional[Redis]:
     return redis_client
 
 
-async def connect_to_redis():
+async def connect_to_redis() -> None:
     """Initializes the Redis client."""
     global redis_client
     if settings.REDIS_ENABLED:
