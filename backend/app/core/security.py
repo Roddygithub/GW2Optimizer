@@ -9,7 +9,6 @@ import jwt
 from jwt import InvalidTokenError as JWTError
 import bcrypt
 from sqlalchemy.ext.asyncio import AsyncSession
-from redis.asyncio import Redis
 from redis.exceptions import RedisError
 from pydantic import ValidationError
 

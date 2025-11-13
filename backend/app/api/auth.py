@@ -16,7 +16,6 @@ from typing_extensions import ParamSpec
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from redis.asyncio import Redis
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 

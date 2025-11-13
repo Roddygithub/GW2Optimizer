@@ -1,7 +1,7 @@
 """Authentication service."""
 
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Any
 
 import jwt
 from passlib.context import CryptContext
@@ -35,7 +35,7 @@ class AuthService:
         """Hash a password."""
         return pwd_context.hash(password)
 
-    def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    def create_access_token(self, data: dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
         """
         Create JWT access token.
 
@@ -58,7 +58,7 @@ class AuthService:
         encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return encoded_jwt
 
-    def create_refresh_token(self, data: dict) -> str:
+    def create_refresh_token(self, data: dict[str, Any]) -> str:
         """
         Create JWT refresh token.
 
@@ -100,7 +100,6 @@ class AuthService:
             )
 
             user_id = payload.get("sub")
-            email = payload.get("email")
 
             if not user_id:
                 logger.warning("Token is missing 'sub' claim")
