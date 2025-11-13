@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
-from typing import Any, Optional
+from typing import Any, Optional, cast
 import uuid
 import time
 
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
+import jwt
+from jwt import InvalidTokenError as JWTError
 import bcrypt
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
@@ -27,7 +28,7 @@ class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
     """
 
     async def __call__(self, request: Request) -> Optional[str]:
-        authorization: str = request.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME)
+        authorization = request.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME)
         if not authorization:
             try:
                 authorization = await super().__call__(request)
@@ -48,7 +49,7 @@ oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl=f"{settings.API_V1_STR}/
 oauth2_optional_scheme = OAuth2PasswordBearerWithCookie(tokenUrl=f"{settings.API_V1_STR}/auth/token", auto_error=False)
 
 
-def create_access_token(subject: str | Any, expires_delta: timedelta = None) -> str:
+def create_access_token(subject: str | Any, expires_delta: timedelta | None = None) -> str:
     """
     Create a new access token.
     """
@@ -76,14 +77,14 @@ def create_refresh_token(subject: str | Any) -> str:
     return encoded_jwt
 
 
-def decode_token(token: str) -> Optional[dict]:
+def decode_token(token: str) -> Optional[dict[str, Any]]:
     """
     Decodes a JWT token, trying multiple keys for rotation.
     """
     keys = [settings.SECRET_KEY] + settings.OLD_SECRET_KEYS
     for key in keys:
         try:
-            payload = jwt.decode(token, key, algorithms=[settings.ALGORITHM])
+            payload = cast(dict[str, Any], jwt.decode(token, key, algorithms=[settings.ALGORITHM]))
             return payload
         except JWTError:
             continue
@@ -106,7 +107,7 @@ def get_password_hash(password: str) -> str:
 async def _resolve_user_from_token(
     token: str,
     db: AsyncSession,
-    redis: Redis | None,
+    redis: Any | None,
 ) -> User:
     def _credentials_exc() -> HTTPException:
         return HTTPException(
@@ -123,6 +124,8 @@ async def _resolve_user_from_token(
             raise credentials_exception
         token_data = TokenData(**payload)
         if token_data.jti is None:
+            raise credentials_exception
+        if token_data.sub is None:
             raise credentials_exception
     except (JWTError, ValidationError) as e:
         logger.warning(f"JWT decoding/validation failed: {e}")
@@ -179,7 +182,7 @@ async def _resolve_user_from_token(
 async def get_current_user(
     db: AsyncSession = Depends(get_db),
     token: str = Depends(oauth2_scheme),
-    redis: Redis | None = Depends(get_redis_client),  # Allow None if Redis is disabled
+    redis: Any | None = Depends(get_redis_client),  # Allow None if Redis is disabled
 ) -> User:
     """Decode token and return the authenticated user."""
 
@@ -189,7 +192,7 @@ async def get_current_user(
 async def get_current_user_optional(
     db: AsyncSession = Depends(get_db),
     token: str | None = Depends(oauth2_optional_scheme),
-    redis: Redis | None = Depends(get_redis_client),
+    redis: Any | None = Depends(get_redis_client),
 ) -> User | None:
     """Return the current user if present; otherwise None without raising."""
 
@@ -215,7 +218,7 @@ async def get_current_active_user(
     return current_user
 
 
-async def revoke_token(jti: str, redis: Redis | None):
+async def revoke_token(jti: str, redis: Any | None) -> None:
     """
     Adds a token's JTI to the revocation list in Redis with an expiration
     time matching the access token's lifetime.

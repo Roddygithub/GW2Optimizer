@@ -10,7 +10,8 @@ from datetime import timedelta
 from functools import wraps
 import os
 import time
-from typing import Optional, Callable, Any
+from typing import Optional, Callable, Any, Awaitable, TypeVar, TypedDict, Literal, cast
+from typing_extensions import ParamSpec
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
@@ -72,6 +73,9 @@ def rate_limit_key(request: Request) -> str:
 limiter = Limiter(key_func=rate_limit_key, default_limits=[settings.DEFAULT_RATE_LIMIT])
 _test_rate_state: defaultdict[tuple[str, str], deque[float]] = defaultdict(deque)
 
+P = ParamSpec("P")
+R = TypeVar("R")
+
 
 def _parse_rate_limit(limit: str) -> tuple[int, float]:
     try:
@@ -95,18 +99,21 @@ def _parse_rate_limit(limit: str) -> tuple[int, float]:
     return count, window
 
 
-def rate_limit(limit: Optional[str]) -> Callable[[Callable], Callable]:
+def rate_limit(limit: Optional[str]) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
     if limit is None:
         return lambda func: func
 
     if _is_testing():
         count, window = _parse_rate_limit(limit)
 
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
             @wraps(func)
-            async def wrapper(*args: Any, **kwargs: Any) -> Any:
-                request: Optional[Request] = kwargs.get("request")
-                if request is None:
+            async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R | Any:
+                request: Optional[Request] = None
+                maybe_req: Any = kwargs.get("request")
+                if isinstance(maybe_req, Request):
+                    request = maybe_req
+                else:
                     for arg in args:
                         if isinstance(arg, Request):
                             request = arg
@@ -138,13 +145,21 @@ def rate_limit(limit: Optional[str]) -> Callable[[Callable], Callable]:
     return limiter.limit(limit)
 
 
-def _cookie_options(max_age: int | None = None) -> dict:
+class CookieOptions(TypedDict, total=False):
+    httponly: bool
+    secure: bool
+    samesite: Literal["lax", "strict", "none"]
+    domain: str
+    max_age: int
+
+
+def _cookie_options(max_age: int | None = None) -> CookieOptions:
     """Build standard cookie options based on settings."""
 
-    options: dict[str, object] = {
+    options: CookieOptions = {
         "httponly": True,
         "secure": settings.COOKIE_SECURE,
-        "samesite": settings.COOKIE_SAMESITE.lower(),
+        "samesite": cast(Literal["lax", "strict", "none"], settings.COOKIE_SAMESITE.lower()),
     }
 
     if settings.COOKIE_DOMAIN:
@@ -160,11 +175,20 @@ def _cookie_options(max_age: int | None = None) -> dict:
 
 def _set_auth_cookie(response: Response, value: str, max_age: int | None) -> None:
     """Apply standard auth cookie settings."""
+    samesite: Literal["lax", "strict", "none"] = cast(
+        Literal["lax", "strict", "none"], settings.COOKIE_SAMESITE.lower()
+    )
+    domain: Optional[str] = settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
+    effective_max_age: Optional[int] = max_age if max_age is not None else settings.COOKIE_MAX_AGE
 
     response.set_cookie(
         key=settings.ACCESS_TOKEN_COOKIE_NAME,
         value=value,
-        **_cookie_options(max_age=max_age),
+        httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite=samesite,
+        domain=domain,
+        max_age=effective_max_age,
     )
 
 
@@ -407,7 +431,7 @@ async def login_alias(
     db: AsyncSession = Depends(get_db),
 ) -> Token:
     """Login endpoint alias - calls the same logic as /token."""
-    return await login_for_access_token(response, request, form_data, db)  # type: ignore[no-any-return]
+    return await login_for_access_token(response, request, form_data, db)
 
 
 @router.post(
@@ -581,7 +605,7 @@ async def get_login_history(
 async def logout(
     response: Response,
     token: str = Depends(oauth2_scheme),
-    redis: Redis = Depends(get_redis_client),
+    redis: Optional[Any] = Depends(get_redis_client),
     current_user: User = Depends(get_current_active_user),
 ) -> None:
     """Logout the current user by revoking the token and clearing the cookie."""

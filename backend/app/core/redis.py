@@ -4,17 +4,17 @@ Redis connection and utilities.
 
 import redis.asyncio as redis
 from redis.asyncio import Redis  # noqa: F401 (used in type annotations)
-from typing import Optional
+from typing import Optional, Any
 
 from app.core.config import settings
 from app.core.logging import logger
 from app.core.circuit_breaker import CircuitBreaker
 
-redis_client: Optional[Redis] = None
+redis_client: Optional[Any] = None
 redis_circuit_breaker = CircuitBreaker(failure_threshold=5, recovery_timeout=60)
 
 
-async def get_redis_client() -> Optional[Redis]:
+async def get_redis_client() -> Optional[Any]:
     """
     Dependency to get the Redis client.
     """
