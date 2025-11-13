@@ -16,7 +16,9 @@
 
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@": ["src"],
+      "@/*": ["src/*"],
+      "@/lib/navigation": ["src/lib/navigation.ts"]
     },
 
     /* Linting */

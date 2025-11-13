@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { register } from '../services/auth';
-import { navigate } from '@/lib/navigation.ts';
+import { navigate } from '@/lib/navigation';
 
 export default function RegisterPage() {
   const [email, setEmail] = useState('');
