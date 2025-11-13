@@ -267,7 +267,7 @@ class GW2SkillParser:
             for idx, skill_id in enumerate(skill_ids[:5]):
                 skills.append(
                     Skill(
-                        slot=skill_slots[idx] if idx < len(skill_slots) else f"Skill{idx+1}",
+                        slot=skill_slots[idx] if idx < len(skill_slots) else f"Skill {idx + 1}",
                         id=int(skill_id),
                         name=f"Skill {skill_id}",
                     )

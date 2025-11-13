@@ -18,7 +18,8 @@
     "paths": {
       "@": ["src"],
       "@/*": ["src/*"],
-      "@/lib/navigation": ["src/lib/navigation.ts"]
+      "@/lib/navigation": ["src/lib/navigation.ts"],
+      "@/lib/*": ["src/lib/*"]
     },
 
     /* Linting */

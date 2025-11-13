@@ -158,9 +158,9 @@ def main():
 """
 
     for cycle in range(1, MAX_CYCLES + 1):
-        log(f"\n{'='*60}", Colors.BLUE)
+        log("\n" + ("=" * 60), Colors.BLUE)
         log(f" CYCLE {cycle}/{MAX_CYCLES}", Colors.BLUE)
-        log(f"{'='*60}", Colors.BLUE)
+        log("=" * 60, Colors.BLUE)
 
         start_time = time.time()
 
