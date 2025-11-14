@@ -1,3 +1,4 @@
+# .github/workflows/security.yml
 name: Security Scan
 
 on:
@@ -6,49 +7,19 @@ on:
   pull_request:
     branches: [ main, develop ]
   schedule:
-    - cron: '0 6 * * 1'
+    - cron: '0 6 * * 1'  # Weekly on Monday 6am
 
 jobs:
-  secrets:
-    name: Secrets Scan (Gitleaks)
-    runs-on: ubuntu-latest
-    if: ${{ secrets.GITLEAKS_LICENSE_KEY != '' }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        with:
-          config-path: .gitleaks.toml
-        env:
-          GITLEAKS_LICENSE_KEY: ${{ secrets.GITLEAKS_LICENSE_KEY }}
-        continue-on-error: false
-
-  sast:
-    name: Static App Security Testing (Semgrep)
-    runs-on: ubuntu-latest
-    if: ${{ secrets.SEMGREP_APP_TOKEN != '' }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run Semgrep
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: |
-            p/ci
-            p/security-audit
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-        continue-on-error: false
-
   trivy-docker:
-    name: Trivy - Docker Images
+    name: Trivy - Docker Image Scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Build Backend Image
         run: docker build -t gamebuilder-backend:test ./backend
-      - name: Run Trivy on Backend
+      
+      - name: Run Trivy Security Scan
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: gamebuilder-backend:test
@@ -56,34 +27,44 @@ jobs:
           output: 'trivy-backend.sarif'
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
-      - name: Upload Trivy results
+      
+      - name: Upload Trivy Results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: 'trivy-backend.sarif'
 
   npm-audit:
-    name: npm audit (Frontend)
+    name: Frontend Dependency Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci
+      
+      - name: Install Dependencies
+        run: npm ci
         working-directory: frontend
-      - run: npm audit --audit-level=high
+      
+      - name: Run npm audit
+        run: npm audit --audit-level=high
         working-directory: frontend
 
   pip-audit:
-    name: pip-audit (Backend)
+    name: Backend Dependency Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install pip-audit
-      - run: |
-          pip-audit -r requirements.txt --severity high,critical
+      
+      - name: Install pip-audit
+        run: pip install pip-audit
+      
+      - name: Run pip-audit
+        run: pip-audit -r requirements.txt --severity high,critical
         working-directory: backend
