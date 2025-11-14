@@ -1,0 +1,60 @@
+src/App.tsx:43 - default
+src/components/SentryTestButton.tsx:10 - SentryTestButton
+src/config/version.ts:11 - APP_COPYRIGHT (used in module)
+src/config/version.ts:22 - default
+src/hooks/useAppVersion.ts:11 - AppVersionInfo (used in module)
+src/hooks/useAppVersion.ts:23 - showAppVersion (used in module)
+src/hooks/useAppVersion.ts:46 - getAppVersion (used in module)
+src/hooks/useAppVersion.ts:119 - default
+src/services/aiService.ts:15 - Build (used in module)
+src/services/aiService.ts:25 - TeamComposition (used in module)
+src/services/aiService.ts:46 - ComposeRequest (used in module)
+src/services/aiService.ts:52 - FeedbackRequest (used in module)
+src/services/aiService.ts:58 - MetaContext (used in module)
+src/services/aiService.ts:69 - AIServiceError (used in module)
+src/services/aiService.ts:230 - aiService
+src/services/aiService.ts:233 - AIService (used in module)
+src/services/api.ts:21 - authAPI
+src/services/api.ts:58 - buildsAPI
+src/services/api.ts:146 - teamsAPI
+src/services/auth.ts:33 - logout
+src/services/auth.ts:38 - refresh
+src/services/builds.ts:3 - SuggestBuildPayload (used in module)
+src/store/auth.ts:3 - AuthUser (used in module)
+src/types/index.ts:3 - User (used in module)
+src/types/index.ts:12 - Build (used in module)
+src/types/index.ts:32 - TeamComposition
+src/types/index.ts:49 - TeamSlot (used in module)
+src/types/index.ts:59 - TraitLine (used in module)
+src/types/index.ts:65 - Skill (used in module)
+src/types/index.ts:71 - Equipment (used in module)
+src/types/index.ts:80 - Profession (used in module)
+src/types/index.ts:91 - GameMode (used in module)
+src/types/index.ts:101 - Role (used in module)
+src/types/index.ts:111 - AuthResponse
+src/types/index.ts:117 - ApiError
+src/types/index.ts:121 - ChatMessage
+src/types/index.ts:128 - BuildSuggestion (used in module)
+src/types/index.ts:151 - ChatResponse
+src/components/ai/AIFocusView.tsx:24 - AIFocusView
+src/components/ai/ChatBox.tsx:10 - Message (used in module)
+src/components/ai/ChatBox.tsx:27 - ChatBoxProps (used in module)
+src/components/ai/ChatBox.tsx:379 - default
+src/components/ai/ChatMessage.tsx:32 - ChatMessage (used in module)
+src/components/builds/BuildDetailPanel.tsx:8 - DetailedBuild (used in module)
+src/components/builds/BuildDetailPanel.tsx:19 - BuildDetailPanelProps (used in module)
+src/components/builds/BuildDetailPanel.tsx:42 - BuildDetailPanel (used in module)
+src/components/builds/BuildDetailPanel.tsx:221 - default
+src/components/builds/BuildGroupCard.tsx:47 - BuildGroupCardProps (used in module)
+src/components/system/LoadingScreen.tsx:4 - LoadingScreen
+src/components/team/TeamSynergyDashboard.tsx:7 - TeamMetadata (used in module)
+src/components/team/TeamSynergyDashboard.tsx:15 - TeamSynergyDashboardProps (used in module)
+src/components/team/TeamSynergyDashboard.tsx:56 - TeamSynergyDashboard (used in module)
+src/components/team/TeamSynergyDashboard.tsx:166 - default
+src/components/ui/button.tsx:36 - ButtonProps (used in module)
+src/components/ui/button.tsx:55 - buttonVariants (used in module)
+src/components/ui/card.tsx:78 - CardFooter (used in module)
+src/components/ui/card.tsx:78 - CardDescription (used in module)
+src/components/ui/VersionDisplay.tsx:16 - VersionDisplay (used in module)
+src/components/ui/VersionDisplay.tsx:77 - default
+src/lib/navigation/index.ts:1 - navigate

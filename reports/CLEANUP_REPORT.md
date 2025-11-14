@@ -1,136 +1,52 @@
-# 🧹 PROJECT CLEANUP REPORT
+🧹 Cleanup Report – v0.4.0-clean (2025-11-14)
 
-**Date**: 2025-10-23T05:24:34.772092
-**Version**: v3.0.0
+Backend
 
----
+Vulture (dead code): 304 lignes
+Principalement des “unused variables” dans les migrations Alembic (révision, down_revision, etc.) → faux positifs attendus
 
-## 📊 CLEANUP STATISTICS
+Radon (complexity): 532 fonctions ≥ C
+Top extrait (grade A montrés dans l’échantillon), aucun hot spot critique identifié dans cet audit
 
-### Files
-- **Removed**: 2 files
-- **Moved**: 30 files
-- **Kept**: 1 files
+Radon (maintainability): 0 fichiers < C (bon)
 
-### Directories
-- **Removed**: 0 directories
+Deptry (unused deps): 0 packages
 
-### Space
-- **Freed**: 0 bytes (0.00 KB)
+Bandit (security): 1384 issues scan, HIGH=0, MEDIUM=0
+B101 (assert_used) signalé dans plusieurs fichiers (faible sévérité, souvent test-only)
 
----
+Décision backend:
+Pas d’autoflake massif (risque de faux positifs dans main.py, core/security.py, endpoints)
+Aucun hotspot sécurité/maintenabilité bloquant
 
-## 🧹 ACTIONS PERFORMED
+Frontend
 
-### 1. Python Cache Cleanup
-- Removed all `__pycache__` directories
-- Removed all `.pyc` files
-- **Result**: Cleaner repository, faster git operations
+ts-prune (dead exports): 0
 
-### 2. Log Files Cleanup
-- Removed empty log files
-- Kept non-empty logs for debugging
-- **Result**: Reduced clutter
+depcheck (unused deps):
+dependencies: 0
+devDependencies (7 suspects, probablement utilisés via scripts/config): tailwindcss, postcss, @testing-library/user-event, @types/jest, @vitest/coverage-v8, autoprefixer, wait-on
 
-### 3. Reports Organization
-- Archived old mission reports (v2.8.0 and earlier)
-- Archived old CI reports (v2.0.0 - v2.6.0)
-- Created `archive/` directories
-- **Result**: Better organization, easier navigation
+Build & bundle:
+Total: 684 KB
+Plus gros chunk: 444 KB (pré-gzip ~137.7 KB gz)
+Top assets:
+dist/assets/index-…js 443.91 kB (gzip: 137.68 kB)
+dist/assets/ui-…js 120.14 kB (gzip: 38.95 kB)
+dist/assets/vendor-…js 62.43 kB (gzip: 21.77 kB)
+dist/assets/react-…js 43.07 kB (gzip: 15.22 kB)
+dist/assets/index-…css 9.13 kB (gzip: 2.44 kB)
 
-### 4. Documentation Index
-- Created `reports/README.md` - Reports index
-- Created `docs/README.md` - Documentation index
-- **Result**: Improved discoverability
+Recommandations frontend:
+Code-splitting ciblé (React.lazy + Suspense) pour routes/pages volumineuses (auth/builds/teams)
+Vérifier le bundle “ui-*.js” (~120 KB) pour d’éventuels re-exports inutiles
+Conserver vendor split actuel
+Revue manuelle des 7 devDeps flaggées par depcheck (scripts/config)
 
----
+Décisions & actions
+Backend: SKIP autoflake massif (code sain, risques supérieurs aux gains)
+Frontend: Actions de suivi proposées (voir issues ci-dessous)
 
-## 📁 NEW STRUCTURE
-
-```
-GW2Optimizer/
-├── reports/
-│   ├── README.md (NEW - Index)
-│   ├── MISSION_v3.0_FINAL_REPORT.md (Current)
-│   ├── MISSION_v2.9.0_FINAL_REPORT.md
-│   ├── IMPLEMENTATION_COMPLETE.md
-│   ├── frontend_coverage.md
-│   ├── monitoring_validation.md
-│   ├── grafana_dashboard_report.md
-│   ├── archive/ (NEW - Old reports)
-│   │   ├── MISSION_v2.8.0_*.md
-│   │   └── ...
-│   └── ci/
-│       ├── MISSION_v2.7.0_FINAL_REPORT.md (Latest)
-│       └── archive/ (NEW - Old CI reports)
-│           ├── MISSION_v2.6.0_*.md
-│           └── ...
-│
-├── docs/
-│   ├── README.md (NEW - Index)
-│   ├── DEPLOYMENT_GUIDE.md
-│   ├── QUICK_TEST_GUIDE.md
-│   ├── SENTRY_SETUP.md
-│   └── ...
-│
-└── backend/
-    ├── app/ (No __pycache__)
-    └── tests/ (No __pycache__)
-```
-
----
-
-## ✅ BENEFITS
-
-### 1. Cleaner Repository
-- No Python cache files
-- No empty logs
-- Better organized reports
-
-### 2. Easier Navigation
-- Clear index files
-- Archived old reports
-- Logical structure
-
-### 3. Better Git Performance
-- Fewer files to track
-- Smaller repository size
-- Faster operations
-
-### 4. Improved Discoverability
-- README files in key directories
-- Clear documentation structure
-- Easy to find current reports
-
----
-
-## 🎯 RECOMMENDATIONS
-
-### Immediate
-1. ✅ Review archived reports if needed
-2. ✅ Use new README files for navigation
-3. ✅ Add `__pycache__/` to `.gitignore` (already done)
-
-### Ongoing
-1. Run cleanup script periodically
-2. Archive old reports after each major version
-3. Keep documentation up to date
-
----
-
-## 📝 NOTES
-
-- All archived files are preserved (not deleted)
-- Current reports (v3.0.0) are easily accessible
-- Documentation structure is now clearer
-- No functionality was affected
-
----
-
-**Cleanup Status**: ✅ COMPLETE
-**Repository Status**: ✅ CLEAN
-**Documentation Status**: ✅ ORGANIZED
-
----
-
-**Generated**: 2025-10-23T05:24:34.772106
+Prochaines étapes (issues)
+Frontend bundle: candidates de code-splitting
+Depcheck: revue devDependencies flaggées (7)

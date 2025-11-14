@@ -1,0 +1,8 @@
+Unused devDependencies
+* @tailwindcss/postcss
+* @testing-library/user-event
+* @types/jest
+* @vitest/coverage-v8
+* autoprefixer
+* postcss
+* wait-on
