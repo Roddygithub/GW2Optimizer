@@ -21,7 +21,7 @@ from app.core.logging import logger
 from app.services.user_service import UserService
 
 
-class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
+class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):  # type: ignore[misc]
     """
     OAuth2PasswordBearer that can read the token from a cookie.
     """
@@ -41,7 +41,7 @@ class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
                         headers={"WWW-Authenticate": "Bearer"},
                     )
                 raise e
-        return authorization
+        return cast(Optional[str], authorization)
 
 
 oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl=f"{settings.API_V1_STR}/auth/token")
@@ -57,7 +57,7 @@ def create_access_token(subject: str | Any, expires_delta: timedelta | None = No
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode = {"exp": expire, "sub": str(subject), "jti": str(uuid.uuid4())}  # Add a unique identifier to the token
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    encoded_jwt: str = cast(str, jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM))
     return encoded_jwt
 
 
@@ -72,7 +72,7 @@ def create_refresh_token(subject: str | Any) -> str:
         "type": "refresh",
         "jti": str(uuid.uuid4()),  # Add a unique identifier to the refresh token
     }
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    encoded_jwt: str = cast(str, jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM))
     return encoded_jwt
 
 
@@ -92,7 +92,7 @@ def decode_token(token: str) -> Optional[dict[str, Any]]:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plain password against a hashed password."""
-    return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+    return bool(bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8")))
 
 
 def get_password_hash(password: str) -> str:

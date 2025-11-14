@@ -66,7 +66,7 @@ def rate_limit_key(request: Request) -> str:
         if current_test:
             client_host = request.client.host if request.client else "unknown"
             return f"{current_test}:{client_host}"
-    return get_remote_address(request)
+    return cast(str, get_remote_address(request))
 
 
 limiter = Limiter(key_func=rate_limit_key, default_limits=[settings.DEFAULT_RATE_LIMIT])
@@ -141,7 +141,7 @@ def rate_limit(limit: Optional[str]) -> Callable[[Callable[P, Awaitable[R]]], Ca
 
         return decorator
 
-    return limiter.limit(limit)
+    return cast(Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]], limiter.limit(limit))
 
 
 class CookieOptions(TypedDict, total=False):
@@ -235,7 +235,7 @@ def _clear_auth_cookie(response: Response) -> None:
 # The following endpoints handle user registration, email verification, login, and token refresh.
 
 
-@router.post(
+@router.post(  # type: ignore[misc]
     "/register",
     response_model=UserOut,
     status_code=status.HTTP_201_CREATED,
@@ -312,7 +312,7 @@ async def register(
     return user
 
 
-@router.get("/verify-email/{token}", status_code=status.HTTP_200_OK, summary="Verify user email")
+@router.get("/verify-email/{token}", status_code=status.HTTP_200_OK, summary="Verify user email")  # type: ignore[misc]
 async def verify_email(token: str, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     """
     Verify a user's email address using the token sent upon registration.
@@ -340,7 +340,7 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)) -> dict[s
     return {"msg": "Email verified successfully. You can now log in."}
 
 
-@router.post(
+@router.post(  # type: ignore[misc]
     "/token",
     response_model=Token,
     summary="Login for access token",
@@ -410,7 +410,7 @@ async def login_for_access_token(
 
 
 # Alias for /token endpoint to support /login
-@router.post(
+@router.post(  # type: ignore[misc]
     "/login",
     response_model=Token,
     summary="Login for access token (alias)",
@@ -422,7 +422,7 @@ async def login_for_access_token(
         429: {"description": "Too many requests"},
     },
 )
-@limiter.limit(settings.LOGIN_RATE_LIMIT)
+@limiter.limit(settings.LOGIN_RATE_LIMIT)  # type: ignore[misc]
 async def login_alias(
     response: Response,
     request: Request,
@@ -433,7 +433,7 @@ async def login_alias(
     return await login_for_access_token(response, request, form_data, db)
 
 
-@router.post(
+@router.post(  # type: ignore[misc]
     "/refresh",
     response_model=Token,
     summary="Refresh access token",
@@ -481,7 +481,7 @@ async def refresh_token(
     return Token(access_token=new_access_token, refresh_token=new_refresh_token, token_type="bearer")
 
 
-@router.post("/password-recovery/{email}", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/password-recovery/{email}", status_code=status.HTTP_202_ACCEPTED)  # type: ignore[misc]
 @rate_limit(settings.PASSWORD_RECOVERY_RATE_LIMIT)
 async def recover_password(email: str, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     """
@@ -499,7 +499,7 @@ async def recover_password(email: str, request: Request, db: AsyncSession = Depe
     return {"msg": "If an account with this email exists, a password recovery link has been sent."}
 
 
-@router.post("/reset-password/", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/reset-password/", status_code=status.HTTP_204_NO_CONTENT)  # type: ignore[misc]
 async def reset_password(
     body: PasswordReset,
     db: AsyncSession = Depends(get_db),
@@ -526,7 +526,7 @@ async def reset_password(
     return
 
 
-@router.get(
+@router.get(  # type: ignore[misc]
     "/me",
     response_model=UserOut,
     summary="Get current user details",
@@ -541,7 +541,7 @@ async def read_users_me(current_user: User = Depends(get_current_active_user)) -
     return current_user
 
 
-@router.put(
+@router.put(  # type: ignore[misc]
     "/me",
     response_model=UserOut,
     summary="Update current user profile",
@@ -557,7 +557,7 @@ async def update_user_me(
     return updated_user
 
 
-@router.put(
+@router.put(  # type: ignore[misc]
     "/me/preferences",
     response_model=UserOut,
     summary="Update user preferences",
@@ -573,7 +573,7 @@ async def update_user_preferences(
     return updated_user
 
 
-@router.get(
+@router.get(  # type: ignore[misc]
     "/me/login-history",
     response_model=list[LoginHistoryOut],
     summary="Get recent login history",
@@ -592,7 +592,7 @@ async def get_login_history(
     return [LoginHistoryOut.model_validate(h) for h in history]
 
 
-@router.post(
+@router.post(  # type: ignore[misc]
     "/logout",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Logout user",

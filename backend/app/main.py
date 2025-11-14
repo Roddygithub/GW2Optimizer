@@ -41,7 +41,6 @@ from app.api import (
     ai_optimizer,
     auth,
     builds,
-    builds_history,
     chat,
     export,
     health,
@@ -52,6 +51,7 @@ from app.api import (
     websocket_mcm,
     sentry_debug,
 )
+import app.api.builds_history as builds_history
 from app.api.auth import limiter as auth_limiter
 
 
@@ -128,7 +128,7 @@ def create_application() -> FastAPI:
     # Add rate limiting (disabled in testing mode)
     if not settings.TESTING:
         app.state.limiter = auth_limiter
-        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
+        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     else:
         # Disable rate limiting in tests
         logger.info("⚠️  Rate limiting DISABLED (TESTING=True)")
@@ -239,7 +239,7 @@ def include_routers(app: FastAPI) -> None:
 def add_health_check(app: FastAPI) -> None:
     """Add health check endpoint."""
 
-    @app.get("/health", tags=["Health"], include_in_schema=False)
+    @app.get("/health", tags=["Health"], include_in_schema=False)  # type: ignore[misc]
     async def health_check() -> dict[str, str]:
         """Health check endpoint."""
         return {"status": "ok", "environment": settings.ENVIRONMENT}

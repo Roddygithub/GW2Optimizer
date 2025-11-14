@@ -63,7 +63,7 @@ class AccountLockedException(BusinessException):
 def add_exception_handlers(app: FastAPI) -> None:
     """Adds custom exception handlers to the FastAPI app."""
 
-    @app.exception_handler(StarletteHTTPException)
+    @app.exception_handler(StarletteHTTPException)  # type: ignore[misc]
     async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         correlation_id = getattr(request.state, "correlation_id", "N/A")
         logger.warning(
@@ -75,7 +75,7 @@ def add_exception_handlers(app: FastAPI) -> None:
             headers=exc.headers or {},
         )
 
-    @app.exception_handler(BusinessException)
+    @app.exception_handler(BusinessException)  # type: ignore[misc]
     async def business_exception_handler(request: Request, exc: BusinessException) -> JSONResponse:
         correlation_id = getattr(request.state, "correlation_id", "N/A")
         logger.warning(f"Business Logic Error: {exc.error_code} - {exc.detail} [ID: {correlation_id}]")
@@ -84,7 +84,7 @@ def add_exception_handlers(app: FastAPI) -> None:
             content={"error_code": exc.error_code, "detail": exc.detail, "correlation_id": correlation_id},
         )
 
-    @app.exception_handler(RequestValidationError)
+    @app.exception_handler(RequestValidationError)  # type: ignore[misc]
     async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
         correlation_id = getattr(request.state, "correlation_id", "N/A")
 
@@ -104,7 +104,7 @@ def add_exception_handlers(app: FastAPI) -> None:
             },
         )
 
-    @app.exception_handler(Exception)
+    @app.exception_handler(Exception)  # type: ignore[misc]
     async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         if isinstance(exc, ConnectionError):
             raise exc
