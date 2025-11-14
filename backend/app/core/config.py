@@ -8,6 +8,7 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+ 
 class Settings(BaseSettings):  # type: ignore[misc]
     """Application settings."""
 
