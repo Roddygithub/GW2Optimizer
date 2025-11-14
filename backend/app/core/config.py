@@ -2,7 +2,7 @@
 
 import json
 import os
-from typing import Any, List, Optional, Sequence, TYPE_CHECKING, Self
+from typing import Any, List, Optional, TYPE_CHECKING, Self
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
