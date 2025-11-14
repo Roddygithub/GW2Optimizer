@@ -430,7 +430,7 @@ async def login_alias(
     db: AsyncSession = Depends(get_db),
 ) -> Token:
     """Login endpoint alias - calls the same logic as /token."""
-    return await login_for_access_token(response, request, form_data, db)
+    return cast(Token, await login_for_access_token(response, request, form_data, db))
 
 
 @router.post(  # type: ignore[misc]

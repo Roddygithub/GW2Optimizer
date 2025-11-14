@@ -100,7 +100,7 @@ def get_password_hash(password: str) -> str:
     Hash a password.
     """
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+    return str(bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8"))
 
 
 async def _resolve_user_from_token(

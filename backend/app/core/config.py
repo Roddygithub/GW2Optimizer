@@ -167,7 +167,7 @@ class Settings(BaseSettings):  # type: ignore[misc]
             self.COOKIE_SAMESITE = "strict"
         return self
 
-    @model_validator(mode="after")
+    @model_validator(mode="after")  # type: ignore[misc]
     def _auto_disable_redis(self) -> Self:
         if self.REDIS_ENABLED and self.REDIS_URL:
             try:
