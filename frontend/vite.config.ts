@@ -44,16 +44,38 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 1000, // Augmente la limite d'avertissement à 1000KB
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Regroupement des dépendances principales
-          react: ['react', 'react-dom', 'react-router-dom'],
-          vendor: ['axios', 'class-variance-authority', 'clsx', 'tailwind-merge'],
-          // Regroupement des dépendances UI
-          ui: ['framer-motion', 'lucide-react'],
-          // Séparation des dépendances de développement
-          ...(mode === 'development' ? {
-            dev: ['@testing-library/react', '@testing-library/user-event', '@testing-library/jest-dom'],
-          } : {}),
+        manualChunks: (id) => {
+          // React core (stable, rarely changes)
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'react';
+          }
+          // Router (separate for code-splitting)
+          if (id.includes('node_modules/react-router-dom')) {
+            return 'router';
+          }
+          // UI libraries (heavy, separate chunk)
+          if (id.includes('node_modules/framer-motion') || id.includes('node_modules/lucide-react')) {
+            return 'ui';
+          }
+          // Zustand store (small, can be in vendor)
+          if (id.includes('node_modules/zustand')) {
+            return 'vendor';
+          }
+          // Axios and utilities
+          if (id.includes('node_modules/axios') || 
+              id.includes('node_modules/class-variance-authority') ||
+              id.includes('node_modules/clsx') ||
+              id.includes('node_modules/tailwind-merge')) {
+            return 'vendor';
+          }
+          // Sentry (monitoring, separate)
+          if (id.includes('node_modules/@sentry')) {
+            return 'monitoring';
+          }
+          // All other node_modules
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
         },
       },
     },
