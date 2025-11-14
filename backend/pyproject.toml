@@ -154,3 +154,8 @@ ignore = []
 quote-style = "double"
 indent-style = "space"
 line-ending = "lf"
+
+# Dependency graph refresh - ven. 14 nov. 2025 11:44:41 CET
+# Phase 1 audit confirmed: ecdsa absent, python-multipart updated to 0.0.19
+# GitHub alerts are stale - forcing refresh
+
