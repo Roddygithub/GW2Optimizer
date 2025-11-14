@@ -6,7 +6,7 @@ import asyncio
 from typing import Optional
 
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 
 from app.api import ai_feedback as api_module
 from app.main import app
@@ -46,7 +46,8 @@ async def test_ai_feedback_endpoint_bg_trigger(monkeypatch, tmp_path):
     app.dependency_overrides[get_current_user_optional] = lambda: None
 
     try:
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(
                 "/api/v1/ai/feedback",
                 json={"target_id": "comp-42", "rating": 8, "comment": "Great"},
