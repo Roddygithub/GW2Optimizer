@@ -179,6 +179,7 @@ class Settings(BaseSettings):  # type: ignore[misc]
                 self.REDIS_ENABLED = False
         return self
 
+
 if TYPE_CHECKING:
     settings: Settings = Settings(SECRET_KEY="x" * 32)
 else:
