@@ -9,6 +9,10 @@ on:
   schedule:
     - cron: '0 6 * * 1'  # Weekly on Monday 6am
 
+permissions:
+  security-events: write
+  contents: read
+
 jobs:
   trivy-docker:
     name: Trivy - Docker Image Scan
@@ -29,7 +33,7 @@ jobs:
           exit-code: '1'
       
       - name: Upload Trivy Results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: 'trivy-backend.sarif'
@@ -66,5 +70,5 @@ jobs:
         run: pip install pip-audit
       
       - name: Run pip-audit
-        run: pip-audit -r requirements.txt --severity high,critical
-        working-directory: backend
+        run: |
+          cd backend && pip-audit -r requirements.txt --severity high,critical
