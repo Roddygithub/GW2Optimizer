@@ -11,7 +11,7 @@ from typing import AsyncGenerator, Dict
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from redis.asyncio import Redis, from_url as redis_from_url
 from sqlalchemy import event, text
 from sqlalchemy.engine import Engine
@@ -39,6 +39,7 @@ from app.core import redis as redis_module
 from app.db.base_class import Base
 from app.db.models import UserDB as User, LoginHistory  # Import your models here
 from app.models.build import BuildDB  # noqa: F401 - ensure build tables are registered
+from app.models.build_suggestion import BuildSuggestionDB  # noqa: F401 - ensure suggestion table registered
 from app.models.team import TeamCompositionDB, TeamSlotDB  # noqa: F401 - ensure team tables are registered
 from app.models.user import UserOut  # Import UserOut from models
 from app.core.security import create_access_token, get_password_hash
@@ -171,8 +172,9 @@ async def client(db_session: AsyncSession, redis_client: Redis) -> AsyncGenerato
     # include_routers(app)  # Routers already included by app startup; avoid duplicates in tests
 
     # Create a test client with the app and base URL
+    transport = ASGITransport(app=app)
     async with AsyncClient(
-        app=app,
+        transport=transport,
         base_url="http://test",
     ) as client:
         # Override dependencies
@@ -231,7 +233,8 @@ async def integration_client(
 
         app.dependency_overrides[get_db] = get_test_db
 
-        async with AsyncClient(app=app, base_url="http://test") as c:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
             yield c
 
         app.dependency_overrides.pop(get_db, None)
@@ -241,6 +244,7 @@ async def integration_client(
             # Delete in correct order (respect foreign keys)
             await conn.execute(text("DELETE FROM team_slots"))
             await conn.execute(text("DELETE FROM team_compositions"))
+            await conn.execute(text("DELETE FROM build_suggestions"))
             await conn.execute(text("DELETE FROM builds"))
             await conn.execute(text("DELETE FROM users"))
     else:
@@ -278,7 +282,8 @@ async def integration_client(
 
         app.dependency_overrides[get_db] = get_test_db
 
-        async with AsyncClient(app=app, base_url="http://test") as c:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as c:
             yield c
 
         app.dependency_overrides.pop(get_db, None)
@@ -287,6 +292,7 @@ async def integration_client(
         async with test_engine.begin() as conn:
             await conn.execute(text("DELETE FROM team_slots"))
             await conn.execute(text("DELETE FROM team_compositions"))
+            await conn.execute(text("DELETE FROM build_suggestions"))
             await conn.execute(text("DELETE FROM builds"))
             await conn.execute(text("DELETE FROM users"))
 
