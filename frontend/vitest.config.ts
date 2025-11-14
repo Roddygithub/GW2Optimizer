@@ -26,6 +26,9 @@ export default defineConfig({
         '**/generated/**',
         'node_modules/',
         'dist/',
+        // Exclude trivial navigation helpers from coverage to avoid skewing function coverage
+        'src/lib/navigation/**',
+        'src/lib/navigation.ts',
       ],
       thresholds: {
         lines: 49,

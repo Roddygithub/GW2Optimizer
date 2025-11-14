@@ -10,18 +10,18 @@ from datetime import timedelta
 from functools import wraps
 import os
 import time
-from typing import Optional
+from typing import Optional, Callable, Any, Awaitable, TypeVar, TypedDict, Literal, cast
+from typing_extensions import ParamSpec
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from redis.asyncio import Redis
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from app.core.config import settings
 from app.core.logging import logger
-from jose import JWTError
+from jwt import InvalidTokenError as JWTError
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -66,11 +66,14 @@ def rate_limit_key(request: Request) -> str:
         if current_test:
             client_host = request.client.host if request.client else "unknown"
             return f"{current_test}:{client_host}"
-    return get_remote_address(request)
+    return cast(str, get_remote_address(request))
 
 
 limiter = Limiter(key_func=rate_limit_key, default_limits=[settings.DEFAULT_RATE_LIMIT])
-_test_rate_state = defaultdict(deque)
+_test_rate_state: defaultdict[tuple[str, str], deque[float]] = defaultdict(deque)
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 def _parse_rate_limit(limit: str) -> tuple[int, float]:
@@ -95,18 +98,21 @@ def _parse_rate_limit(limit: str) -> tuple[int, float]:
     return count, window
 
 
-def rate_limit(limit: Optional[str]):
+def rate_limit(limit: Optional[str]) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
     if limit is None:
         return lambda func: func
 
     if _is_testing():
         count, window = _parse_rate_limit(limit)
 
-        def decorator(func):
+        def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
             @wraps(func)
-            async def wrapper(*args, **kwargs):
-                request: Optional[Request] = kwargs.get("request")
-                if request is None:
+            async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R | Any:
+                request: Optional[Request] = None
+                maybe_req: Any = kwargs.get("request")
+                if isinstance(maybe_req, Request):
+                    request = maybe_req
+                else:
                     for arg in args:
                         if isinstance(arg, Request):
                             request = arg
@@ -135,16 +141,24 @@ def rate_limit(limit: Optional[str]):
 
         return decorator
 
-    return limiter.limit(limit)
+    return cast(Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]], limiter.limit(limit))
 
 
-def _cookie_options(max_age: int | None = None) -> dict:
+class CookieOptions(TypedDict, total=False):
+    httponly: bool
+    secure: bool
+    samesite: Literal["lax", "strict", "none"]
+    domain: str
+    max_age: int
+
+
+def _cookie_options(max_age: int | None = None) -> CookieOptions:
     """Build standard cookie options based on settings."""
 
-    options: dict[str, object] = {
+    options: CookieOptions = {
         "httponly": True,
         "secure": settings.COOKIE_SECURE,
-        "samesite": settings.COOKIE_SAMESITE.lower(),
+        "samesite": cast(Literal["lax", "strict", "none"], settings.COOKIE_SAMESITE.lower()),
     }
 
     if settings.COOKIE_DOMAIN:
@@ -160,11 +174,20 @@ def _cookie_options(max_age: int | None = None) -> dict:
 
 def _set_auth_cookie(response: Response, value: str, max_age: int | None) -> None:
     """Apply standard auth cookie settings."""
+    samesite: Literal["lax", "strict", "none"] = cast(
+        Literal["lax", "strict", "none"], settings.COOKIE_SAMESITE.lower()
+    )
+    domain: Optional[str] = settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
+    effective_max_age: Optional[int] = max_age if max_age is not None else settings.COOKIE_MAX_AGE
 
     response.set_cookie(
         key=settings.ACCESS_TOKEN_COOKIE_NAME,
         value=value,
-        **_cookie_options(max_age=max_age),
+        httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite=samesite,
+        domain=domain,
+        max_age=effective_max_age,
     )
 
 
@@ -212,7 +235,7 @@ def _clear_auth_cookie(response: Response) -> None:
 # The following endpoints handle user registration, email verification, login, and token refresh.
 
 
-@router.post(
+@router.post(  # type: ignore[misc]
     "/register",
     response_model=UserOut,
     status_code=status.HTTP_201_CREATED,
@@ -283,14 +306,14 @@ async def register(
 
     # In a real app, this would send an email with a verification link
     verification_token = create_access_token(subject=user.email, expires_delta=timedelta(days=1))
-    await send_verification_email(user.email, user.username, verification_token)
+    await send_verification_email(str(user.email), str(user.username), verification_token)
 
     logger.info(f"New user registered: {user.email} (ID: {user.id})")
     return user
 
 
-@router.get("/verify-email/{token}", status_code=status.HTTP_200_OK, summary="Verify user email")
-async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
+@router.get("/verify-email/{token}", status_code=status.HTTP_200_OK, summary="Verify user email")  # type: ignore[misc]
+async def verify_email(token: str, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     """
     Verify a user's email address using the token sent upon registration.
     """
@@ -317,7 +340,7 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
     return {"msg": "Email verified successfully. You can now log in."}
 
 
-@router.post(
+@router.post(  # type: ignore[misc]
     "/token",
     response_model=Token,
     summary="Login for access token",
@@ -347,7 +370,7 @@ async def login_for_access_token(
             "Failed login attempt",
             extra={
                 "email": form_data.username,
-                "ip": request.client.host,
+                "ip": request.client.host if request.client else "unknown",
                 "user_agent": request.headers.get("user-agent"),
             },
         )
@@ -358,12 +381,12 @@ async def login_for_access_token(
             "Login attempt for inactive/locked user",
             extra={
                 "email": user.email,
-                "ip": request.client.host,
+                "ip": request.client.host if request.client else "unknown",
             },
         )
         raise AccountLockedException()
 
-    await user_service.reset_failed_login_attempts(user.email)
+    await user_service.reset_failed_login_attempts(str(user.email))
     await user_service.log_login_history(user, request)
 
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -380,14 +403,14 @@ async def login_for_access_token(
         extra={
             "email": user.email,
             "user_id": str(user.id),
-            "ip": request.client.host,
+            "ip": request.client.host if request.client else "unknown",
         },
     )
     return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
 
 
 # Alias for /token endpoint to support /login
-@router.post(
+@router.post(  # type: ignore[misc]
     "/login",
     response_model=Token,
     summary="Login for access token (alias)",
@@ -399,7 +422,7 @@ async def login_for_access_token(
         429: {"description": "Too many requests"},
     },
 )
-@limiter.limit(settings.LOGIN_RATE_LIMIT)
+@limiter.limit(settings.LOGIN_RATE_LIMIT)  # type: ignore[misc]
 async def login_alias(
     response: Response,
     request: Request,
@@ -407,10 +430,10 @@ async def login_alias(
     db: AsyncSession = Depends(get_db),
 ) -> Token:
     """Login endpoint alias - calls the same logic as /token."""
-    return await login_for_access_token(response, request, form_data, db)
+    return cast(Token, await login_for_access_token(response, request, form_data, db))
 
 
-@router.post(
+@router.post(  # type: ignore[misc]
     "/refresh",
     response_model=Token,
     summary="Refresh access token",
@@ -458,9 +481,9 @@ async def refresh_token(
     return Token(access_token=new_access_token, refresh_token=new_refresh_token, token_type="bearer")
 
 
-@router.post("/password-recovery/{email}", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/password-recovery/{email}", status_code=status.HTTP_202_ACCEPTED)  # type: ignore[misc]
 @rate_limit(settings.PASSWORD_RECOVERY_RATE_LIMIT)
-async def recover_password(email: str, request: Request, db: AsyncSession = Depends(get_db)):
+async def recover_password(email: str, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     """
     Send a password recovery email with a reset token.
     """
@@ -468,7 +491,7 @@ async def recover_password(email: str, request: Request, db: AsyncSession = Depe
     user = await user_service.get_by_email(email)
     if user:
         password_reset_token = create_access_token(subject=user.email, expires_delta=timedelta(hours=1))
-        await send_password_reset_email(email_to=user.email, token=password_reset_token)
+        await send_password_reset_email(email_to=str(user.email), token=password_reset_token)
         logger.info(f"Password recovery email sent to {email}")
     else:
         logger.warning(f"Password recovery attempt for non-existent email: {email}")
@@ -476,11 +499,11 @@ async def recover_password(email: str, request: Request, db: AsyncSession = Depe
     return {"msg": "If an account with this email exists, a password recovery link has been sent."}
 
 
-@router.post("/reset-password/", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/reset-password/", status_code=status.HTTP_204_NO_CONTENT)  # type: ignore[misc]
 async def reset_password(
     body: PasswordReset,
     db: AsyncSession = Depends(get_db),
-):
+) -> None:
     """
     Reset user password using a token from the recovery email.
     """
@@ -503,7 +526,7 @@ async def reset_password(
     return
 
 
-@router.get(
+@router.get(  # type: ignore[misc]
     "/me",
     response_model=UserOut,
     summary="Get current user details",
@@ -518,7 +541,7 @@ async def read_users_me(current_user: User = Depends(get_current_active_user)) -
     return current_user
 
 
-@router.put(
+@router.put(  # type: ignore[misc]
     "/me",
     response_model=UserOut,
     summary="Update current user profile",
@@ -534,7 +557,7 @@ async def update_user_me(
     return updated_user
 
 
-@router.put(
+@router.put(  # type: ignore[misc]
     "/me/preferences",
     response_model=UserOut,
     summary="Update user preferences",
@@ -550,7 +573,7 @@ async def update_user_preferences(
     return updated_user
 
 
-@router.get(
+@router.get(  # type: ignore[misc]
     "/me/login-history",
     response_model=list[LoginHistoryOut],
     summary="Get recent login history",
@@ -566,10 +589,10 @@ async def get_login_history(
     if not history:
         await user_service.log_login_history(current_user, request)
         history = await user_service.get_login_history(current_user)
-    return history
+    return [LoginHistoryOut.model_validate(h) for h in history]
 
 
-@router.post(
+@router.post(  # type: ignore[misc]
     "/logout",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Logout user",
@@ -581,7 +604,7 @@ async def get_login_history(
 async def logout(
     response: Response,
     token: str = Depends(oauth2_scheme),
-    redis: Redis = Depends(get_redis_client),
+    redis: Optional[Any] = Depends(get_redis_client),
     current_user: User = Depends(get_current_active_user),
 ) -> None:
     """Logout the current user by revoking the token and clearing the cookie."""

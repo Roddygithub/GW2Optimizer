@@ -311,7 +311,7 @@ class GW2APIClient:
                 batch_data = await self._request(endpoint, params=params)
                 results.extend(batch_data)
             except Exception as e:
-                logger.error(f"Failed to fetch batch {i}-{i+page_size}: {e}")
+                logger.error(f"Failed to fetch batch {i}-{i + page_size}: {e}")
 
         return results
 

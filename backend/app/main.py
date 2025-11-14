@@ -51,6 +51,7 @@ from app.api import (
     websocket_mcm,
     sentry_debug,
 )
+import app.api.builds_history as builds_history
 from app.api.auth import limiter as auth_limiter
 
 
@@ -183,8 +184,9 @@ def configure_cors(app: FastAPI) -> None:
         CORSMiddleware,
         allow_origins=settings.ALLOWED_ORIGINS,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "Accept", "X-Requested-With"],
+        expose_headers=["Content-Disposition"],
     )
     logger.info(
         "🌐 CORS configured for origins: %s",
@@ -214,6 +216,7 @@ def include_routers(app: FastAPI) -> None:
     api_router.include_router(ai_feedback.router, prefix="/ai", tags=["AI Feedback"])
     api_router.include_router(ai_optimizer.router, prefix="/ai-optimizer", tags=["AI Optimizer"])
     api_router.include_router(builds.router, tags=["Builds"])
+    api_router.include_router(builds_history.router, prefix="/builds", tags=["Build Suggestions"])
     api_router.include_router(teams.router, tags=["Teams"])
     api_router.include_router(chat.router, prefix="/chat", tags=["Chat"])
     api_router.include_router(export.router, prefix="/export", tags=["Export"])
@@ -236,7 +239,7 @@ def include_routers(app: FastAPI) -> None:
 def add_health_check(app: FastAPI) -> None:
     """Add health check endpoint."""
 
-    @app.get("/health", tags=["Health"], include_in_schema=False)
+    @app.get("/health", tags=["Health"], include_in_schema=False)  # type: ignore[misc]
     async def health_check() -> dict[str, str]:
         """Health check endpoint."""
         return {"status": "ok", "environment": settings.ENVIRONMENT}

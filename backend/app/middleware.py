@@ -7,11 +7,15 @@ and adding correlation IDs and process time information to requests.
 import os
 import time
 import uuid
+from typing import TYPE_CHECKING
 
-from fastapi import Request
+from fastapi import Request, FastAPI
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 from starlette.responses import Response
+
+if TYPE_CHECKING:
+    from app.core.config import Settings
 
 
 class ProcessTimeMiddleware(BaseHTTPMiddleware):
@@ -92,7 +96,7 @@ class StripServerHeaderMiddleware(BaseHTTPMiddleware):
         return response
 
 
-def add_security_middleware(app, settings):
+def add_security_middleware(app: FastAPI, settings: "Settings") -> None:
     """
     Adds all security-related middleware to the FastAPI app.
 

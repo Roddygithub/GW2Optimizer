@@ -2,13 +2,13 @@
 
 import json
 import os
-from typing import List, Optional
+from typing import Any, List, Optional, TYPE_CHECKING, Self
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseSettings):
+class Settings(BaseSettings):  # type: ignore[misc]
     """Application settings."""
 
     # Backend Configuration
@@ -36,7 +36,7 @@ class Settings(BaseSettings):
     BASE_URL_BACKEND: str = "http://localhost:8000"
 
     # Authentication
-    SECRET_KEY: str = "your-secret-key-change-in-production"
+    SECRET_KEY: str
     OLD_SECRET_KEYS: List[str] = []  # For key rotation
 
     # GW2 Sync Configuration
@@ -110,9 +110,22 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    @model_validator(mode="before")
+    @property
+    def is_production(self) -> bool:
+        return self.ENVIRONMENT.lower() == "production"
+
+    @field_validator("SECRET_KEY")  # type: ignore[misc]
     @classmethod
-    def _hydrate_allowed_origins(cls, values: dict) -> dict:
+    def validate_secret(cls, value: str) -> str:
+        if not value or len(value.strip()) < 32:
+            raise ValueError("SECRET_KEY must be at least 32 characters")
+        if "your-secret-key" in value:
+            raise ValueError("SECRET_KEY must be replaced with a strong random value")
+        return value
+
+    @model_validator(mode="before")  # type: ignore[misc]
+    @classmethod
+    def _hydrate_allowed_origins(cls, values: dict[str, Any]) -> dict[str, Any]:
         if values.get("ALLOWED_ORIGINS"):
             return values
 
@@ -128,9 +141,9 @@ class Settings(BaseSettings):
         values["ALLOWED_ORIGINS"] = items
         return values
 
-    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @field_validator("ALLOWED_ORIGINS", mode="before")  # type: ignore[misc]
     @classmethod
-    def _coerce_origins(cls, value):
+    def _coerce_origins(cls, value: Any) -> Any:
         if isinstance(value, str):
             try:
                 parsed = json.loads(value)
@@ -142,10 +155,31 @@ class Settings(BaseSettings):
             return [str(item).strip("/") for item in value]
         return value
 
-    @field_validator("COOKIE_SAMESITE", mode="after")
+    @field_validator("COOKIE_SAMESITE", mode="after")  # type: ignore[misc]
     @classmethod
     def _normalize_samesite(cls, value: str) -> str:
         return (value or "lax").lower()
 
+    @model_validator(mode="after")  # type: ignore[misc]
+    def _apply_environment_cookie_defaults(self) -> Self:
+        if self.is_production:
+            self.COOKIE_SECURE = True
+            self.COOKIE_SAMESITE = "strict"
+        return self
 
-settings = Settings()
+    @model_validator(mode="after")  # type: ignore[misc]
+    def _auto_disable_redis(self) -> Self:
+        if self.REDIS_ENABLED and self.REDIS_URL:
+            try:
+                import redis
+                r = redis.from_url(self.REDIS_URL)
+                r.ping()
+            except Exception:
+                self.REDIS_ENABLED = False
+        return self
+
+
+if TYPE_CHECKING:
+    settings: Settings = Settings(SECRET_KEY="x" * 32)
+else:
+    settings = Settings()

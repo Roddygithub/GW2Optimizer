@@ -197,7 +197,7 @@ class GW2SkillParser:
             if not trait_lines:
                 logger.warning("No trait lines found in page, creating placeholders")
                 for i in range(3):
-                    trait_lines.append(TraitLine(id=i, name=f"Trait Line {i+1}", traits=[]))
+                    trait_lines.append(TraitLine(id=i, name=f"Trait Line {i + 1}", traits=[]))
 
         except Exception as e:
             logger.error(f"Error parsing trait lines: {e}")
@@ -220,7 +220,7 @@ class GW2SkillParser:
                 trait_lines.append(
                     TraitLine(
                         id=len(trait_lines),
-                        name=f"Trait Line {len(trait_lines)+1}",
+                        name=f"Trait Line {len(trait_lines) + 1}",
                         traits=[int(tid) for tid in trait_ids[:3]],  # Max 3 traits per line
                     )
                 )
@@ -267,7 +267,7 @@ class GW2SkillParser:
             for idx, skill_id in enumerate(skill_ids[:5]):
                 skills.append(
                     Skill(
-                        slot=skill_slots[idx] if idx < len(skill_slots) else f"Skill{idx+1}",
+                        slot=skill_slots[idx] if idx < len(skill_slots) else f"Skill {idx + 1}",
                         id=int(skill_id),
                         name=f"Skill {skill_id}",
                     )

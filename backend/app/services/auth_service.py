@@ -1,9 +1,9 @@
 """Authentication service."""
 
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, Any, cast
 
-from jose import jwt
+import jwt
 from passlib.context import CryptContext
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,7 +20,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 class AuthService:
     """Service for authentication and user management."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize auth service."""
         self.secret_key = settings.SECRET_KEY
         self.algorithm = settings.ALGORITHM
@@ -29,13 +29,13 @@ class AuthService:
 
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """Verify a password against a hash."""
-        return pwd_context.verify(plain_password, hashed_password)
+        return bool(pwd_context.verify(plain_password, hashed_password))
 
     def get_password_hash(self, password: str) -> str:
         """Hash a password."""
-        return pwd_context.hash(password)
+        return str(pwd_context.hash(password))
 
-    def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    def create_access_token(self, data: dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
         """
         Create JWT access token.
 
@@ -55,10 +55,10 @@ class AuthService:
 
         to_encode.update({"exp": expire, "type": "access", "iat": datetime.utcnow(), "sub": str(data.get("sub", ""))})
 
-        encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
+        encoded_jwt: str = cast(str, jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm))
         return encoded_jwt
 
-    def create_refresh_token(self, data: dict) -> str:
+    def create_refresh_token(self, data: dict[str, Any]) -> str:
         """
         Create JWT refresh token.
 
@@ -71,7 +71,7 @@ class AuthService:
         to_encode = data.copy()
         expire = datetime.utcnow() + timedelta(days=self.refresh_token_expire)
         to_encode.update({"exp": expire, "type": "refresh", "iat": datetime.utcnow(), "sub": str(data.get("sub", ""))})
-        encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
+        encoded_jwt: str = cast(str, jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm))
         return encoded_jwt
 
     def decode_token(self, token: str) -> Optional[TokenData]:
@@ -100,14 +100,13 @@ class AuthService:
             )
 
             user_id = payload.get("sub")
-            email = payload.get("email")
 
             if not user_id:
                 logger.warning("Token is missing 'sub' claim")
                 return None
 
             logger.debug(f"Successfully decoded token for user_id: {user_id}")
-            return TokenData(user_id=str(user_id), email=email)
+            return TokenData(sub=str(user_id))
 
         except jwt.ExpiredSignatureError:
             logger.warning("Token has expired")
@@ -133,7 +132,8 @@ class AuthService:
             User if found, None otherwise
         """
         result = await db.execute(select(UserDB).where(UserDB.email == email))
-        return result.scalar_one_or_none()
+        user = result.scalar_one_or_none()
+        return cast(Optional[UserDB], user)
 
     async def get_user_by_id(self, db: AsyncSession, user_id: str) -> Optional[UserDB]:
         """
@@ -156,7 +156,7 @@ class AuthService:
             else:
                 logger.debug(f"Found user: {user.email} (ID: {user.id})")
 
-            return user
+            return cast(Optional[UserDB], user)
 
         except Exception as e:
             logger.error(f"Error in get_user_by_id for user_id {user_id}: {str(e)}", exc_info=True)
@@ -174,7 +174,8 @@ class AuthService:
             User if found, None otherwise
         """
         result = await db.execute(select(UserDB).where(UserDB.username == username))
-        return result.scalar_one_or_none()
+        user = result.scalar_one_or_none()
+        return cast(Optional[UserDB], user)
 
     async def create_user(self, db: AsyncSession, user_create: UserCreate) -> UserDB:
         """
@@ -310,7 +311,7 @@ class AuthService:
                 logger.warning(f"Authentication failed: No password set for user {user.email}")
                 return None
 
-            if not self.verify_password(user_login.password, user.hashed_password):
+            if not self.verify_password(user_login.password, str(user.hashed_password)):
                 logger.warning(f"Authentication failed: Invalid password for user {user.email}")
                 return None
 

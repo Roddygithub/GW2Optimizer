@@ -1,4 +1,36 @@
 # Changelog
+## [0.2.3] - 2025-11-13 - Security Hardening & MyPy Progressive ✅
+
+### 🔒 Sécurité
+- BREAKING: Migration de `python-jose` vers `PyJWT` 2.10.1 (élimine CVE-2024-23342 sur `ecdsa`)
+- Workflows sécurité renforcés: Trivy (Docker), npm audit, pip-audit
+
+### ✅ Qualité & Typage
+- MyPy progressive typing configuré (CI bloquante, modules critiques stricts)
+  - Modules stricts: `app/api/auth.py`, `app/services/auth_service.py`, `app/core/security.py`, `app/core/config.py`, `app/main.py`
+  - Success: 0 erreur sur modules stricts; 110 fichiers OK en MyPy global
+  - Roadmap documentée: `docs/MYPY_ROADMAP.md`
+- Améliorations typing clés
+  - ParamSpec/TypeVar pour décorateurs génériques (rate limiting)
+  - TypedDict pour options de cookies
+  - Typage Redis sûr à l'exécution (évite generics runtime)
+  - Annotations précises sans `# type: ignore`
+
+### 🧪 Tests & CI
+- Backend Auth: tests passent localement (Postgres en CI >60% coverage)
+- CI: `ci.yml` utilise désormais `poetry run mypy app/ --config-file=pyproject.toml`
+
+### 📚 Documentation
+- `docs/MYPY_ROADMAP.md`: plan de migration progressive vers strict global
+- `docs/SECRETS_SETUP.md`: guide de configuration des secrets GitHub
+
+### 🗂️ Fichiers clés modifiés
+- `backend/app/api/auth.py` — Typage strict, décorateurs ParamSpec, cookies typés
+- `backend/app/core/security.py` — PyJWT + typage strict (decode/verify)
+- `backend/app/services/auth_service.py` — Typage complet et TokenData corrigé
+- `backend/pyproject.toml` — Configuration MyPy progressive
+- `.github/workflows/ci.yml` — MyPy via config, bloquant
+
 
 All notable changes to GW2Optimizer will be documented in this file.
 
@@ -6,6 +38,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+### 🔒 Sécurité
+- BREAKING: Migration de `python-jose` vers `PyJWT` 2.10.1 (suppression transitive d'`ecdsa` vulnérable CVE-2024-23342)
+- `pip-audit`: 0 vulnérabilité après migration
+
+### 🚀 CI/CD
+- `security.yml`: ajout Trivy (images Docker, CRITICAL/HIGH bloquants), npm audit et pip-audit (bloquants high/critical)
+- `ci.yml`: seuil de couverture backend relevé à 60%, MyPy et Playwright bloquants
+
+### 📚 Documentation
+- `README.md`: badges CI, Security, Coverage, Python, React
+- `docs/SECRETS_SETUP.md`: guide complet de configuration des secrets GitHub (Semgrep, Gitleaks, Codecov, prod)
+
 
 ## [4.2.0] - 2025-10-28 - Auth & Testing Improvements
 

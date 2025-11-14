@@ -81,6 +81,7 @@ frontend/.cache/
 .env.*.local
 .env.production
 .env.development
+**/*.env
 
 # Logs
 logs/
@@ -127,3 +128,7 @@ Thumbs.db
 # Backup files
 *.bak
 *.backup
+
+# Allow frontend TS sources in src/lib (otherwise blocked by generic 'lib/' rule)
+!frontend/src/lib/
+!frontend/src/lib/**

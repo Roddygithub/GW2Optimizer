@@ -64,7 +64,7 @@ class StorageManager:
 
             logger.info(
                 f"Cleanup complete: archived={stats['archived']}, "
-                f"deleted={stats['deleted']}, freed={stats['bytes_freed']/1024/1024:.2f} MB"
+                f"deleted={stats['deleted']}, freed={stats['bytes_freed'] / 1024 / 1024:.2f} MB"
             )
 
             return stats
