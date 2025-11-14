@@ -1,0 +1,13 @@
+=== MyPy Error Summary ===
+     41 
+Total errors: 41
+
+=== Top 3 Error Types with Examples ===
+
+=== Errors by File ===
+     16 app/api/auth.py
+      7 app/services/auth_service.py
+      6 app/core/security.py
+      5 app/core/config.py
+      4 app/exceptions.py
+      3 app/main.py
