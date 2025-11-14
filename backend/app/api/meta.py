@@ -78,7 +78,8 @@ async def analyze_meta(request: MetaAnalysisRequest):
         )
 
         if not result.get("success"):
-            raise HTTPException(status_code=500, detail=f"Meta analysis failed: {result.get('error', 'Unknown error')}")
+            logger.error(f"Meta analysis failed: {result.get('error', 'Unknown error')}")
+            raise HTTPException(status_code=500, detail="Meta analysis failed")
 
         return {"success": True, "report": result.get("report"), "timestamp": result.get("execution_timestamp")}
 

@@ -41,9 +41,12 @@ async def trigger_gw2_sync(
 
     try:
         result = await sync_all(session)
-    except Exception:
-        logger.exception("GW2 synchronisation failed")
+    except (ConnectionError, TimeoutError, ValueError) as e:
+        logger.error(f"GW2 synchronisation failed: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="GW2 synchronisation failed")
+    except Exception as e:
+        logger.exception("Unexpected error during GW2 synchronisation")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
 
     logger.info("GW2 synchronisation triggered via API: %s", result)
     return {"status": "accepted", "result": result}
