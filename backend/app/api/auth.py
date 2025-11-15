@@ -285,12 +285,12 @@ async def register(
     existing_user = await user_service.get_by_email(user_in.email)
     if existing_user:
         logger.warning(f"Registration failed: email '{user_in.email}' already exists.")
-        raise HTTPException(status_code=409, detail="Email or username already registered")
+        raise UserEmailExistsException()
 
     existing_username = await user_service.get_by_username(user_in.username)
     if existing_username:
         logger.warning(f"Registration failed: username '{user_in.username}' already taken.")
-        raise HTTPException(status_code=409, detail="Email or username already registered")
+        raise UserUsernameExistsException()
 
     hashed_password = get_password_hash(user_in.password)
     user = await user_service.create_user(
@@ -375,7 +375,7 @@ async def login_for_access_token(
                 "user_agent": request.headers.get("user-agent"),
             },
         )
-        raise HTTPException(status_code=401, detail="Incorrect or invalid credentials", headers={"X-Error-Code": "INVALID_CREDENTIALS"})
+        raise InvalidCredentialsException()
 
     if not user.is_active:
         logger.warning(
@@ -385,7 +385,7 @@ async def login_for_access_token(
                 "ip": request.client.host if request.client else "unknown",
             },
         )
-        raise HTTPException(status_code=401, detail="Account is inactive or locked", headers={"X-Error-Code": "ACCOUNT_INACTIVE"})
+        raise AccountLockedException()
 
     await user_service.reset_failed_login_attempts(str(user.email))
     await user_service.log_login_history(user, request)

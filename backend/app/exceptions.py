@@ -35,14 +35,14 @@ class UserExistsException(BusinessException):
 class UserEmailExistsException(BusinessException):
     """Exception raised when an email is already registered."""
 
-    def __init__(self, detail: str = "Email already exists"):
+    def __init__(self, detail: str = "Email already registered"):
         super().__init__(detail, status.HTTP_409_CONFLICT, "USER_EMAIL_EXISTS")
 
 
 class UserUsernameExistsException(BusinessException):
     """Exception raised when a username is already taken."""
 
-    def __init__(self, detail: str = "Username already exists"):
+    def __init__(self, detail: str = "Username already registered"):
         super().__init__(detail, status.HTTP_409_CONFLICT, "USER_USERNAME_EXISTS")
 
 
