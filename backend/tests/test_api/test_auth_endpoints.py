@@ -48,7 +48,7 @@ class TestAuthRegistration:
             },
         )
         
-        assert response.status_code == 400
+        assert response.status_code == 409
         assert "already registered" in response.json()["detail"].lower()
 
     @pytest.mark.asyncio
@@ -63,7 +63,7 @@ class TestAuthRegistration:
             },
         )
         
-        assert response.status_code == 400
+        assert response.status_code == 409
         assert "already registered" in response.json()["detail"].lower()
 
     @pytest.mark.asyncio
