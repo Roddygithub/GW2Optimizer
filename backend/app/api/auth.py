@@ -384,14 +384,26 @@ async def login_for_access_token(
         raise InvalidCredentialsException()
 
     if not user.is_active:
-        logger.warning(
-            "Login attempt for inactive/locked user",
-            extra={
-                "email": user.email,
-                "ip": request.client.host if request.client else "unknown",
-            },
-        )
-        raise AccountLockedException(status_code=401)
+        # Check if account is locked (has locked_until) vs just inactive
+        if hasattr(user, 'locked_until') and user.locked_until:
+            logger.warning(
+                "Login attempt for locked account",
+                extra={
+                    "email": user.email,
+                    "locked_until": str(user.locked_until),
+                    "ip": request.client.host if request.client else "unknown",
+                },
+            )
+            raise AccountLockedException(status_code=403)
+        else:
+            logger.warning(
+                "Login attempt for inactive user",
+                extra={
+                    "email": user.email,
+                    "ip": request.client.host if request.client else "unknown",
+                },
+            )
+            raise AccountLockedException(status_code=401)
 
     await user_service.reset_failed_login_attempts(str(user.email))
     await user_service.log_login_history(user, request)
