@@ -283,3 +283,78 @@ class AIService:
             "agents": list(self.agents.keys()),
             "workflows": list(self.workflows.keys()),
         }
+
+    async def compose_team(
+        self, game_mode: str, team_size: int, preferences: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Compose une équipe optimale pour un mode de jeu donné.
+
+        Args:
+            game_mode: Mode de jeu (WvW, PvP, Raids, etc.)
+            team_size: Taille de l'équipe
+            preferences: Préférences optionnelles (focus, style, etc.)
+
+        Returns:
+            Dictionnaire contenant la composition d'équipe et les synergies
+        """
+        try:
+            result = await self._call_ai_model(
+                prompt=f"Compose a team of {team_size} for {game_mode}",
+                game_mode=game_mode,
+                team_size=team_size,
+                preferences=preferences or {},
+            )
+            return result
+        except Exception as e:
+            logger.warning(f"AI team composition failed, using fallback: {e}")
+            # Fallback composition
+            return {
+                "composition": [
+                    {"profession": "Guardian", "role": "Support"},
+                    {"profession": "Warrior", "role": "DPS"},
+                ],
+                "synergies": ["might", "fury"],
+            }
+
+    async def optimize_build(
+        self, profession: str, current_build: Dict[str, Any], objective: str
+    ) -> Dict[str, Any]:
+        """
+        Optimise un build pour un objectif donné.
+
+        Args:
+            profession: Profession du personnage
+            current_build: Build actuel (traits, skills, etc.)
+            objective: Objectif d'optimisation (maximize_boons, maximize_dps, etc.)
+
+        Returns:
+            Dictionnaire contenant les suggestions d'optimisation
+        """
+        result = await self._call_ai_model(
+            prompt=f"Optimize {profession} build for {objective}",
+            profession=profession,
+            current_build=current_build,
+            objective=objective,
+        )
+        return result
+
+    async def analyze_synergy(
+        self, professions: list, game_mode: str
+    ) -> Dict[str, Any]:
+        """
+        Analyse les synergies entre plusieurs professions.
+
+        Args:
+            professions: Liste des professions à analyser
+            game_mode: Mode de jeu
+
+        Returns:
+            Dictionnaire contenant le score de synergie et les recommandations
+        """
+        result = await self._call_ai_model(
+            prompt=f"Analyze synergy for {', '.join(professions)} in {game_mode}",
+            professions=professions,
+            game_mode=game_mode,
+        )
+        return result
