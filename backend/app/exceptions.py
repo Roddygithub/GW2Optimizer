@@ -35,29 +35,29 @@ class UserExistsException(BusinessException):
 class UserEmailExistsException(BusinessException):
     """Exception raised when an email is already registered."""
 
-    def __init__(self, detail: str = "Email already exists"):
+    def __init__(self, detail: str = "Email already registered"):
         super().__init__(detail, status.HTTP_409_CONFLICT, "USER_EMAIL_EXISTS")
 
 
 class UserUsernameExistsException(BusinessException):
     """Exception raised when a username is already taken."""
 
-    def __init__(self, detail: str = "Username already exists"):
+    def __init__(self, detail: str = "Username already registered"):
         super().__init__(detail, status.HTTP_409_CONFLICT, "USER_USERNAME_EXISTS")
 
 
 class InvalidCredentialsException(BusinessException):
     """Exception raised when credentials are invalid."""
 
-    def __init__(self, detail: str = "Invalid credentials"):
+    def __init__(self, detail: str = "Incorrect or invalid credentials"):
         super().__init__(detail, status.HTTP_401_UNAUTHORIZED, "INVALID_CREDENTIALS")
 
 
 class AccountLockedException(BusinessException):
     """Exception raised when account is locked."""
 
-    def __init__(self, detail: str = "Account is locked"):
-        super().__init__(detail, status.HTTP_403_FORBIDDEN, "ACCOUNT_LOCKED")
+    def __init__(self, detail: str = "Account is locked", status_code: int = status.HTTP_403_FORBIDDEN):
+        super().__init__(detail, status_code, "ACCOUNT_LOCKED")
 
 
 def add_exception_handlers(app: FastAPI) -> None:

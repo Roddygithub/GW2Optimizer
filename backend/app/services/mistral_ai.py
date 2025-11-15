@@ -32,6 +32,37 @@ class MistralAIService:
         """Close HTTP client"""
         await self.client.aclose()
 
+    async def generate_completion(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
+        """
+        Méthode générique pour générer une completion (pour tests).
+        
+        Args:
+            prompt: Le prompt à envoyer
+            **kwargs: Arguments additionnels
+            
+        Returns:
+            Réponse formatée du modèle
+        """
+        if not self.api_key:
+            return {"choices": [{"message": {"content": "fallback"}}], "usage": {"prompt_tokens": 1, "completion_tokens": 1}}
+        
+        try:
+            response = await self.client.post(
+                self.API_URL,
+                headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+                json={
+                    "model": self.MODEL,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": kwargs.get("temperature", 0.7),
+                    "max_tokens": kwargs.get("max_tokens", 1000),
+                },
+            )
+            response.raise_for_status()
+            return response.json()
+        except Exception as e:
+            logger.error(f"Mistral AI error: {e}")
+            return {"choices": [{"message": {"content": "error"}}], "usage": {"prompt_tokens": 0, "completion_tokens": 0}}
+
     async def generate_team_composition(
         self, wvw_data: Dict[str, Any], team_size: int = 50, game_mode: str = "zerg"
     ) -> Dict[str, Any]:

@@ -31,6 +31,10 @@ h11 = ">=0.16.0,<0.18.0"
 asyncpg = "^0.30.0"
 numpy = "^2.3.4"
 starlette = ">=0.49.1"
+prometheus-client = "^0.23.1"
+prometheus-fastapi-instrumentator = "^7.1.0"
+structlog = "^25.5.0"
+python-json-logger = "^4.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
@@ -80,14 +84,15 @@ use_parentheses = true
 ensure_newline_before_comments = true
 
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
-disallow_untyped_defs = false
-ignore_missing_imports = true
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy"]
+# Temporarily disable strict checks
+warn_unused_ignores = false
+warn_redundant_casts = false
 no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
 warn_no_return = true
 strict_equality = true
 

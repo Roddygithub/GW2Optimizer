@@ -4,10 +4,14 @@ Circuit Breaker implementation for handling failures in distributed systems.
 
 import time
 import asyncio
+import logging
 from functools import wraps
 from typing import Any, Awaitable, Callable, Optional, TypeVar  # noqa: F401 (used in type annotations)
 
 from app.core.logging import logger
+
+# Standard logger for test compatibility
+log_std = logging.getLogger(__name__)
 
 # Type variable for generic function typing
 T = TypeVar("T")
@@ -136,6 +140,7 @@ class CircuitBreaker:
             except Exception as e:
                 last_exception = e
                 logger.warning(f"Attempt {attempt} failed: {str(e)}")
+                log_std.warning(f"Attempt {attempt} failed: {str(e)}")
 
                 if self._state == "HALF_OPEN":
                     self._state = "OPEN"
@@ -176,6 +181,10 @@ class CircuitBreaker:
         if self._failures >= self.failure_threshold:
             self._state = "OPEN"
             logger.error(
+                f"Circuit breaker opened after {self._failures} failures. "
+                f"Will retry in {self.recovery_timeout} seconds"
+            )
+            log_std.error(
                 f"Circuit breaker opened after {self._failures} failures. "
                 f"Will retry in {self.recovery_timeout} seconds"
             )

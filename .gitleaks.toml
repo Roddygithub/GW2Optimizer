@@ -1,0 +1,31 @@
+title = "GW2Optimizer Gitleaks Config"
+
+[extend]
+# Use built-in gitleaks rules
+useDefault = true
+
+[allowlist]
+# Allow test/dev secrets and benign patterns
+
+# Regex patterns to allow
+regexes = [
+  # CI secret used only for testing (not real secret)
+  "test-secret-key-for-ci-only-not-for-production",
+  # Local dev long secret examples
+  "this-is-a-long-dev-secret-key-32-characters-please",
+  # JWT alg names, placeholders
+  "HS256|RS256|CHANGE_ME_MINIMUM_32_CHARS",
+  # Local URLs and tokens placeholders
+  "http://localhost:[0-9]+/api/v1",
+]
+
+# File path globs to ignore
+paths = [
+  # Coverage and reports
+  "**/coverage/**",
+  "**/playwright-report/**",
+  # Build artifacts
+  "**/dist/**",
+  # Test snapshots or fixtures (if added later)
+  "**/__snapshots__/**",
+]

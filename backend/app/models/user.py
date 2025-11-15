@@ -80,6 +80,7 @@ class UserUpdate(BaseModel):
     full_name: Optional[str] = Field(None, max_length=100, example="John Doe")
     bio: Optional[str] = Field(None, max_length=500, example="Experienced GW2 player.")
     profile_picture_url: Optional[str] = Field(None, example="https://example.com/avatar.png")
+    preferences: Optional[Dict[str, Any]] = Field(None, example={"theme": "dark", "language": "en"})
 
 
 class UserPreferencesUpdate(BaseModel):
