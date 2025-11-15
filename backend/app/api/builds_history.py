@@ -51,8 +51,8 @@ async def list_build_suggestions(
     if current_user:
         filters.append(BuildSuggestionDB.user_id == current_user.id)
     else:
-        # Anonymes: retourner liste vide
-        return PaginatedBuildSuggestions(items=[], total=0, page=page, limit=limit, has_next=False)
+        # Anonymes: retourner items avec user_id IS NULL
+        filters.append(BuildSuggestionDB.user_id.is_(None))
 
     total_stmt = select(func.count()).select_from(BuildSuggestionDB).where(*filters)
     total = (await db.execute(total_stmt)).scalar_one()
