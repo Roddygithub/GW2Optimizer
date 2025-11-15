@@ -226,8 +226,9 @@ def include_routers(app: FastAPI) -> None:
     api_router.include_router(ai.router, prefix="/ai", tags=["AI"])
     api_router.include_router(ai_feedback.router, prefix="/ai", tags=["AI Feedback"])
     api_router.include_router(ai_optimizer.router, prefix="/ai-optimizer", tags=["AI Optimizer"])
-    api_router.include_router(builds.router, tags=["Builds"])
+    # Mount builds_history before builds to ensure /history routes match before /{build_id}
     api_router.include_router(builds_history.router, prefix="/builds", tags=["Build Suggestions"])
+    api_router.include_router(builds.router, tags=["Builds"])
     api_router.include_router(teams.router, tags=["Teams"])
     api_router.include_router(chat.router, prefix="/chat", tags=["Chat"])
     api_router.include_router(export.router, prefix="/export", tags=["Export"])

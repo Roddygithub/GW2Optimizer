@@ -28,12 +28,18 @@ class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):  # type: ignore[misc
 
     async def __call__(self, request: Request) -> Optional[str]:
         authorization = request.cookies.get(settings.ACCESS_TOKEN_COOKIE_NAME)
+        logger.debug(f"OAuth2: cookie_auth={authorization is not None}, auto_error={self.auto_error}")
         if not authorization:
             try:
                 authorization = await super().__call__(request)
+                logger.debug(f"OAuth2: super() returned {authorization is not None}")
             except HTTPException as e:
-                if not self.auto_error and e.status_code == status.HTTP_401_UNAUTHORIZED:
+                logger.debug(f"OAuth2: super() raised {e.status_code}, auto_error={self.auto_error}")
+                # If auto_error is False, return None instead of raising
+                if not self.auto_error:
+                    logger.debug("OAuth2: returning None (auto_error=False)")
                     return None
+                # If auto_error is True, customize the 401 message
                 if e.status_code == status.HTTP_401_UNAUTHORIZED:
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
