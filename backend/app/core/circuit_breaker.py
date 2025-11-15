@@ -79,6 +79,7 @@ class CircuitBreaker:
         if self._state == "OPEN" and (time.time() - self._last_failure_time) > self.recovery_timeout:
             self._state = "HALF_OPEN"
             logger.info("Circuit breaker moved to HALF_OPEN state")
+            log_std.info("Circuit breaker moved to HALF_OPEN state")
         return self._state
 
     async def call_async(self, func: Callable[..., Awaitable[T]], *args, **kwargs) -> T:
@@ -119,6 +120,7 @@ class CircuitBreaker:
             if time.time() - self._last_failure_time >= self.recovery_timeout:
                 self._state = "HALF_OPEN"
                 logger.info("Circuit breaker is HALF_OPEN, allowing a test call")
+                log_std.info("Circuit breaker is HALF_OPEN, allowing a test call")
             else:
                 raise CircuitBreakerError(self, "Circuit breaker is open")
 
@@ -135,6 +137,7 @@ class CircuitBreaker:
                 if self._state == "HALF_OPEN":
                     self._state = "CLOSED"
                     logger.info("Circuit breaker reset to CLOSED after successful test call")
+                    log_std.info("Circuit breaker reset to CLOSED after successful test call")
                 return result
 
             except Exception as e:
@@ -146,6 +149,7 @@ class CircuitBreaker:
                     self._state = "OPEN"
                     self._last_failure_time = time.time()
                     logger.error("Test call in HALF_OPEN state failed, reopening circuit")
+                    log_std.error("Test call in HALF_OPEN state failed, reopening circuit")
                     raise CircuitBreakerError(self, "Circuit breaker is open") from e
 
                 has_retry = attempt <= self.max_retries
@@ -193,6 +197,7 @@ class CircuitBreaker:
         """Record a successful call and reset the circuit if needed."""
         if self._state != "CLOSED":
             logger.info("Circuit breaker reset after successful call")
+            log_std.info("Circuit breaker reset after successful call")
             self._state = "CLOSED"
         self._failures = 0
 
@@ -211,6 +216,7 @@ class CircuitBreaker:
         self._failures = 0
         self._last_failure_time = 0.0
         logger.info("Circuit breaker manually reset")
+        log_std.info("Circuit breaker manually reset")
 
 
 # Global circuit breaker instance for chat service
