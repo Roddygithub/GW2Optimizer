@@ -336,3 +336,20 @@ async def get_cached_team(team_id: str) -> Optional[dict]:
 async def invalidate_team_cache(team_id: str) -> bool:
     """Invalidate cache for a specific team."""
     return await CacheManager.delete(f"team:{team_id}")
+
+
+# Simple wrappers for tests compatibility
+async def set_cache(key: str, value: Any, ttl: int = 60) -> None:
+    """Set cache value with TTL (wrapper for tests)."""
+    await CacheManager.set(key, json.dumps(value) if not isinstance(value, str) else value, ttl)
+
+
+async def get_cache(key: str) -> Optional[Any]:
+    """Get cache value (wrapper for tests)."""
+    cached = await CacheManager.get(key)
+    if cached:
+        try:
+            return json.loads(cached)
+        except json.JSONDecodeError:
+            return cached
+    return None

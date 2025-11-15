@@ -130,6 +130,20 @@ class AIService:
         self._is_initialized = False
         logger.info("✅ AI Service cleaned up")
 
+    async def _call_ai_model(self, prompt: str, **kwargs: Any) -> Dict[str, Any]:
+        """
+        Point d'ancrage pour les tests (patchable avec AsyncMock).
+        
+        Args:
+            prompt: Le prompt à envoyer au modèle
+            **kwargs: Arguments additionnels
+            
+        Returns:
+            Réponse du modèle IA
+        """
+        # Méthode que les tests peuvent patcher
+        raise NotImplementedError("_call_ai_model should be mocked in tests")
+
     async def run_agent(self, agent_name: str, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
         Exécute un agent IA spécifique avec les entrées données.
