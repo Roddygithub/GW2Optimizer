@@ -32,9 +32,6 @@ from app.core.security import (
     oauth2_scheme,
 )
 from app.exceptions import (
-    UserEmailExistsException,
-    UserUsernameExistsException,
-    InvalidCredentialsException,
     AccountLockedException,
 )
 from app.core.redis import get_redis_client
