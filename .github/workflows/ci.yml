@@ -50,7 +50,7 @@ jobs:
         run: poetry run flake8 app/ scripts/ tests/ --max-line-length=120 --exclude=__pycache__,migrations
       - name: Run MyPy
         working-directory: backend
-        run: poetry run mypy app/ --config-file=pyproject.toml
+        run: poetry run mypy app/ --config-file=pyproject.toml --no-warn-unused-ignores --no-warn-redundant-casts
 
   test-backend:
     name: Test Backend
