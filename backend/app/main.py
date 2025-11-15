@@ -173,6 +173,17 @@ def create_application() -> FastAPI:
     if PROMETHEUS_AVAILABLE and not settings.TESTING:
         Instrumentator().instrument(app).expose(app, endpoint="/metrics")
         logger.info("📈 Prometheus metrics endpoint enabled at /metrics")
+        
+        # Initialize custom metrics
+        try:
+            from app.core.metrics import initialize_app_info
+            initialize_app_info(
+                version=settings.API_VERSION,
+                environment=settings.ENVIRONMENT,
+            )
+            logger.info("📊 Custom Prometheus metrics initialized")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to initialize custom metrics: {e}")
 
     return app
 

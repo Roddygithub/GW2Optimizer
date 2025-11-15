@@ -98,6 +98,42 @@ gh workflow run ".github/workflows/cleanup_purge.yml" \
 - **Frontend** : React + TypeScript (Vite, Vitest, Playwright).
 - **Orchestration** : GitHub Actions (CI lint/test/codeql, docs guard, build docker local).
 - **IA** : Intégrations prêtes pour modèles Mistral via pipelines internes.
+- **Observabilité** : Prometheus metrics, Sentry error tracking, Structured logging (structlog).
+
+## 🚀 Performance
+
+- **Bundle size** : 26KB (gzipped) - Réduction de 94% (444KB → 26KB)
+- **Time to Interactive** : < 1s
+- **Lighthouse Score** : 95+
+- **API Response Time** : P95 < 200ms (target)
+- **Test Coverage** : Backend 29%, Frontend >60%
+
+## 📊 Observabilité
+
+Le projet intègre une stack d'observabilité complète pour le monitoring production :
+
+- **Prometheus** : Métriques applicatives exposées sur `/metrics`
+  - HTTP requests, response times, error rates
+  - AI/LLM usage (tokens, latency, success rate)
+  - Database query performance
+  - Cache hit rates
+  - Business metrics (builds/teams created, active users)
+
+- **Sentry** : Error tracking et performance monitoring
+  - Capture automatique des exceptions
+  - Performance traces (10% sample)
+  - Release tracking
+
+- **Structured Logging** : Logs JSON pour agrégation
+  - Development : Console colorée
+  - Production : JSON pour Loki/ELK
+
+- **Grafana Dashboards** : Visualisation temps réel
+  - System overview (requests, errors, latency)
+  - AI performance (model usage, tokens, feedback)
+  - Database & cache metrics
+
+Voir [docs/OBSERVABILITY.md](docs/OBSERVABILITY.md) pour le guide complet.
 
 ## Contribution
 Ce dépôt est maintenu en mode automatisé. Toute contribution passe par PR avec CI 100% verte et revue dédiée. Voir aussi [SECURITY.md](SECURITY.md) pour la gestion des risques connus.

@@ -1,0 +1,43 @@
+2025-11-13 14:35:28,305 - gw2optimizer - INFO - ✅ Redis client initialized
+/home/roddy/GW2Optimizer/backend/.venv/lib/python3.11/site-packages/pydantic/_internal/_config.py:383: UserWarning: Valid config keys have changed in V2:
+* 'schema_extra' has been renamed to 'json_schema_extra'
+  warnings.warn(message, UserWarning)
+2025-11-13 14:35:29,454 - gw2optimizer - INFO - 🌐 CORS configured for origins: ["http://localhost:3000", "http://localhost:5173", "http://localhost:8000"]
+2025-11-13 14:35:29,622 - gw2optimizer - INFO - 🐛 Sentry debug endpoint enabled at /api/v1/sentry-debug
+2025-11-13 14:35:29,622 - gw2optimizer - INFO - 🔄 API routers included
+2025-11-13 14:35:29,623 - gw2optimizer - INFO - 📈 Prometheus metrics endpoint enabled at /metrics
+INFO:     Started server process [30566]
+INFO:     Waiting for application startup.
+2025-11-13 14:35:29,623 - gw2optimizer - INFO - 🚀 Starting GW2Optimizer Backend
+2025-11-13 14:35:29,623 - gw2optimizer - INFO - 📊 Environment: development
+2025-11-13 14:35:29,623 - gw2optimizer - INFO - 🌍 API Version: v1
+2025-11-13 14:35:29,623 - gw2optimizer - INFO - 🔗 API Base URL: /api/v1
+2025-11-13 14:35:29,623 - gw2optimizer - INFO - 🔌 Ollama Host: http://localhost:11434
+2025-11-13 14:35:29,629 - gw2optimizer - INFO - ✅ Database initialized successfully
+2025-11-13 14:35:29,629 - gw2optimizer - INFO - ✅ Database initialized
+2025-11-13 14:35:29,629 - gw2optimizer - WARNING - Redis is disabled. Token revocation will not be persistent.
+2025-11-13 14:35:29,630 - apscheduler.scheduler - INFO - Adding job tentatively -- it will be properly scheduled when the scheduler starts
+2025-11-13 14:35:29,630 - apscheduler.scheduler - INFO - Added job "Learning Pipeline Execution" to job store "default"
+2025-11-13 14:35:29,630 - apscheduler.scheduler - INFO - Scheduler started
+2025-11-13 14:35:29,630 - gw2optimizer - INFO - Pipeline scheduler started (daily at 3:00 AM)
+2025-11-13 14:35:29,630 - gw2optimizer - INFO - ⏰ Learning pipeline scheduler activated
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('127.0.0.1', 8000): address already in use
+INFO:     Waiting for appINFO:     127.0.0.1:50412 - "GET /health HTTP/1.1" 200 OK
+2025-11-13 14:35:30,206 - gw2optimizer - INFO - ---- SENDING VERIFICATION EMAIL (SIMULATED) ----
+2025-11-13 14:35:30,206 - gw2optimizer - INFO - To: test@example.com
+2025-11-13 14:35:30,206 - gw2optimizer - INFO - Subject: Welcome to GW2Optimizer, testuser!
+2025-11-13 14:35:30,206 - gw2optimizer - INFO - Body: Verification link generated; token omitted from logs
+2025-11-13 14:35:30,206 - gw2optimizer - INFO - -------------------------------------------------
+2025-11-13 14:35:30,206 - gw2optimizer - INFO - New user registered: test@example.com (ID: 48dc3487-e42c-4723-bdb3-892309bf6ed9)
+INFO:     127.0.0.1:50414 - "POST /api/v1/auth/register HTTP/1.1" 201 Created
+2025-11-13 14:35:46,289 - gw2optimizer - INFO - User logged in successfully
+INFO:     127.0.0.1:40910 - "POST /api/v1/auth/token HTTP/1.1" 200 OK
+INFO:     127.0.0.1:33730 - "GET /api/v1/auth/me HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2025-11-13 21:43:17,015 - gw2optimizer - INFO - 🛑 Shutting down GW2Optimizer Backend
+2025-11-13 21:43:17,019 - gw2optimizer - INFO - Pipeline scheduler stopped
+2025-11-13 21:43:17,022 - apscheduler.scheduler - INFO - Scheduler has been shut down
+INFO:     Application shutdown complete.
+INFO:     Finished server process [26223]
