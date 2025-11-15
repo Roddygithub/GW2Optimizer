@@ -14,10 +14,10 @@ from app.db.models import UserDB
 from app.models.build_suggestion import BuildSuggestionDB
 from app.schemas.builds import BuildSuggestionCreate, BuildSuggestionOut, PaginatedBuildSuggestions
 
-router = APIRouter(prefix="/history", tags=["Build Suggestions"])
+router = APIRouter(tags=["Build Suggestions"])
 
 
-@router.post("", response_model=BuildSuggestionOut, status_code=status.HTTP_201_CREATED)
+@router.post("/history", response_model=BuildSuggestionOut, status_code=status.HTTP_201_CREATED)
 async def create_build_suggestion(
     payload: BuildSuggestionCreate,
     current_user: Optional[UserDB] = Depends(get_current_user_optional),
@@ -37,7 +37,7 @@ async def create_build_suggestion(
     return BuildSuggestionOut.model_validate(suggestion)
 
 
-@router.get("", response_model=PaginatedBuildSuggestions, status_code=status.HTTP_200_OK)
+@router.get("/history", response_model=PaginatedBuildSuggestions, status_code=status.HTTP_200_OK)
 async def list_build_suggestions(
     page: int = Query(1, ge=1, description="Page number (starts at 1)"),
     limit: int = Query(20, ge=1, le=100, description="Number of items per page"),
