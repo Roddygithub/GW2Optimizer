@@ -391,7 +391,7 @@ async def login_for_access_token(
                 "ip": request.client.host if request.client else "unknown",
             },
         )
-        raise AccountLockedException()
+        raise AccountLockedException(status_code=401)
 
     await user_service.reset_failed_login_attempts(str(user.email))
     await user_service.log_login_history(user, request)

@@ -49,15 +49,15 @@ class UserUsernameExistsException(BusinessException):
 class InvalidCredentialsException(BusinessException):
     """Exception raised when credentials are invalid."""
 
-    def __init__(self, detail: str = "Invalid credentials"):
+    def __init__(self, detail: str = "Incorrect or invalid credentials"):
         super().__init__(detail, status.HTTP_401_UNAUTHORIZED, "INVALID_CREDENTIALS")
 
 
 class AccountLockedException(BusinessException):
     """Exception raised when account is locked."""
 
-    def __init__(self, detail: str = "Account is locked"):
-        super().__init__(detail, status.HTTP_403_FORBIDDEN, "ACCOUNT_LOCKED")
+    def __init__(self, detail: str = "Account is locked", status_code: int = status.HTTP_403_FORBIDDEN):
+        super().__init__(detail, status_code, "ACCOUNT_LOCKED")
 
 
 def add_exception_handlers(app: FastAPI) -> None:
