@@ -6,8 +6,6 @@ import time
 from datetime import datetime
 from typing import List, Tuple
 
-pytestmark = pytest.mark.xfail(reason="Circuit breaker logging integration needs review")
-
 from app.core.circuit_breaker import CircuitBreaker
 from app.models.chat import ChatRequest
 from app.services.ai.chat_service import ChatService
