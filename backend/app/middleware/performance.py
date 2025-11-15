@@ -5,9 +5,12 @@ Tracks request/response times and logs slow requests.
 """
 
 import time
-from typing import Callable
-from fastapi import Request, Response
+from typing import Any, Awaitable, Callable
+
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.types import ASGIApp
+
 from app.core.logging import logger
 
 
@@ -20,7 +23,7 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
     - Can be used with Prometheus metrics
     """
     
-    def __init__(self, app, slow_threshold: float = 1.0):
+    def __init__(self, app: ASGIApp, slow_threshold: float = 1.0) -> None:
         """
         Initialize performance middleware.
         
@@ -31,7 +34,9 @@ class PerformanceMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.slow_threshold = slow_threshold
     
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Awaitable[Any]]
+    ) -> Any:
         """Process request and track performance."""
         start_time = time.time()
         
