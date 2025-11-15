@@ -37,7 +37,7 @@ async def create_build_suggestion(
     return BuildSuggestionOut.model_validate(suggestion)
 
 
-@router.get("", response_model=PaginatedBuildSuggestions)
+@router.get("", response_model=PaginatedBuildSuggestions, status_code=status.HTTP_200_OK)
 async def list_build_suggestions(
     page: int = Query(1, ge=1, description="Page number (starts at 1)"),
     limit: int = Query(20, ge=1, le=100, description="Number of items per page"),
@@ -46,11 +46,13 @@ async def list_build_suggestions(
 ) -> PaginatedBuildSuggestions:
     """Return paginated build suggestions for the current context."""
 
+    # Anonymes et auth retournent 200 avec liste vide ou items
     filters = []
     if current_user:
         filters.append(BuildSuggestionDB.user_id == current_user.id)
     else:
-        filters.append(BuildSuggestionDB.user_id.is_(None))
+        # Anonymes: retourner liste vide
+        return PaginatedBuildSuggestions(items=[], total=0, page=page, limit=limit, has_next=False)
 
     total_stmt = select(func.count()).select_from(BuildSuggestionDB).where(*filters)
     total = (await db.execute(total_stmt)).scalar_one()
