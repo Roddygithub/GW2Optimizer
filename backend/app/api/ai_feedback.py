@@ -65,7 +65,7 @@ def _persist_feedback_fallback(base_dir: str, payload: Dict[str, Any], user_id: 
     return str(fallback_file)
 
 
-@router.post("/feedback", status_code=status.HTTP_202_ACCEPTED)
+@router.post("/feedback", status_code=status.HTTP_201_CREATED)
 async def submit_feedback(
     feedback_in: FeedbackIn,
     background_tasks: BackgroundTasks,

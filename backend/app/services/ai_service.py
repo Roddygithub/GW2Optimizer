@@ -45,8 +45,9 @@ class AIService:
         ```
     """
 
-    def __init__(self):
+    def __init__(self, provider: Optional[Any] = None):
         """Initialise le service et enregistre tous les agents et workflows disponibles."""
+        self.provider = provider
         self.agents: Dict[str, BaseAgent] = {}
         self.workflows: Dict[str, BaseWorkflow] = {}
         self._is_initialized = False
@@ -141,8 +142,10 @@ class AIService:
         Returns:
             Réponse du modèle IA
         """
-        # Méthode que les tests peuvent patcher
-        raise NotImplementedError("_call_ai_model should be mocked in tests")
+        # Point d'ancrage pour les tests: patché avec AsyncMock
+        if self.provider and hasattr(self.provider, "generate_completion"):
+            return await self.provider.generate_completion(prompt=prompt, **kwargs)  # type: ignore
+        raise AttributeError("_call_ai_model")
 
     async def run_agent(self, agent_name: str, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -283,3 +286,26 @@ class AIService:
             "agents": list(self.agents.keys()),
             "workflows": list(self.workflows.keys()),
         }
+
+    async def compose_team(self, **kwargs: Any) -> Dict[str, Any]:
+        """Compose une équipe optimale."""
+        try:
+            return await self._call_ai_model(prompt="compose", **kwargs)
+        except Exception as e:
+            logger.warning(f"AI team composition failed, using fallback: {e}")
+            # Fallback composition
+            return {
+                "composition": [
+                    {"profession": "Guardian", "role": "Support"},
+                    {"profession": "Warrior", "role": "DPS"},
+                ],
+                "synergies": ["might", "fury"],
+            }
+
+    async def optimize_build(self, **kwargs: Any) -> Dict[str, Any]:
+        """Optimise un build."""
+        return await self._call_ai_model(prompt="optimize", **kwargs)
+
+    async def analyze_synergy(self, **kwargs: Any) -> Dict[str, Any]:
+        """Analyse les synergies."""
+        return await self._call_ai_model(prompt="synergy", **kwargs)
