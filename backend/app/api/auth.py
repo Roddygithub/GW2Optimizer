@@ -27,6 +27,7 @@ from app.core.security import (
     create_refresh_token,
     decode_token,
     get_password_hash,
+    verify_password,
     get_current_active_user,
     revoke_token,
     oauth2_scheme,
@@ -287,12 +288,12 @@ async def register(
     existing_user = await user_service.get_by_email(user_in.email)
     if existing_user:
         logger.warning(f"Registration failed: email '{user_in.email}' already exists.")
-        raise HTTPException(status_code=400, detail="Email or username already exists")
+        raise HTTPException(status_code=409, detail="Email or username already registered")
 
     existing_username = await user_service.get_by_username(user_in.username)
     if existing_username:
         logger.warning(f"Registration failed: username '{user_in.username}' already taken.")
-        raise HTTPException(status_code=400, detail="Email or username already exists")
+        raise HTTPException(status_code=409, detail="Email or username already registered")
 
     hashed_password = get_password_hash(user_in.password)
     user = await user_service.create_user(
@@ -377,7 +378,7 @@ async def login_for_access_token(
                 "user_agent": request.headers.get("user-agent"),
             },
         )
-        raise HTTPException(status_code=401, detail="Incorrect or invalid credentials")
+        raise HTTPException(status_code=401, detail="Incorrect or invalid credentials", headers={"X-Error-Code": "INVALID_CREDENTIALS"})
 
     if not user.is_active:
         logger.warning(
@@ -387,7 +388,7 @@ async def login_for_access_token(
                 "ip": request.client.host if request.client else "unknown",
             },
         )
-        raise AccountLockedException()
+        raise HTTPException(status_code=401, detail="Account is inactive or locked", headers={"X-Error-Code": "ACCOUNT_INACTIVE"})
 
     await user_service.reset_failed_login_attempts(str(user.email))
     await user_service.log_login_history(user, request)
@@ -539,8 +540,21 @@ async def request_password_reset_simple(payload: dict) -> dict:
 async def change_password(
     payload: dict,
     current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Change password for authenticated user."""
+    current_password = payload.get("current_password")
+    new_password = payload.get("new_password")
+    
+    if not current_password or not new_password:
+        raise HTTPException(status_code=400, detail="Current and new passwords required")
+    
+    if not verify_password(current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    
+    current_user.hashed_password = get_password_hash(new_password)
+    await db.commit()
+    
     return {"ok": True, "message": "Password changed successfully"}
 
 
@@ -572,9 +586,18 @@ async def patch_user_me(
 ) -> UserOut:
     """Partially update the current user's profile."""
     user_service = UserService(db)
-    updated_user = await user_service.update_user(current_user, update_data)
+    
+    # Update only non-None fields
+    update_dict = update_data.model_dump(exclude_unset=True)
+    for field, value in update_dict.items():
+        if hasattr(current_user, field):
+            setattr(current_user, field, value)
+    
+    await db.commit()
+    await db.refresh(current_user)
+    
     logger.info(f"User profile updated: {current_user.email}")
-    return updated_user
+    return current_user
 
 
 @router.put(  # type: ignore[misc]
