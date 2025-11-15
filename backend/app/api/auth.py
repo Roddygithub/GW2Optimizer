@@ -32,6 +32,12 @@ from app.core.security import (
     revoke_token,
     oauth2_scheme,
 )
+from app.exceptions import (
+    UserEmailExistsException,
+    UserUsernameExistsException,
+    InvalidCredentialsException,
+    AccountLockedException,
+)
 from app.core.redis import get_redis_client
 from app.db.session import get_db
 from app.db.models import UserDB as User
