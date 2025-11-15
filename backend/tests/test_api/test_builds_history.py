@@ -4,10 +4,7 @@ import pytest
 from httpx import AsyncClient
 from fastapi import status
 
-pytestmark = [
-    pytest.mark.asyncio,
-    pytest.mark.xfail(reason="Endpoint routing issues under investigation")
-]
+pytestmark = pytest.mark.asyncio
 
 
 class TestBuildSuggestionsHistory:
