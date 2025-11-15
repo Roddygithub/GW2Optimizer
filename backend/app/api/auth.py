@@ -32,9 +32,6 @@ from app.core.security import (
     revoke_token,
     oauth2_scheme,
 )
-from app.exceptions import (
-    AccountLockedException,
-)
 from app.core.redis import get_redis_client
 from app.db.session import get_db
 from app.db.models import UserDB as User
@@ -585,7 +582,6 @@ async def patch_user_me(
     current_user: User = Depends(get_current_active_user),
 ) -> UserOut:
     """Partially update the current user's profile."""
-    user_service = UserService(db)
     
     # Update only non-None fields
     update_dict = update_data.model_dump(exclude_unset=True)
