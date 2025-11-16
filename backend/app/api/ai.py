@@ -385,7 +385,7 @@ async def get_ai_status() -> Dict[str, Any]:
 
 
 @router.post("/compose-team", response_model=Dict[str, Any])
-async def compose_team(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def compose_team_test(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Compose optimal team (test-compatible endpoint)."""
     try:
         ai_service = AIService()
@@ -397,7 +397,7 @@ async def compose_team(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @router.post("/optimize-build", response_model=Dict[str, Any])
-async def optimize_build(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def optimize_build_test(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Optimize build (test-compatible endpoint)."""
     try:
         ai_service = AIService()
@@ -409,7 +409,7 @@ async def optimize_build(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @router.post("/analyze-synergy", response_model=Dict[str, Any])
-async def analyze_synergy(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def analyze_synergy_test(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Analyze synergy (test-compatible endpoint)."""
     try:
         ai_service = AIService()
