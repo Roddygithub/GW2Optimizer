@@ -2,42 +2,53 @@ name: Scheduled Learning Pipeline
 
 on:
   schedule:
-    # Run every Sunday at 00:00 UTC
-    - cron: '0 0 * * 0'
-  workflow_dispatch:  # Allow manual triggering
+    - cron: '0 3 * * *' # 03:00 UTC (ajuste si besoin)
+  workflow_dispatch: {} # Permet le run manuel
 
-env:
-  PYTHON_VERSION: '3.11'
+# Evite les annulations croisées avec la CI
+concurrency:
+  group: learning-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
-  run-learning-pipeline:
-    name: Run Learning Pipeline
+  train:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     
     services:
       postgres:
-        image: postgres:14-alpine
+        image: postgres:16-alpine
         env:
-          POSTGRES_USER: ${{ secrets.DB_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.DB_NAME }}
-        ports:
-          - 5432:5432
+          POSTGRES_USER: dev
+          POSTGRES_PASSWORD: dev
+          POSTGRES_DB: gw2optimizer
+        ports: ["5432:5432"]
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
+          --health-cmd "pg_isready -U dev"
+          --health-interval 5s
+          --health-timeout 3s
           --health-retries 5
       
       redis:
         image: redis:7-alpine
-        ports:
-          - 6379:6379
+        ports: ["6379:6379"]
         options: >-
           --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
+          --health-interval 5s
+          --health-timeout 3s
           --health-retries 5
+    
+    env:
+      DATABASE_URL: postgresql+asyncpg://dev:dev@localhost:5432/gw2optimizer
+      REDIS_URL: redis://localhost:6379/0
+      # Ajoute ici les clés si la pipeline les utilise (Mistral/OpenAI)
+      MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      ENVIRONMENT: ci
     
     steps:
       - uses: actions/checkout@v4
@@ -45,57 +56,17 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
-          cache: 'pip'
+          python-version: '3.12'
       
-      - name: Install dependencies
+      - name: Install poetry
+        run: pipx install poetry
+      
+      - name: Install deps
         run: |
           cd backend
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          poetry install --no-interaction
       
-      - name: Run learning data collection
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          REDIS_URL: ${{ secrets.REDIS_URL }}
-          SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          LEARNING_ENABLED: "true"
-          LEARNING_DATA_DIR: ./data/learning
+      - name: Run learning pipeline
         run: |
           cd backend
-          python -m app.learning.scripts.collect_data
-      
-      - name: Process learning data
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          LEARNING_DATA_DIR: ./data/learning
-        run: |
-          cd backend
-          python -m app.learning.scripts.process_data
-      
-      - name: Generate learning statistics
-        env:
-          LEARNING_DATA_DIR: ./data/learning
-        run: |
-          cd backend
-          python -m app.learning.scripts.generate_stats
-      
-      - name: Archive learning data
-        uses: actions/upload-artifact@v4
-        with:
-          name: learning-data-${{ github.run_number }}
-          path: backend/data/learning/
-          retention-days: 90
-      
-      - name: Notify on failure
-        if: failure()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'Learning Pipeline Failed',
-              body: `The scheduled learning pipeline failed on ${new Date().toISOString()}\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-              labels: ['bug', 'learning', 'automated']
-            })
+          poetry run python -m app.services.learning.pipeline --mode cron || poetry run python -m app.learning.pipeline --mode cron
