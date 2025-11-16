@@ -1,0 +1,74 @@
+name: No XFail Gate
+
+"on":
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check-xfail:
+    name: Verify No XFail Markers
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for xfail markers in tests
+        run: |
+          echo "🔍 Checking for xfail markers in test files..."
+          
+          # Search for @pytest.mark.xfail
+          XFAIL_COUNT=$(grep -r "@pytest.mark.xfail" backend/tests/ 2>/dev/null | wc -l || echo "0")
+          
+          # Search for pytest.xfail()
+          XFAIL_CALL_COUNT=$(grep -r "pytest.xfail(" backend/tests/ 2>/dev/null | wc -l || echo "0")
+          
+          TOTAL=$((XFAIL_COUNT + XFAIL_CALL_COUNT))
+          
+          echo "Found $XFAIL_COUNT @pytest.mark.xfail decorators"
+          echo "Found $XFAIL_CALL_COUNT pytest.xfail() calls"
+          echo "Total: $TOTAL xfail markers"
+          
+          if [ $TOTAL -gt 0 ]; then
+            echo ""
+            echo "❌ XFAIL MARKERS DETECTED!"
+            echo ""
+            echo "The following files contain xfail markers:"
+            grep -rn "@pytest.mark.xfail\|pytest.xfail(" backend/tests/ 2>/dev/null || true
+            echo ""
+            echo "⚠️  XFail markers are not allowed in production."
+            echo "Please fix the tests or remove the xfail markers."
+            echo ""
+            exit 1
+          else
+            echo ""
+            echo "✅ No xfail markers found - all tests are production ready!"
+            echo ""
+          fi
+      
+      - name: Verify xfail_strict is enabled
+        run: |
+          echo "🔍 Checking pytest.ini configuration..."
+          
+          if grep -q "xfail_strict = true" backend/pytest.ini; then
+            echo "✅ xfail_strict is enabled in pytest.ini"
+          else
+            echo "❌ xfail_strict is not enabled in pytest.ini"
+            echo "Please add 'xfail_strict = true' to backend/pytest.ini"
+            exit 1
+          fi
+      
+      - name: Summary
+        if: success()
+        run: |
+          echo ""
+          echo "🎉 XFail Gate: PASSED"
+          echo ""
+          echo "✅ No xfail markers in tests"
+          echo "✅ xfail_strict enabled"
+          echo "✅ All tests are production ready"
+          echo ""
