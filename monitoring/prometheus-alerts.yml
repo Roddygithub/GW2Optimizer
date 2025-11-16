@@ -1,0 +1,195 @@
+groups:
+  - name: gw2optimizer_critical
+    interval: 30s
+    rules:
+      # 1. 5xx rate > 1% (5m)
+      - alert: HighErrorRate
+        expr: |
+          (
+            rate(http_requests_total{status=~"5.."}[5m])
+            /
+            rate(http_requests_total[5m])
+          ) * 100 > 1
+        for: 5m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "High 5xx error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 1%)"
+          runbook: "https://github.com/Roddygithub/GW2Optimizer/blob/main/docs/RUNBOOK_PRODUCTION.md#high-error-rate"
+
+      # 2. p95 latency > 1s (5m)
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_request_duration_seconds_bucket[5m])
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High API latency detected"
+          description: "p95 latency is {{ $value }}s (threshold: 1s)"
+          runbook: "https://github.com/Roddygithub/GW2Optimizer/blob/main/docs/RUNBOOK_PRODUCTION.md#high-latency"
+
+      # 3. Instance down (1m)
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: infrastructure
+        annotations:
+          summary: "Instance {{ $labels.instance }} is down"
+          description: "{{ $labels.job }} on {{ $labels.instance }} has been down for more than 1 minute"
+          runbook: "https://github.com/Roddygithub/GW2Optimizer/blob/main/docs/RUNBOOK_PRODUCTION.md#instance-down"
+
+      # 4. Scheduled pipeline failure
+      - alert: LearningPipelineFailure
+        expr: increase(learning_pipeline_failures_total[1h]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          component: learning
+        annotations:
+          summary: "Learning pipeline has failed"
+          description: "{{ $value }} failures in the last hour"
+          runbook: "https://github.com/Roddygithub/GW2Optimizer/blob/main/docs/RUNBOOK_PRODUCTION.md#pipeline-failure"
+
+  - name: gw2optimizer_performance
+    interval: 1m
+    rules:
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[5m]) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          component: resources
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}% (threshold: 80%)"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (process_resident_memory_bytes / 1024 / 1024 / 1024) > 2
+        for: 10m
+        labels:
+          severity: warning
+          component: resources
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value }}GB (threshold: 2GB)"
+
+      # Database connection pool exhausted
+      - alert: DatabasePoolExhausted
+        expr: db_connections_active / db_connections_max > 0.9
+        for: 5m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "{{ $value | humanizePercentage }} of connections in use"
+
+      # Redis connection issues
+      - alert: RedisConnectionFailures
+        expr: rate(redis_connection_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          component: cache
+        annotations:
+          summary: "Redis connection failures detected"
+          description: "{{ $value }} failures per second"
+
+  - name: gw2optimizer_business
+    interval: 5m
+    rules:
+      # AI token budget exceeded
+      - alert: HighAICost
+        expr: sum(increase(mistral_tokens_used_total[24h])) > 1000000
+        labels:
+          severity: warning
+          component: ai
+        annotations:
+          summary: "Daily AI token usage exceeded 1M"
+          description: "{{ $value }} tokens used in last 24h (budget: 1M)"
+          runbook: "https://github.com/Roddygithub/GW2Optimizer/blob/main/docs/RUNBOOK_PRODUCTION.md#high-ai-cost"
+
+      # AI service degraded
+      - alert: AIServiceDegraded
+        expr: rate(mistral_errors_total[5m]) / rate(mistral_requests_total[5m]) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          component: ai
+        annotations:
+          summary: "AI service error rate is high"
+          description: "{{ $value | humanizePercentage }} of AI requests failing"
+
+      # Low cache hit rate
+      - alert: LowCacheHitRate
+        expr: |
+          (
+            rate(redis_hits_total[5m])
+            /
+            (rate(redis_hits_total[5m]) + rate(redis_misses_total[5m]))
+          ) < 0.5
+        for: 15m
+        labels:
+          severity: warning
+          component: cache
+        annotations:
+          summary: "Redis cache hit rate is low"
+          description: "Hit rate is {{ $value | humanizePercentage }} (threshold: 50%)"
+
+      # No recent user activity
+      - alert: NoUserActivity
+        expr: |
+          (time() - max(http_requests_total{path=~"/api/v1/.*"})) > 3600
+        labels:
+          severity: info
+          component: business
+        annotations:
+          summary: "No user activity in the last hour"
+          description: "Last request was {{ $value | humanizeDuration }} ago"
+
+  - name: gw2optimizer_security
+    interval: 1m
+    rules:
+      # High rate of auth failures
+      - alert: HighAuthFailureRate
+        expr: rate(auth_failures_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "High authentication failure rate"
+          description: "{{ $value }} auth failures per second"
+
+      # Rate limit triggered frequently
+      - alert: FrequentRateLimiting
+        expr: rate(rate_limit_exceeded_total[5m]) > 10
+        for: 10m
+        labels:
+          severity: info
+          component: security
+        annotations:
+          summary: "Rate limiting triggered frequently"
+          description: "{{ $value }} rate limit hits per second"
+
+      # Suspicious activity pattern
+      - alert: SuspiciousActivityPattern
+        expr: |
+          sum by (ip) (rate(http_requests_total{status="401"}[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "Suspicious activity from {{ $labels.ip }}"
+          description: "{{ $value }} failed auth attempts per second"

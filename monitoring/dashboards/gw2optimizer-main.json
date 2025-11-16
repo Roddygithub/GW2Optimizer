@@ -1,0 +1,212 @@
+{
+  "dashboard": {
+    "title": "GW2Optimizer - Production Dashboard",
+    "tags": ["gw2optimizer", "production"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 1,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Request Rate (req/s)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{path}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Error Rate (%)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"5..\"}[5m]) / rate(http_requests_total[5m]) * 100",
+            "legendFormat": "5xx rate"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [1], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "60s",
+          "handler": 1,
+          "name": "High Error Rate",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 3,
+        "title": "Response Time (p95, p99)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "p95"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "p99"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [1], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "name": "High Latency"
+        }
+      },
+      {
+        "id": 4,
+        "title": "Active Connections",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "http_connections_active",
+            "legendFormat": "Active"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "CPU Usage (%)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(process_cpu_seconds_total[5m]) * 100",
+            "legendFormat": "CPU"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "Memory Usage (MB)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes / 1024 / 1024",
+            "legendFormat": "Memory"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 7,
+        "title": "Database Connections",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "db_connections_active",
+            "legendFormat": "Active"
+          },
+          {
+            "expr": "db_connections_idle",
+            "legendFormat": "Idle"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "id": 8,
+        "title": "Redis Hit Rate (%)",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(redis_hits_total[5m]) / (rate(redis_hits_total[5m]) + rate(redis_misses_total[5m])) * 100",
+            "legendFormat": "Hit Rate"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+      },
+      {
+        "id": 9,
+        "title": "AI Requests",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(mistral_requests_total[5m])",
+            "legendFormat": "Mistral"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 32}
+      },
+      {
+        "id": 10,
+        "title": "AI Token Usage (24h)",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "sum(increase(mistral_tokens_used_total[24h]))"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 32}
+      },
+      {
+        "id": 11,
+        "title": "Active Users (24h)",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "count(count by (user_id) (http_requests_total{path=~\"/api/v1/.*\"}[24h]))"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 40}
+      },
+      {
+        "id": 12,
+        "title": "Builds Created (24h)",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "sum(increase(builds_created_total[24h]))"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 40}
+      },
+      {
+        "id": 13,
+        "title": "Teams Created (24h)",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "sum(increase(teams_created_total[24h]))"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 40}
+      },
+      {
+        "id": 14,
+        "title": "Learning Pipeline Status",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "learning_pipeline_last_success_timestamp"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 40}
+      }
+    ]
+  }
+}
