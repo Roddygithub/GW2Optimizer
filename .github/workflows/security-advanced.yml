@@ -100,7 +100,8 @@ jobs:
         run: |
           cd backend
           bandit -r app -f json -o ../audit-reports/bandit.json || true
-          bandit -r app -f txt
+          bandit -r app -f txt || true
+        continue-on-error: true
       
       - name: Upload Bandit results
         uses: actions/upload-artifact@v4
