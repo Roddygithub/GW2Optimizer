@@ -19,13 +19,17 @@ regexes = [
   "http://localhost:[0-9]+/api/v1",
 ]
 
-# File path globs to ignore
+# File path patterns to ignore (glob-style)
 paths = [
   # Coverage and reports
-  "**/coverage/**",
-  "**/playwright-report/**",
+  '''.*coverage/.*''',
+  '''.*playwright-report/.*''',
   # Build artifacts
-  "**/dist/**",
-  # Test snapshots or fixtures (if added later)
-  "**/__snapshots__/**",
+  '''.*dist/.*''',
+  '''.*build/.*''',
+  # Test snapshots or fixtures
+  '''.*__snapshots__/.*''',
+  # Node modules and dependencies
+  '''.*node_modules/.*''',
+  '''.*\.venv/.*''',
 ]
