@@ -8,6 +8,12 @@ __pycache__/
 *.so
 .Python
 build/
+
+# Redis
+dump.rdb
+
+# Learning data artifacts
+backend/backend/data/learning/feedback/feedback/*.json
 develop-eggs/
 dist/
 downloads/
