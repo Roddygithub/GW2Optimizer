@@ -48,7 +48,7 @@ jobs:
       SECRET_KEY: test-secret-key-for-ci-only-not-for-production
       # Ajoute ici les clés si la pipeline les utilise (Mistral/OpenAI)
       MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
-      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN || '' }}
       ENVIRONMENT: ci
     
     steps:
