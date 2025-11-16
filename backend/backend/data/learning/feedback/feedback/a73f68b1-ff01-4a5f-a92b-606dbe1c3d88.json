@@ -1,0 +1,12 @@
+{
+  "id": "a73f68b1-ff01-4a5f-a92b-606dbe1c3d88",
+  "composition_id": "comp-123",
+  "user_id": "anonymous",
+  "type": "explicit_rating",
+  "rating": 8,
+  "comments": "Good",
+  "metadata": {
+    "comment": "Good"
+  },
+  "timestamp": "2025-11-16T07:05:53.038848"
+}
