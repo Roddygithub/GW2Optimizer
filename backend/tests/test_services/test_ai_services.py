@@ -6,8 +6,6 @@ Target: +20% coverage on AI services.
 """
 
 import pytest
-
-pytestmark = pytest.mark.xfail(reason="AI service methods not yet fully implemented")
 from unittest.mock import AsyncMock, Mock, patch
 from httpx import AsyncClient
 
@@ -15,13 +13,20 @@ from app.services.ai_service import AIService
 from app.services.mistral_ai import MistralAIService
 
 
+@pytest.fixture
+def ai_service():
+    """Create AI service instance."""
+    return AIService()
+
+
+@pytest.fixture
+def mistral_service():
+    """Create Mistral AI service instance."""
+    return MistralAIService()
+
+
 class TestAIService:
     """Tests for base AI service."""
-
-    @pytest.fixture
-    def ai_service(self):
-        """Create AI service instance."""
-        return AIService()
 
     @pytest.mark.asyncio
     async def test_compose_team_success(self, ai_service):
@@ -105,11 +110,6 @@ class TestAIService:
 
 class TestMistralAIService:
     """Tests for Mistral AI service."""
-
-    @pytest.fixture
-    def mistral_service(self):
-        """Create Mistral AI service instance."""
-        return MistralAIService()
 
     @pytest.mark.asyncio
     async def test_generate_completion_success(self, mistral_service):

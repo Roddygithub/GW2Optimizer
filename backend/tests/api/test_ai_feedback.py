@@ -53,7 +53,7 @@ async def test_ai_feedback_endpoint_bg_trigger(monkeypatch, tmp_path):
                 json={"target_id": "comp-42", "rating": 8, "comment": "Great"},
             )
 
-        assert response.status_code == 202
+        assert response.status_code == 201
         body = response.json()
         assert body["status"] == "accepted"
         assert body["training"] == "scheduled"
