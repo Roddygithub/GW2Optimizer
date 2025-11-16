@@ -1,0 +1,64 @@
+{
+  "name": "Standard Zerg Composition",
+  "size": 50,
+  "game_mode": "zerg",
+  "builds": [
+    {
+      "profession": "Guardian",
+      "role": "Support",
+      "count": 10,
+      "priority": "High",
+      "description": "Firebrand for stability and healing"
+    },
+    {
+      "profession": "Warrior",
+      "role": "Tank",
+      "count": 5,
+      "priority": "High",
+      "description": "Spellbreaker for frontline"
+    },
+    {
+      "profession": "Necromancer",
+      "role": "DPS",
+      "count": 15,
+      "priority": "High",
+      "description": "Scourge for AoE damage"
+    },
+    {
+      "profession": "Mesmer",
+      "role": "Support",
+      "count": 7,
+      "priority": "Medium",
+      "description": "Chronomancer for boons and portals"
+    },
+    {
+      "profession": "Revenant",
+      "role": "DPS",
+      "count": 7,
+      "priority": "Medium",
+      "description": "Herald for damage and boons"
+    },
+    {
+      "profession": "Engineer",
+      "role": "DPS",
+      "count": 5,
+      "priority": "Low",
+      "description": "Scrapper for utility"
+    }
+  ],
+  "strategy": "Standard balanced composition for WvW zerg fights",
+  "strengths": [
+    "Strong boon coverage",
+    "Good AoE damage",
+    "Excellent stability",
+    "Balanced offense and defense"
+  ],
+  "weaknesses": [
+    "Vulnerable to heavy focus fire",
+    "Requires good coordination",
+    "Limited mobility without portals"
+  ],
+  "timestamp": "2025-11-16T14:26:47.942569",
+  "source": "fallback",
+  "model": "rule_based"
+}
