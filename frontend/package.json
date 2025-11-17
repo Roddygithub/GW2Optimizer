@@ -18,7 +18,7 @@
     "version": "node scripts/show-version.cjs"
   },
   "dependencies": {
-    "@sentry/react": "^8.10.1",
+    "@sentry/react": "^10.25.0",
     "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
