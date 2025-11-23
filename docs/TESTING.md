@@ -51,11 +51,8 @@ backend/tests/
 ```bash
 cd backend
 
-# Installer les dépendances de production
-pip install -r requirements.txt
-
-# Installer les dépendances de développement
-pip install -r requirements-dev.txt
+# Installer toutes les dépendances backend via Poetry
+poetry install
 ```
 
 ### Configuration de l'environnement de test

@@ -1,0 +1,23 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  backend-tests:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      - redis
+    environment:
+      TESTING: "true"
+      SECRET_KEY: "test-secret-key-for-docker-tests"
+      ALGORITHM: "HS256"
+      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      DATABASE_URL: "sqlite+aiosqlite:///./test.db"
+      TEST_DATABASE_URL: "sqlite+aiosqlite:///./test.db"
+      REDIS_URL: "redis://redis:6379/0"
+      TEST_REDIS_URL: "redis://redis:6379/15"
+      REDIS_ENABLED: "true"
+    command: ["sh", "-c", "sleep 5 && poetry run pytest -v"]

@@ -76,7 +76,7 @@ async def test_login_wrong_email(client: AsyncClient, test_user: TestUser):
 
 async def test_get_current_user_with_token(client: AsyncClient, auth_headers: dict):
     """Test accessing a protected endpoint with a valid token header."""
-    response = await client.get("/api/v1/auth/me", headers=auth_headers)
+    response = await client.get("/api/v1/users/me", headers=auth_headers)
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert data["email"] == TEST_USER_EMAIL
@@ -93,7 +93,7 @@ async def test_get_current_user_with_cookie(client: AsyncClient, test_user: Test
 
     # Make request without Authorization header, relying on the cookie
     response = await client.get(
-        "/api/v1/auth/me",
+        "/api/v1/users/me",
         cookies={settings.ACCESS_TOKEN_COOKIE_NAME: token},
     )
     assert response.status_code == status.HTTP_200_OK
@@ -103,7 +103,7 @@ async def test_get_current_user_with_cookie(client: AsyncClient, test_user: Test
 
 async def test_get_current_user_no_auth(client: AsyncClient):
     """Test accessing a protected endpoint without any authentication."""
-    response = await client.get("/api/v1/auth/me")
+    response = await client.get("/api/v1/users/me")
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert "Not authenticated" in response.json()["detail"]
 
@@ -111,7 +111,7 @@ async def test_get_current_user_no_auth(client: AsyncClient):
 async def test_get_current_user_invalid_token(client: AsyncClient):
     """Test accessing a protected endpoint with an invalid token."""
     headers = {"Authorization": "Bearer invalidtoken"}
-    response = await client.get("/api/v1/auth/me", headers=headers)
+    response = await client.get("/api/v1/users/me", headers=headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert "Could not validate credentials" in response.json()["detail"]
 
@@ -125,7 +125,7 @@ async def test_logout(client: AsyncClient, auth_headers: dict):
     assert 'expires="Thu, 01 Jan 1970 00:00:00 GMT"' in logout_response.headers["set-cookie"]
 
     # Verify token is revoked
-    response = await client.get("/api/v1/auth/me", headers=auth_headers)
+    response = await client.get("/api/v1/users/me", headers=auth_headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
@@ -145,7 +145,7 @@ async def test_get_current_user_fails_closed_when_redis_unavailable(
 
     monkeypatch.setattr(redis_client, "sismember", boom)
 
-    response = await client.get("/api/v1/auth/me", headers=auth_headers)
+    response = await client.get("/api/v1/users/me", headers=auth_headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     body = response.json()
     assert body["detail"] == "Unable to verify token revocation"
@@ -345,7 +345,7 @@ async def test_email_verification_flow(mock_send_email, client: AsyncClient):
 async def test_update_user_profile(client: AsyncClient, auth_headers: dict):
     """Test updating the current user's profile."""
     update_data = {"full_name": "Test User Full Name", "bio": "This is my test bio."}
-    response = await client.put("/api/v1/auth/me", json=update_data, headers=auth_headers)
+    response = await client.put("/api/v1/users/me", json=update_data, headers=auth_headers)
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert data["full_name"] == "Test User Full Name"
@@ -356,7 +356,7 @@ async def test_update_user_profile(client: AsyncClient, auth_headers: dict):
 async def test_update_user_preferences(client: AsyncClient, auth_headers: dict):
     """Test updating user preferences."""
     preferences_data = {"preferences": {"theme": "dark", "language": "fr"}}
-    response = await client.put("/api/v1/auth/me/preferences", json=preferences_data, headers=auth_headers)
+    response = await client.put("/api/v1/users/me/preferences", json=preferences_data, headers=auth_headers)
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert data["preferences"]["theme"] == "dark"
@@ -366,7 +366,7 @@ async def test_update_user_preferences(client: AsyncClient, auth_headers: dict):
 async def test_get_login_history(client: AsyncClient, auth_headers: dict):
     """Test retrieving user login history."""
     # Note: A login happened in the fixture that created auth_headers
-    response = await client.get("/api/v1/auth/me/login-history", headers=auth_headers)
+    response = await client.get("/api/v1/users/me/login-history", headers=auth_headers)
     assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert isinstance(data, list)
@@ -458,7 +458,7 @@ async def test_redis_unavailability_on_auth(monkeypatch, client: AsyncClient, au
     monkeypatch.setattr("app.core.redis.redis_client", failing_redis, raising=False)
 
     try:
-        response = await client.get("/api/v1/auth/me", headers=auth_headers)
+        response = await client.get("/api/v1/users/me", headers=auth_headers)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         assert response.json()["detail"] == "Unable to verify token revocation"
         assert response.headers.get("www-authenticate") == "Bearer"

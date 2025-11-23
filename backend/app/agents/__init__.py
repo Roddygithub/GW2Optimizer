@@ -16,6 +16,7 @@ from app.agents.recommender_agent import RecommenderAgent
 from app.agents.synergy_agent import SynergyAgent
 from app.agents.optimizer_agent import OptimizerAgent
 from app.agents.meta_agent import MetaAgent
+from app.agents.analyst_agent import AnalystAgent
 
 __all__ = [
     "BaseAgent",
@@ -23,4 +24,5 @@ __all__ = [
     "SynergyAgent",
     "OptimizerAgent",
     "MetaAgent",
+    "AnalystAgent",
 ]

@@ -11,9 +11,9 @@ Guild Wars 2 build & team optimization platform pilotée par IA — alimentée p
 ## Quick start
 ```bash
 # Backend
-python -m venv .venv && source .venv/bin/activate
-pip install -r backend/requirements.txt -r backend/requirements-dev.txt
-uvicorn app.main:app --app-dir backend/app --host 0.0.0.0 --port 8000
+cd backend
+poetry install
+poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 # Frontend
 cp frontend/.env.development.example frontend/.env.development   # puis ajuster VITE_API_BASE_URL si besoin
@@ -21,9 +21,26 @@ npm --prefix frontend install
 npm --prefix frontend run dev
 
 # Tests
-pytest -q backend/tests
+cd backend
+poetry run pytest -q tests
 npm --prefix frontend test
 npm --prefix frontend run test:e2e   # optionnel (Playwright)
+```
+
+### Running backend tests locally
+
+> Note: une grande partie des tests backend s'appuie sur Redis (rate limiting, cache, revocation de tokens, etc.).
+> Si aucun Redis n'est disponible sur `localhost:6379`, ces tests seront **SKIPPED**.
+
+Pour exécuter la suite de tests complète en local :
+
+```bash
+# Démarrer Redis en local via Docker
+docker run -d -p 6379:6379 redis
+
+# Depuis le dossier backend, avec l'environnement Poetry configuré
+cd backend
+poetry run pytest
 ```
 
 ## Configuration backend (local par défaut)

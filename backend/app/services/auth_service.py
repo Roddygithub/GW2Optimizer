@@ -55,7 +55,7 @@ class AuthService:
 
         to_encode.update({"exp": expire, "type": "access", "iat": datetime.utcnow(), "sub": str(data.get("sub", ""))})
 
-        encoded_jwt: str = cast(str, jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm))
+        encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return encoded_jwt
 
     def create_refresh_token(self, data: dict[str, Any]) -> str:
@@ -71,7 +71,7 @@ class AuthService:
         to_encode = data.copy()
         expire = datetime.utcnow() + timedelta(days=self.refresh_token_expire)
         to_encode.update({"exp": expire, "type": "refresh", "iat": datetime.utcnow(), "sub": str(data.get("sub", ""))})
-        encoded_jwt: str = cast(str, jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm))
+        encoded_jwt = jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
         return encoded_jwt
 
     def decode_token(self, token: str) -> Optional[TokenData]:
@@ -133,7 +133,7 @@ class AuthService:
         """
         result = await db.execute(select(UserDB).where(UserDB.email == email))
         user = result.scalar_one_or_none()
-        return cast(Optional[UserDB], user)
+        return user
 
     async def get_user_by_id(self, db: AsyncSession, user_id: str) -> Optional[UserDB]:
         """
@@ -156,7 +156,7 @@ class AuthService:
             else:
                 logger.debug(f"Found user: {user.email} (ID: {user.id})")
 
-            return cast(Optional[UserDB], user)
+            return user
 
         except Exception as e:
             logger.error(f"Error in get_user_by_id for user_id {user_id}: {str(e)}", exc_info=True)
@@ -175,7 +175,7 @@ class AuthService:
         """
         result = await db.execute(select(UserDB).where(UserDB.username == username))
         user = result.scalar_one_or_none()
-        return cast(Optional[UserDB], user)
+        return user
 
     async def create_user(self, db: AsyncSession, user_create: UserCreate) -> UserDB:
         """

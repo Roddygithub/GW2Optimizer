@@ -17,13 +17,16 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt requirements-dev.txt ./
+# Copy Poetry configuration first for better caching
+COPY pyproject.toml poetry.lock ./
 
-# Install Python dependencies
+# Install Python dependencies with Poetry (no virtualenv inside container)
+# NOTE: use --no-root so Poetry does not try to install the current project
+# before the source code is copied into the image.
 RUN pip install --upgrade pip && \
-    pip install -r requirements.txt && \
-    pip install -r requirements-dev.txt
+    pip install poetry && \
+    poetry config virtualenvs.create false && \
+    poetry install --no-root
 
 # Copy application code
 COPY . .

@@ -29,7 +29,7 @@ except ImportError:
     logger.warning("⚠️ Prometheus instrumentator not available")
 
 try:
-    import sentry_sdk
+    import sentry_sdk  # type: ignore[import-not-found]
 
     SENTRY_AVAILABLE = True
 except ImportError:
@@ -50,6 +50,7 @@ from app.api import (
     teams,
     websocket_mcm,
     sentry_debug,
+    users,
 )
 import app.api.builds_history as builds_history
 from app.api.auth import limiter as auth_limiter
@@ -218,12 +219,15 @@ def include_routers(app: FastAPI) -> None:
 
     # Authentication routes (public)
     api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+    # User profile routes
+    api_router.include_router(users.router, prefix="/users", tags=["Users"])
 
     # Protected routes (require authentication)
-    from app.api import sync
+    from app.api import sync, ai_analysis
 
     api_router.include_router(sync.router, prefix="/sync", tags=["Sync"])
     api_router.include_router(ai.router, prefix="/ai", tags=["AI"])
+    api_router.include_router(ai_analysis.router, prefix="/ai", tags=["AI Analysis"])
     api_router.include_router(ai_feedback.router, prefix="/ai", tags=["AI Feedback"])
     api_router.include_router(ai_optimizer.router, prefix="/ai-optimizer", tags=["AI Optimizer"])
     # Mount builds_history before builds to ensure /history routes match before /{build_id}

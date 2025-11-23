@@ -1,66 +1,17 @@
-"""Database session management."""
+"""Database session management.
+
+Ce module fournit la dépendance `get_db` utilisée par les endpoints FastAPI.
+Il réutilise l'engine et la factory de sessions définis dans `app.db.base`,
+qui s'appuient déjà sur `settings.DATABASE_URL` (donc sur le `.env`).
+"""
 
 from __future__ import annotations
 
-import os
 from typing import AsyncGenerator
 
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.logging import logger
-from app.core.config import settings
-
-
-def _build_database_url() -> str:
-    """Construct the database URL with sensible fallbacks for non-Postgres environments."""
-
-    database_url = os.getenv("DATABASE_URL")
-    if database_url:
-        if database_url.startswith("postgres://"):
-            logger.warning("DATABASE_URL uses deprecated postgres:// prefix; updating to postgresql+asyncpg://")
-            database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
-        if not database_url.startswith("postgresql+"):
-            database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-        return database_url
-
-    required_vars = {"POSTGRES_USER", "POSTGRES_PASSWORD", "POSTGRES_HOST", "POSTGRES_DB"}
-    missing = sorted(var for var in required_vars if not os.getenv(var))
-
-    if missing:
-        if getattr(settings, "REQUIRE_POSTGRES", False):
-            raise RuntimeError("Missing required Postgres environment variables: " + ", ".join(missing))
-
-        logger.warning(
-            "Postgres environment variables missing (%s); falling back to SQLite for documentation/test builds.",
-            ", ".join(missing),
-        )
-        sqlite_path = os.getenv("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
-        return sqlite_path
-
-    user = os.getenv("POSTGRES_USER")
-    password = os.getenv("POSTGRES_PASSWORD")
-    host = os.getenv("POSTGRES_HOST")
-    port = os.getenv("POSTGRES_PORT", "5432")
-    db_name = os.getenv("POSTGRES_DB")
-
-    return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db_name}"
-
-
-DATABASE_URL = _build_database_url()
-
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=os.getenv("SQL_ECHO", "0") == "1",
-    future=True,
-)
-
-AsyncSessionLocal = async_sessionmaker(
-    engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autocommit=False,
-    autoflush=False,
-)
+from app.db.base import SessionLocal as AsyncSessionLocal
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:

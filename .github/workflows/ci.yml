@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  PYTHON_VERSION: '3.12'
+  PYTHON_VERSION: '3.11'
   NODE_VERSION: '20'
 
 concurrency:
@@ -51,11 +51,8 @@ jobs:
       - name: Run MyPy
         working-directory: backend
         run: |
-          # TODO: Fix mypy strict checks (38 unused-ignore/redundant-cast errors)
-          # Temporarily skipped to unblock observability work
-          # Track in issue: Fix mypy strict checks
-          echo "⚠️  MyPy temporarily skipped (non-critical type warnings)"
-          # poetry run mypy app/ --config-file=pyproject.toml --no-warn-unused-ignores --no-warn-redundant-casts
+          echo "Running MyPy static type checks"
+          poetry run mypy app/ --config-file=pyproject.toml --no-warn-unused-ignores --no-warn-redundant-casts
 
   test-backend:
     name: Test Backend

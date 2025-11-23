@@ -31,6 +31,8 @@ GW2Optimizer/
 - **builds.py**: Gestion des builds
 - **teams.py**: Compositions d'équipes
 - **learning.py**: Système d'apprentissage
+- **auth.py**: Authentification (JWT, login, register, tokens)
+- **users.py**: Gestion du profil utilisateur (`/me`, préférences, historique de connexion)
 
 ### Services Layer (`app/services/`)
 
@@ -64,8 +66,8 @@ GW2Optimizer/
 - **StatsPanel**: Statistiques d'apprentissage
 
 ### State Management
-- React Query pour les requêtes API
-- Local state avec useState
+- Axios + Zustand pour les requêtes API et l'état global
+- Local state avec useState pour les composants simples
 
 ## Learning Pipeline
 
@@ -110,10 +112,10 @@ Suppression automatique des données anciennes ou non performantes.
 - APScheduler (tâches planifiées)
 
 ### Frontend
-- React 18 + TypeScript
+- React 19 + TypeScript
 - Vite (build tool)
 - TailwindCSS (styling)
-- React Query (data fetching)
+- Axios + Zustand (data fetching & state management)
 
 ## Security
 

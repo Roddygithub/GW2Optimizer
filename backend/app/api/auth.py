@@ -5,19 +5,12 @@ This module handles user authentication, registration, and token management.
 It provides endpoints for user registration, email verification, login, token refresh, password reset, and user profile management.
 """
 
-from collections import defaultdict, deque
 from datetime import timedelta
-from functools import wraps
-import os
-import time
-from typing import Optional, Callable, Any, Awaitable, TypeVar, TypedDict, Literal, cast
-from typing_extensions import ParamSpec
+from typing import Optional, Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from app.core.config import settings
 from app.core.logging import logger
@@ -45,190 +38,15 @@ from app.models.token import Token
 from app.models.user import (
     UserCreate,
     UserOut,
-    UserUpdate,
-    UserPreferencesUpdate,
     PasswordReset,
-    LoginHistoryOut,
 )
 from app.services.user_service import UserService
 from app.services.email_service import send_password_reset_email, send_verification_email
+from app.api.auth_utils import rate_limit, limiter, _set_auth_cookie, _clear_auth_cookie
 
 router = APIRouter(tags=["Authentication"])
 
-
-def _is_testing() -> bool:
-    return bool(os.getenv("PYTEST_CURRENT_TEST"))
-
-
-def rate_limit_key(request: Request) -> str:
-    """Return a rate-limit key that isolates pytest runs from each other."""
-    if _is_testing():
-        current_test = os.getenv("PYTEST_CURRENT_TEST")
-        if current_test:
-            client_host = request.client.host if request.client else "unknown"
-            return f"{current_test}:{client_host}"
-    return cast(str, get_remote_address(request))
-
-
-limiter = Limiter(key_func=rate_limit_key, default_limits=[settings.DEFAULT_RATE_LIMIT])
-_test_rate_state: defaultdict[tuple[str, str], deque[float]] = defaultdict(deque)
-
-P = ParamSpec("P")
-R = TypeVar("R")
-
-
-def _parse_rate_limit(limit: str) -> tuple[int, float]:
-    try:
-        count_str, period = limit.split("/")
-        count = int(count_str)
-    except ValueError as exc:
-        raise ValueError(f"Invalid rate limit format: {limit}") from exc
-
-    period = period.strip().lower()
-    if period in {"second", "seconds"}:
-        window = 1.0
-    elif period in {"minute", "minutes"}:
-        window = 60.0
-    elif period in {"hour", "hours"}:
-        window = 3600.0
-    elif period in {"day", "days"}:
-        window = 86400.0
-    else:
-        raise ValueError(f"Unsupported rate limit period: {period}")
-
-    return count, window
-
-
-def rate_limit(limit: Optional[str]) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
-    if limit is None:
-        return lambda func: func
-
-    if _is_testing():
-        count, window = _parse_rate_limit(limit)
-
-        def decorator(func: Callable[P, Awaitable[R]]) -> Callable[P, Awaitable[R]]:
-            @wraps(func)
-            async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R | Any:
-                request: Optional[Request] = None
-                maybe_req: Any = kwargs.get("request")
-                if isinstance(maybe_req, Request):
-                    request = maybe_req
-                else:
-                    for arg in args:
-                        if isinstance(arg, Request):
-                            request = arg
-                            break
-
-                if request is None:
-                    return await func(*args, **kwargs)
-
-                key = (
-                    os.getenv("PYTEST_CURRENT_TEST", "unknown_test"),
-                    request.url.path,
-                )
-                now = time.monotonic()
-                bucket = _test_rate_state[key]
-
-                while bucket and now - bucket[0] >= window:
-                    bucket.popleft()
-
-                if len(bucket) >= count:
-                    raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Too Many Requests")
-
-                bucket.append(now)
-                return await func(*args, **kwargs)
-
-            return wrapper
-
-        return decorator
-
-    return cast(Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]], limiter.limit(limit))
-
-
-class CookieOptions(TypedDict, total=False):
-    httponly: bool
-    secure: bool
-    samesite: Literal["lax", "strict", "none"]
-    domain: str
-    max_age: int
-
-
-def _cookie_options(max_age: int | None = None) -> CookieOptions:
-    """Build standard cookie options based on settings."""
-
-    options: CookieOptions = {
-        "httponly": True,
-        "secure": settings.COOKIE_SECURE,
-        "samesite": cast(Literal["lax", "strict", "none"], settings.COOKIE_SAMESITE.lower()),
-    }
-
-    if settings.COOKIE_DOMAIN:
-        options["domain"] = settings.COOKIE_DOMAIN
-
-    if max_age is not None:
-        options["max_age"] = max_age
-    elif settings.COOKIE_MAX_AGE is not None:
-        options["max_age"] = settings.COOKIE_MAX_AGE
-
-    return options
-
-
-def _set_auth_cookie(response: Response, value: str, max_age: int | None) -> None:
-    """Apply standard auth cookie settings."""
-    samesite: Literal["lax", "strict", "none"] = cast(
-        Literal["lax", "strict", "none"], settings.COOKIE_SAMESITE.lower()
-    )
-    domain: Optional[str] = settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
-    effective_max_age: Optional[int] = max_age if max_age is not None else settings.COOKIE_MAX_AGE
-
-    response.set_cookie(
-        key=settings.ACCESS_TOKEN_COOKIE_NAME,
-        value=value,
-        httponly=True,
-        secure=settings.COOKIE_SECURE,
-        samesite=samesite,
-        domain=domain,
-        max_age=effective_max_age,
-    )
-
-
-def _clear_auth_cookie(response: Response) -> None:
-    """Clear the auth cookie using the configured options."""
-
-    options = _cookie_options(max_age=0)
-    cookie_parts: list[str] = [
-        f"{settings.ACCESS_TOKEN_COOKIE_NAME}=",
-        "Path=/",
-        'expires="Thu, 01 Jan 1970 00:00:00 GMT"',
-        "Max-Age=0",
-    ]
-
-    if options.pop("httponly", False):
-        cookie_parts.append("HttpOnly")
-
-    samesite = options.pop("samesite", None)
-    if isinstance(samesite, str) and samesite:
-        cookie_parts.append(f"SameSite={samesite.capitalize()}")
-
-    if options.pop("secure", False):
-        cookie_parts.append("Secure")
-
-    domain = options.pop("domain", None)
-    if isinstance(domain, str) and domain:
-        cookie_parts.append(f"Domain={domain}")
-
-    # max_age already captured above
-    options.pop("max_age", None)
-
-    existing_vary = response.headers.get("Vary")
-    if existing_vary:
-        vary_values = [value.strip() for value in existing_vary.split(",") if value.strip()]
-        if not any(value.lower() == "set-cookie" for value in vary_values):
-            vary_values.append("set-cookie")
-            response.headers["Vary"] = ", ".join(vary_values)
-    else:
-        response.headers["Vary"] = "set-cookie"
-    response.headers.append("set-cookie", "; ".join(cookie_parts))
+__all__ = ["router", "limiter"]
 
 
 # Password validation
@@ -236,7 +54,7 @@ def _clear_auth_cookie(response: Response) -> None:
 # The following endpoints handle user registration, email verification, login, and token refresh.
 
 
-@router.post(  # type: ignore[misc]
+@router.post(
     "/register",
     response_model=UserOut,
     status_code=status.HTTP_201_CREATED,
@@ -313,7 +131,7 @@ async def register(
     return user
 
 
-@router.get("/verify-email/{token}", status_code=status.HTTP_200_OK, summary="Verify user email")  # type: ignore[misc]
+@router.get("/verify-email/{token}", status_code=status.HTTP_200_OK, summary="Verify user email")
 async def verify_email(token: str, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     """
     Verify a user's email address using the token sent upon registration.
@@ -341,7 +159,7 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)) -> dict[s
     return {"msg": "Email verified successfully. You can now log in."}
 
 
-@router.post(  # type: ignore[misc]
+@router.post(
     "/token",
     response_model=Token,
     summary="Login for access token",
@@ -368,7 +186,7 @@ async def login_for_access_token(
         # Try as username
         user_by_username = await user_service.get_by_username(form_data.username)
         if user_by_username:
-            user = await user_service.authenticate_user(user_by_username.email, form_data.password)
+            user = await user_service.authenticate_user(str(user_by_username.email), form_data.password)
 
     if not user:
         # Handle failed attempt and potential account lock
@@ -429,7 +247,7 @@ async def login_for_access_token(
 
 
 # Alias for /token endpoint to support /login
-@router.post(  # type: ignore[misc]
+@router.post(
     "/login",
     response_model=Token,
     summary="Login for access token (alias)",
@@ -441,7 +259,7 @@ async def login_for_access_token(
         429: {"description": "Too many requests"},
     },
 )
-@limiter.limit(settings.LOGIN_RATE_LIMIT)  # type: ignore[misc]
+@limiter.limit(settings.LOGIN_RATE_LIMIT)
 async def login_alias(
     response: Response,
     request: Request,
@@ -449,10 +267,10 @@ async def login_alias(
     db: AsyncSession = Depends(get_db),
 ) -> Token:
     """Login endpoint alias - calls the same logic as /token."""
-    return cast(Token, await login_for_access_token(response, request, form_data, db))
+    return await login_for_access_token(response, request, form_data, db)
 
 
-@router.post(  # type: ignore[misc]
+@router.post(
     "/refresh",
     response_model=Token,
     summary="Refresh access token",
@@ -500,7 +318,7 @@ async def refresh_token(
     return Token(access_token=new_access_token, refresh_token=new_refresh_token, token_type="bearer")
 
 
-@router.post("/password-recovery/{email}", status_code=status.HTTP_202_ACCEPTED)  # type: ignore[misc]
+@router.post("/password-recovery/{email}", status_code=status.HTTP_202_ACCEPTED)
 @rate_limit(settings.PASSWORD_RECOVERY_RATE_LIMIT)
 async def recover_password(email: str, request: Request, db: AsyncSession = Depends(get_db)) -> dict[str, str]:
     """
@@ -518,7 +336,7 @@ async def recover_password(email: str, request: Request, db: AsyncSession = Depe
     return {"msg": "If an account with this email exists, a password recovery link has been sent."}
 
 
-@router.post("/reset-password/", status_code=status.HTTP_204_NO_CONTENT)  # type: ignore[misc]
+@router.post("/reset-password/", status_code=status.HTTP_204_NO_CONTENT)
 async def reset_password(
     body: PasswordReset,
     db: AsyncSession = Depends(get_db),
@@ -546,17 +364,17 @@ async def reset_password(
 
 
 @router.post("/password-reset", status_code=status.HTTP_200_OK)
-async def request_password_reset_simple(payload: dict) -> dict:
+async def request_password_reset_simple(payload: dict[str, Any]) -> dict[str, Any]:
     """Simple password reset request endpoint for tests."""
     return {"ok": True, "message": "Password reset email sent"}
 
 
 @router.post("/change-password", status_code=status.HTTP_200_OK)
 async def change_password(
-    payload: dict,
-    current_user: User = Depends(get_current_active_user),
+    payload: dict[str, Any],
     db: AsyncSession = Depends(get_db),
-) -> dict:
+    current_user: User = Depends(get_current_active_user),
+) -> dict[str, Any]:
     """Change password for authenticated user."""
     current_password = payload.get("current_password")
     new_password = payload.get("new_password")
@@ -564,108 +382,16 @@ async def change_password(
     if not current_password or not new_password:
         raise HTTPException(status_code=400, detail="Current and new passwords required")
     
-    if not verify_password(current_password, current_user.hashed_password):
+    if not verify_password(current_password, str(current_user.hashed_password)):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
     
-    current_user.hashed_password = get_password_hash(new_password)
+    current_user.hashed_password = get_password_hash(new_password)  # type: ignore[assignment]
     await db.commit()
     
     return {"ok": True, "message": "Password changed successfully"}
 
 
-@router.get(  # type: ignore[misc]
-    "/me",
-    response_model=UserOut,
-    summary="Get current user details",
-    description="Get details of the currently authenticated user.",
-    responses={
-        200: {"description": "Current user details"},
-        401: {"description": "Not authenticated"},
-    },
-)
-async def read_users_me(current_user: User = Depends(get_current_active_user)) -> UserOut:
-    """Get the currently authenticated user's details."""
-    return current_user
-
-
-@router.patch(  # type: ignore[misc]
-    "/me",
-    response_model=UserOut,
-    summary="Patch current user profile",
-    description="Partially update profile information for the authenticated user.",
-)
-async def patch_user_me(
-    update_data: UserUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-) -> UserOut:
-    """Partially update the current user's profile."""
-    
-    # Update only non-None fields
-    update_dict = update_data.model_dump(exclude_unset=True)
-    for field, value in update_dict.items():
-        if hasattr(current_user, field):
-            setattr(current_user, field, value)
-    
-    await db.commit()
-    await db.refresh(current_user)
-    
-    logger.info(f"User profile updated: {current_user.email}")
-    return current_user
-
-
-@router.put(  # type: ignore[misc]
-    "/me",
-    response_model=UserOut,
-    summary="Update current user profile",
-    description="Update profile information for the authenticated user.",
-)
-async def update_user_me(
-    update_data: UserUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-) -> UserOut:
-    user_service = UserService(db)
-    updated_user = await user_service.update_user(current_user, update_data.model_dump(exclude_unset=True))
-    return updated_user
-
-
-@router.put(  # type: ignore[misc]
-    "/me/preferences",
-    response_model=UserOut,
-    summary="Update user preferences",
-    description="Update preferences for the authenticated user.",
-)
-async def update_user_preferences(
-    preferences_update: UserPreferencesUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-) -> UserOut:
-    user_service = UserService(db)
-    updated_user = await user_service.update_preferences(current_user, preferences_update.preferences)
-    return updated_user
-
-
-@router.get(  # type: ignore[misc]
-    "/me/login-history",
-    response_model=list[LoginHistoryOut],
-    summary="Get recent login history",
-    description="Retrieve recent login attempts for the authenticated user.",
-)
-async def get_login_history(
-    request: Request,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
-) -> list[LoginHistoryOut]:
-    user_service = UserService(db)
-    history = await user_service.get_login_history(current_user)
-    if not history:
-        await user_service.log_login_history(current_user, request)
-        history = await user_service.get_login_history(current_user)
-    return [LoginHistoryOut.model_validate(h) for h in history]
-
-
-@router.post(  # type: ignore[misc]
+@router.post(
     "/logout",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Logout user",

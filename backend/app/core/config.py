@@ -8,7 +8,7 @@ from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseSettings):  # type: ignore[misc]
+class Settings(BaseSettings):
     """Application settings."""
 
     # Backend Configuration
@@ -114,7 +114,7 @@ class Settings(BaseSettings):  # type: ignore[misc]
     def is_production(self) -> bool:
         return self.ENVIRONMENT.lower() == "production"
 
-    @field_validator("SECRET_KEY")  # type: ignore[misc]
+    @field_validator("SECRET_KEY")
     @classmethod
     def validate_secret(cls, value: str) -> str:
         if not value or len(value.strip()) < 32:
@@ -123,7 +123,7 @@ class Settings(BaseSettings):  # type: ignore[misc]
             raise ValueError("SECRET_KEY must be replaced with a strong random value")
         return value
 
-    @model_validator(mode="before")  # type: ignore[misc]
+    @model_validator(mode="before")
     @classmethod
     def _hydrate_allowed_origins(cls, values: dict[str, Any]) -> dict[str, Any]:
         if values.get("ALLOWED_ORIGINS"):
@@ -141,7 +141,7 @@ class Settings(BaseSettings):  # type: ignore[misc]
         values["ALLOWED_ORIGINS"] = items
         return values
 
-    @field_validator("ALLOWED_ORIGINS", mode="before")  # type: ignore[misc]
+    @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
     def _coerce_origins(cls, value: Any) -> Any:
         if isinstance(value, str):
@@ -155,24 +155,30 @@ class Settings(BaseSettings):  # type: ignore[misc]
             return [str(item).strip("/") for item in value]
         return value
 
-    @field_validator("COOKIE_SAMESITE", mode="after")  # type: ignore[misc]
+    @field_validator("COOKIE_SAMESITE", mode="after")
     @classmethod
     def _normalize_samesite(cls, value: str) -> str:
         return (value or "lax").lower()
 
-    @model_validator(mode="after")  # type: ignore[misc]
+    @model_validator(mode="after")
     def _apply_environment_cookie_defaults(self) -> Self:
         if self.is_production:
             self.COOKIE_SECURE = True
             self.COOKIE_SAMESITE = "strict"
         return self
 
-    @model_validator(mode="after")  # type: ignore[misc]
+    @model_validator(mode="after")
     def _auto_disable_redis(self) -> Self:
         if self.REDIS_ENABLED and self.REDIS_URL:
+            if getattr(self, "TESTING", False):
+                return self
             try:
                 import redis
-                r = redis.from_url(self.REDIS_URL)
+                r = redis.from_url(  # type: ignore[no-untyped-call]
+                    self.REDIS_URL,
+                    socket_connect_timeout=1,
+                    socket_keepalive=True,
+                )
                 r.ping()
             except Exception:
                 self.REDIS_ENABLED = False
