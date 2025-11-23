@@ -64,8 +64,8 @@ const AiBuildLab: React.FC = () => {
     try {
       traitIdList = parseIds(traitIds, 'de traits');
       skillIdList = parseIds(skillIds, 'de skills');
-    } catch (parseError: any) {
-      setError(parseError?.message || 'Erreur dans les IDs fournis.');
+    } catch (parseError: unknown) {
+      setError(parseError instanceof Error ? parseError.message : 'Erreur dans les IDs fournis.');
       return;
     }
 
@@ -73,8 +73,8 @@ const AiBuildLab: React.FC = () => {
       setLoading(true);
       const data = await aiService.analyzeBuild(specIdValue, traitIdList, skillIdList, context);
       setResult(data);
-    } catch (err: any) {
-      const message = err?.response?.data?.detail || "Erreur lors de l'analyse du build.";
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || "Erreur lors de l'analyse du build.";
       setError(message);
     } finally {
       setLoading(false);

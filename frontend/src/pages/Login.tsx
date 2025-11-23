@@ -4,7 +4,7 @@ import { authService } from '../services/auth.service';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation() as any;
+  const location = useLocation() as { state?: { from?: { pathname: string } } };
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,8 +19,8 @@ const Login: React.FC = () => {
       await authService.login(identifier, password);
       const redirectTo = location.state?.from?.pathname || '/';
       navigate(redirectTo, { replace: true });
-    } catch (err: any) {
-      const message = err?.response?.data?.detail || 'Identifiants invalides ou erreur serveur.';
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Identifiants invalides ou erreur serveur.';
       setError(message);
     } finally {
       setLoading(false);

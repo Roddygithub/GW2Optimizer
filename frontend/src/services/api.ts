@@ -8,10 +8,8 @@ export const api = axios.create({
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = localStorage.getItem('access_token');
-  if (token) {
-    config.headers = (config.headers || {}) as any;
-    // Axios typings autorisent l'accès direct au header Authorization
-    (config.headers as any).Authorization = `Bearer ${token}`;
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });

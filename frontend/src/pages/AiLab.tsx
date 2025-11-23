@@ -22,8 +22,8 @@ const AiLab: React.FC = () => {
       setLoading(true);
       const data = await aiService.analyzeSkill(id, context);
       setResult(data);
-    } catch (err: any) {
-      const message = err?.response?.data?.detail || "Erreur lors de l'analyse du skill.";
+    } catch (err: unknown) {
+      const message = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || "Erreur lors de l'analyse du skill.";
       setError(message);
     } finally {
       setLoading(false);
