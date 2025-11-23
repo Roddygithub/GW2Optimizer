@@ -177,8 +177,8 @@ backend/
 │   ├── versions/
 │   └── env.py
 │
-├── requirements.txt               # Dependencies prod
-├── requirements-dev.txt           # Dependencies dev
+├── pyproject.toml                 # Dépendances (Poetry)
+├── poetry.lock                    # Verrouillage des versions
 ├── pytest.ini                     # Pytest config
 └── .env.example                   # Environment variables
 ```

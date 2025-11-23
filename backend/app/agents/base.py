@@ -139,8 +139,17 @@ class BaseAgent(ABC):
 
         except Exception as e:
             execution_time = (datetime.now() - start_time).total_seconds()
-            logger.error(f"Agent {self.name} execution failed after {execution_time:.2f}s: {str(e)}", exc_info=True)
-            return {"success": False, "agent": self.name, "execution_time": execution_time, "error": str(e)}
+            error_text = str(e) or repr(e)
+            logger.error(
+                f"Agent {self.name} execution failed after {execution_time:.2f}s: {error_text}",
+                exc_info=True,
+            )
+            return {
+                "success": False,
+                "agent": self.name,
+                "execution_time": execution_time,
+                "error": error_text,
+            }
 
     async def validate_inputs(self, inputs: Dict[str, Any]) -> None:
         """

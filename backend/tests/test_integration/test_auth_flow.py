@@ -53,7 +53,7 @@ class TestAuthenticationFlow:
         # Step 3: Access protected endpoint with token
         auth_headers = {"Authorization": f"Bearer {access_token}"}
 
-        me_response = await integration_client.get("/api/v1/auth/me", headers=auth_headers)
+        me_response = await integration_client.get("/api/v1/users/me", headers=auth_headers)
 
         assert me_response.status_code == status.HTTP_200_OK
         me_data = me_response.json()
@@ -102,7 +102,7 @@ class TestAuthenticationFlow:
 
     async def test_access_protected_endpoint_without_token(self, integration_client: AsyncClient):
         """Test accessing protected endpoint without token."""
-        response = await integration_client.get("/api/v1/auth/me")
+        response = await integration_client.get("/api/v1/users/me")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -110,7 +110,7 @@ class TestAuthenticationFlow:
         """Test accessing protected endpoint with invalid token."""
         invalid_headers = {"Authorization": "Bearer invalid_token_here"}
 
-        response = await integration_client.get("/api/v1/auth/me", headers=invalid_headers)
+        response = await integration_client.get("/api/v1/users/me", headers=invalid_headers)
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 

@@ -1,10 +1,6 @@
 """Test configuration."""
 
-import os
-from typing import Dict, Any
-
-from pydantic import PostgresDsn, validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class TestSettings(BaseSettings):
@@ -24,11 +20,12 @@ class TestSettings(BaseSettings):
     TEST_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     TEST_REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    class Config:
-        """Pydantic config."""
-
-        env_file = ".env.test"
-        case_sensitive = True
+    # Pydantic v2 settings config
+    model_config = SettingsConfigDict(
+        env_file=".env.test",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
 
 # Create test settings instance

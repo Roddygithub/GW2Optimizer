@@ -21,7 +21,7 @@ from app.core.logging import logger
 from app.services.user_service import UserService
 
 
-class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):  # type: ignore[misc]
+class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):
     """
     OAuth2PasswordBearer that can read the token from a cookie.
     """
@@ -47,7 +47,7 @@ class OAuth2PasswordBearerWithCookie(OAuth2PasswordBearer):  # type: ignore[misc
                         headers={"WWW-Authenticate": "Bearer"},
                     )
                 raise e
-        return cast(Optional[str], authorization)
+        return authorization
 
 
 oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl=f"{settings.API_V1_STR}/auth/token")
@@ -63,7 +63,7 @@ def create_access_token(subject: str | Any, expires_delta: timedelta | None = No
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode = {"exp": expire, "sub": str(subject), "jti": str(uuid.uuid4())}  # Add a unique identifier to the token
-    encoded_jwt: str = cast(str, jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM))
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 
@@ -78,7 +78,7 @@ def create_refresh_token(subject: str | Any) -> str:
         "type": "refresh",
         "jti": str(uuid.uuid4()),  # Add a unique identifier to the refresh token
     }
-    encoded_jwt: str = cast(str, jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM))
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 

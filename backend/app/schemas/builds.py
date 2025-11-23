@@ -9,14 +9,14 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-class BuildSuggestionCreate(BaseModel):  # type: ignore[misc]
+class BuildSuggestionCreate(BaseModel):
     """Payload for persisting a generated build suggestion."""
 
     build: Dict[str, Any] = Field(..., description="Build suggestion payload returned by the AI")
     explanation: Optional[str] = Field(None, description="Optional explanation provided by the AI")
 
 
-class BuildSuggestionOut(BaseModel):  # type: ignore[misc]
+class BuildSuggestionOut(BaseModel):
     """Serialized build suggestion entry."""
 
     id: UUID
@@ -29,7 +29,7 @@ class BuildSuggestionOut(BaseModel):  # type: ignore[misc]
         from_attributes = True
 
 
-class PaginatedBuildSuggestions(BaseModel):  # type: ignore[misc]
+class PaginatedBuildSuggestions(BaseModel):
     """Paginated list of build suggestions."""
 
     items: List[BuildSuggestionOut]

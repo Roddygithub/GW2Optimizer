@@ -15,6 +15,10 @@ import httpx
 from app.core.logging import logger
 
 
+class Gw2ApiError(Exception):
+    pass
+
+
 class GW2APIClient:
     """
     Client pour l'API officielle Guild Wars 2.
@@ -176,6 +180,20 @@ class GW2APIClient:
         """
         return await self._request(f"skills/{skill_id}")
 
+    async def get_skill_details(self, skill_id: int) -> Optional[Dict[str, Any]]:
+        try:
+            return await self.get_skill(skill_id)
+        except httpx.HTTPStatusError as exc:
+            status_code = exc.response.status_code if exc.response is not None else None
+            if status_code == 404:
+                logger.warning(f"Skill not found in GW2 API: {skill_id}")
+                return None
+            logger.error(f"GW2 API returned error for skill {skill_id}: {exc}")
+            raise Gw2ApiError(f"Failed to fetch skill {skill_id}") from exc
+        except httpx.HTTPError as exc:
+            logger.error(f"GW2 API request failed for skill {skill_id}: {exc}")
+            raise Gw2ApiError(f"Failed to fetch skill {skill_id}") from exc
+
     # ==================== Traits ====================
 
     async def get_traits(self, trait_ids: Optional[List[int]] = None) -> List[Dict[str, Any]]:
@@ -207,6 +225,25 @@ class GW2APIClient:
         """
         return await self._request(f"traits/{trait_id}")
 
+    async def get_trait_details(self, trait_id: int) -> Optional[Dict[str, Any]]:
+        """Récupère les détails d'un trait avec gestion des erreurs.
+
+        Renvoie None si le trait n'existe pas (404), sinon lève Gw2ApiError
+        pour les autres erreurs réseau.
+        """
+        try:
+            return await self.get_trait(trait_id)
+        except httpx.HTTPStatusError as exc:  # type: ignore[reportGeneralTypeIssues]
+            status_code = exc.response.status_code if exc.response is not None else None
+            if status_code == 404:
+                logger.warning(f"Trait not found in GW2 API: {trait_id}")
+                return None
+            logger.error(f"GW2 API returned error for trait {trait_id}: {exc}")
+            raise Gw2ApiError(f"Failed to fetch trait {trait_id}") from exc
+        except httpx.HTTPError as exc:  # type: ignore[reportGeneralTypeIssues]
+            logger.error(f"GW2 API request failed for trait {trait_id}: {exc}")
+            raise Gw2ApiError(f"Failed to fetch trait {trait_id}") from exc
+
     # ==================== Specializations ====================
 
     async def get_specializations(self, spec_ids: Optional[List[int]] = None) -> List[Dict[str, Any]]:
@@ -237,6 +274,25 @@ class GW2APIClient:
             Détails de la spécialisation
         """
         return await self._request(f"specializations/{spec_id}")
+
+    async def get_specialization_details(self, spec_id: int) -> Optional[Dict[str, Any]]:
+        """Récupère les détails d'une spécialisation avec gestion des erreurs.
+
+        Renvoie None si la spécialisation n'existe pas (404), sinon lève
+        Gw2ApiError pour les autres erreurs réseau.
+        """
+        try:
+            return await self.get_specialization(spec_id)
+        except httpx.HTTPStatusError as exc:  # type: ignore[reportGeneralTypeIssues]
+            status_code = exc.response.status_code if exc.response is not None else None
+            if status_code == 404:
+                logger.warning(f"Specialization not found in GW2 API: {spec_id}")
+                return None
+            logger.error(f"GW2 API returned error for specialization {spec_id}: {exc}")
+            raise Gw2ApiError(f"Failed to fetch specialization {spec_id}") from exc
+        except httpx.HTTPError as exc:  # type: ignore[reportGeneralTypeIssues]
+            logger.error(f"GW2 API request failed for specialization {spec_id}: {exc}")
+            raise Gw2ApiError(f"Failed to fetch specialization {spec_id}") from exc
 
     # ==================== Items ====================
 

@@ -1,6 +1,7 @@
 """Ollama service for AI interactions."""
 
 import json
+import re
 import time
 from typing import Any, Dict, List, Optional
 
@@ -48,17 +49,51 @@ class OllamaService:
         Returns:
             Generated text
         """
+        messages = []
+
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+
+        messages.append({"role": "user", "content": prompt})
+
+        chat_payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False,
+            "options": {
+                "temperature": temperature,
+                "num_predict": max_tokens,
+            },
+        }
+
+        # Essayer d'abord l'endpoint /api/chat (Ollama récents)
         try:
-            messages = []
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(f"{self.host}/api/chat", json=chat_payload)
+                response.raise_for_status()
+                data = response.json()
+                content = data.get("message", {}).get("content", "")
+                if content:
+                    return content
+        except httpx.HTTPStatusError as e:
+            if e.response is not None and e.response.status_code == 404:
+                logger.warning("Ollama /api/chat returned 404, falling back to /api/generate")
+            else:
+                logger.error(f"Ollama /api/chat error: {e}")
+                raise
+        except Exception as e:
+            logger.error(f"Error generating with Ollama via /api/chat: {e}")
+            raise
 
+        # Fallback: utiliser /api/generate (anciennes versions d'Ollama)
+        try:
+            full_prompt = prompt
             if system_prompt:
-                messages.append({"role": "system", "content": system_prompt})
+                full_prompt = f"{system_prompt}\n\n{prompt}"
 
-            messages.append({"role": "user", "content": prompt})
-
-            payload = {
+            generate_payload = {
                 "model": self.model,
-                "messages": messages,
+                "prompt": full_prompt,
                 "stream": False,
                 "options": {
                     "temperature": temperature,
@@ -67,24 +102,41 @@ class OllamaService:
             }
 
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    f"{self.host}/api/chat",
-                    json=payload,
-                )
+                response = await client.post(f"{self.host}/api/generate", json=generate_payload)
                 response.raise_for_status()
-
                 data = response.json()
-                return data.get("message", {}).get("content", "")
-
+                return data.get("response", "")
         except Exception as e:
-            logger.error(f"Error generating with Ollama: {e}")
+            logger.error(f"Error generating with Ollama via /api/generate: {e}")
             raise
+
+    def _clean_json_string(self, text: str) -> str:
+        """Extract the first JSON object from a text blob, if possible.
+
+        This is useful when the model wraps JSON in markdown (```json ... ```)
+        or adds explanatory text around the JSON. If no object is found,
+        returns the original text.
+        """
+
+        # Remove common markdown fences first to simplify the text
+        cleaned = text.strip()
+        if "```json" in cleaned:
+            cleaned = cleaned.split("```json", 1)[1]
+        if "```" in cleaned:
+            cleaned = cleaned.split("```", 1)[0]
+
+        # Try to extract the first {...} block
+        match = re.search(r"\{.*\}", cleaned, re.DOTALL)
+        if match:
+            return match.group(0)
+        return cleaned
 
     async def generate_structured(
         self,
         prompt: str,
         system_prompt: Optional[str] = None,
         schema: Optional[Dict[str, Any]] = None,
+        max_tokens: int = 512,
     ) -> Dict[str, Any]:
         """
         Generate structured JSON response.
@@ -103,24 +155,28 @@ class OllamaService:
         else:
             full_system += "\n\nRespond with valid JSON only, no additional text."
 
-        response = await self.generate(
+        raw_response = await self.generate(
             prompt=prompt,
             system_prompt=full_system,
             temperature=0.3,  # Lower temperature for structured output
+            max_tokens=max_tokens,
         )
 
+        # First attempt: direct JSON parse
+        candidate = raw_response.strip()
         try:
-            # Try to extract JSON from response
-            response = response.strip()
-            if "```json" in response:
-                response = response.split("```json")[1].split("```")[0]
-            elif "```" in response:
-                response = response.split("```")[1].split("```")[0]
-
-            return json.loads(response)
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse JSON response: {e}\nResponse: {response}")
-            raise ValueError(f"Failed to parse JSON response: {e}")
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            # Second attempt: extract the first JSON object from the text
+            cleaned = self._clean_json_string(candidate)
+            try:
+                return json.loads(cleaned)
+            except json.JSONDecodeError as e:
+                logger.error(
+                    f"Failed to parse JSON response after cleaning: {e}\n"
+                    f"Raw response: {raw_response}\nCleaned candidate: {cleaned}"
+                )
+                raise ValueError(f"Failed to parse JSON response: {e}")
 
     async def chat(
         self,

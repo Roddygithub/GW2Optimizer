@@ -56,7 +56,8 @@ backend/
 │       └── utils/        # Utilitaires
 ├── alembic/              # Migrations
 ├── tests/                # Tests unitaires
-└── requirements.txt      # Dépendances
+├── pyproject.toml        # Dépendances (Poetry)
+└── poetry.lock           # Verrouillage des versions
 ```
 
 ---
@@ -74,7 +75,7 @@ backend/
 
 ```bash
 cd backend
-pip install -r requirements.txt
+poetry install
 ```
 
 ### Configuration de la base de données
@@ -94,10 +95,11 @@ alembic upgrade head
 
 ```bash
 # Mode développement
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+cd backend
+poetry run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# Mode production
-gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker
+# Mode production (exemple)
+poetry run gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker
 ```
 
 ---
@@ -759,9 +761,16 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copier la configuration Poetry
+COPY pyproject.toml poetry.lock ./
 
+# Installer les dépendances avec Poetry (sans virtualenv dédié)
+RUN pip install --upgrade pip \
+    && pip install poetry \
+    && poetry config virtualenvs.create false \
+    && poetry install --only main
+
+# Copier le code applicatif
 COPY . .
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

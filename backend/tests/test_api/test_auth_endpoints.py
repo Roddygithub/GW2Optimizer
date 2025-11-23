@@ -188,7 +188,7 @@ class TestAuthProfile:
     @pytest.mark.asyncio
     async def test_get_current_user(self, client: AsyncClient, auth_headers, test_user):
         """Test getting current user profile."""
-        response = await client.get("/api/v1/auth/me", headers=auth_headers)
+        response = await client.get("/api/v1/users/me", headers=auth_headers)
         
         assert response.status_code == 200
         data = response.json()
@@ -199,7 +199,7 @@ class TestAuthProfile:
     @pytest.mark.asyncio
     async def test_get_current_user_unauthorized(self, client: AsyncClient):
         """Test getting profile without auth fails."""
-        response = await client.get("/api/v1/auth/me")
+        response = await client.get("/api/v1/users/me")
         
         assert response.status_code == 401
 
@@ -207,7 +207,7 @@ class TestAuthProfile:
     async def test_get_current_user_invalid_token(self, client: AsyncClient):
         """Test getting profile with invalid token fails."""
         response = await client.get(
-            "/api/v1/auth/me",
+            "/api/v1/users/me",
             headers={"Authorization": "Bearer invalid_token"},
         )
         
@@ -217,7 +217,7 @@ class TestAuthProfile:
     async def test_update_user_profile(self, client: AsyncClient, auth_headers, test_user):
         """Test updating user profile."""
         response = await client.patch(
-            "/api/v1/auth/me",
+            "/api/v1/users/me",
             headers=auth_headers,
             json={"preferences": {"theme": "dark", "language": "en"}},
         )
@@ -309,7 +309,7 @@ class TestTokenRefresh:
         
         # Use token to access protected endpoint
         response = await client.get(
-            "/api/v1/auth/me",
+            "/api/v1/users/me",
             headers={"Authorization": f"Bearer {access_token}"},
         )
         

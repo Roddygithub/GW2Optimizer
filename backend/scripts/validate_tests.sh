@@ -65,9 +65,9 @@ echo "⚙️  Vérification de la configuration..."
 test -f "pytest.ini"
 check "pytest.ini"
 
-# 4. Vérifier requirements-dev.txt
-test -f "requirements-dev.txt"
-check "requirements-dev.txt"
+# 4. Vérifier la configuration Poetry (pyproject.toml)
+test -f "pyproject.toml"
+check "pyproject.toml (Poetry)"
 
 # 5. Vérifier que pytest est installé
 echo ""

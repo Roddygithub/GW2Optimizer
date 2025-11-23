@@ -15,6 +15,14 @@ pytestmark = pytest.mark.asyncio
 class TestBuildService:
     """Test suite for BuildService."""
 
+    async def test_list_user_builds_empty(self, db_session: AsyncSession, test_user: UserDB) -> None:
+        """list_user_builds should return an empty list when user has no builds."""
+        service = BuildService(db_session)
+
+        builds = await service.list_user_builds(test_user)
+
+        assert builds == []
+
     async def test_create_build_success(self, db_session: AsyncSession, test_user: UserDB, sample_build_data: dict):
         """Test successful build creation."""
         service = BuildService(db_session)
