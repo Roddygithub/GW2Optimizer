@@ -4,7 +4,6 @@ This module handles operations related to the current authenticated user:
 profile, preferences, and login history.
 """
 
-from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -6,7 +6,7 @@ It provides endpoints for user registration, email verification, login, token re
 """
 
 from datetime import timedelta
-from typing import Optional, Any, cast
+from typing import Optional, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm

@@ -1,7 +1,7 @@
 """Authentication service."""
 
 from datetime import datetime, timedelta
-from typing import Optional, Any, cast
+from typing import Optional, Any
 
 import jwt
 from passlib.context import CryptContext
