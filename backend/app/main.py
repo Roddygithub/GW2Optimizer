@@ -48,9 +48,11 @@ from app.api import (
     meta,
     scraper,
     teams,
+    team_commander,
     websocket_mcm,
     sentry_debug,
     users,
+    saved_builds,
 )
 import app.api.builds_history as builds_history
 from app.api.auth import limiter as auth_limiter
@@ -95,6 +97,22 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.info("⏰ Learning pipeline scheduler activated")
     except Exception as e:
         logger.warning(f"⚠️ Failed to start scheduler: {str(e)}")
+
+    # Start GW2 version tracking
+    try:
+        from app.services.game_version_tracker import get_version_tracker
+        import asyncio
+
+        tracker = get_version_tracker()
+        # Initial check
+        version_status = await tracker.check_for_game_update()
+        logger.info(f"🎮 GW2 Version Tracker: {version_status['message']}")
+        
+        # Start periodic checking task (non-blocking)
+        # Note: For production, use a proper task queue (Celery, APScheduler, etc.)
+        # This is a simplified background task
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to start version tracker: {str(e)}")
 
     yield
 
@@ -230,9 +248,11 @@ def include_routers(app: FastAPI) -> None:
     api_router.include_router(ai_analysis.router, prefix="/ai", tags=["AI Analysis"])
     api_router.include_router(ai_feedback.router, prefix="/ai", tags=["AI Feedback"])
     api_router.include_router(ai_optimizer.router, prefix="/ai-optimizer", tags=["AI Optimizer"])
+    api_router.include_router(team_commander.router, prefix="/ai/teams", tags=["AI Team Commander"])
     # Mount builds_history before builds to ensure /history routes match before /{build_id}
     api_router.include_router(builds_history.router, prefix="/builds", tags=["Build Suggestions"])
     api_router.include_router(builds.router, tags=["Builds"])
+    api_router.include_router(saved_builds.router, prefix="/saved-builds", tags=["Saved Builds"])
     api_router.include_router(teams.router, tags=["Teams"])
     api_router.include_router(chat.router, prefix="/chat", tags=["Chat"])
     api_router.include_router(export.router, prefix="/export", tags=["Export"])

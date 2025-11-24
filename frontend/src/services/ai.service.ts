@@ -19,6 +19,26 @@ export interface BuildAnalysisResult {
   [key: string]: unknown;
 }
 
+export interface UrlAnalysisResult {
+  source: {
+    url: string;
+    name?: string | null;
+    context?: string | null;
+    chat_code?: string | null;
+    stats_text?: string | null;
+    runes_text?: string | null;
+    [key: string]: unknown;
+  };
+  decoded: {
+    specialization_id?: number;
+    trait_ids?: number[];
+    skill_ids?: number[];
+    [key: string]: unknown;
+  };
+  analysis: BuildAnalysisResult;
+  [key: string]: unknown;
+}
+
 class AiService {
   async analyzeSkill(skillId: number, context: string = 'WvW Zerg'): Promise<SkillAnalysisResult> {
     const { data } = await api.post<SkillAnalysisResult>('/ai/analyze/skill', {
@@ -45,6 +65,12 @@ class AiService {
     }
 
     const { data } = await api.post<BuildAnalysisResult>('/ai/analyze/build', payload);
+    return data;
+  }
+
+  async analyzeUrl(url: string, context: string = 'WvW Zerg'): Promise<UrlAnalysisResult> {
+    const payload = { url, context };
+    const { data } = await api.post<UrlAnalysisResult>('/ai/analyze/url', payload);
     return data;
   }
 }

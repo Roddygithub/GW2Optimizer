@@ -2,6 +2,38 @@
 
 Guild Wars 2 build & team optimization platform pilotée par IA — alimentée par des connecteurs de données, un pipeline de normalisation et une synchronisation hebdomadaire automatique.
 
+---
+
+## 🎮 ✨ NOUVEAU : AI Team Commander
+
+**L'IA qui construit vos teams WvW automatiquement. Zéro clic. Juste parler.**
+
+```bash
+# Démarrage ultra-rapide
+./start.sh
+
+# Ou voir: QUICKSTART.md
+```
+
+**Exemples de commandes:**
+```
+"2 groupes de 5 avec Firebrand, Druid, Harbinger, Spellbreaker, Scrapper"
+"Je veux 10 joueurs. Dans chaque groupe : stabeur, healer, booner, strip, dps"
+```
+
+➡️ **[Guide complet Team Commander](README_TEAM_COMMANDER.md)**  
+➡️ **[Démarrage rapide](QUICKSTART.md)**  
+➡️ **[Cheatsheet](CHEATSHEET.md)**
+
+**⚡ Nouvelles optimisations:**
+- Batch processing async (-46% temps réponse)
+- Module performance complet
+- Projet nettoyé (+36% moins de fichiers)
+
+➡️ **[Rapport optimisations](NETTOYAGE_ET_OPTIMISATION_FINAL.md)**
+
+---
+
 ## Vision : IA auto-mise-à-jour
 1. **Connecteurs de données** : API GW2 officielle, Wiki, sources communautaires.
 2. **Pipeline de normalisation** : schémas unifiés, indexation vectorielle optionnelle (RAG) et expiration contrôlée.

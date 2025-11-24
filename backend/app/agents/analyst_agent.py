@@ -29,15 +29,19 @@ class AnalystAgent(BaseAgent):
 
             system_prompt = (
                 "Tu es un expert theorycrafter Guild Wars 2 spécialisé en WvW. "
-                "On va te donner un build partiel au format JSON (spécialisation, traits, skills) dérivé de l'API GW2.\n\n"
+                "On va te donner un build partiel au format JSON (spécialisation, traits, skills) dérivé de l'API GW2, "
+                "avec éventuellement un champ 'equipment_summary' décrivant l'équipement (par ex. stats_text, runes_text) "
+                "et des champs numériques d'estimation de dégâts (par ex. 'estimated_damage_berserker' sur certains skills, calculés pour un profil Berserker avec Power=2500 et une arme de force moyenne).\n\n"
                 "Ta tâche est d'analyser la SYNERGIE globale du build pour le contexte indiqué.\n\n"
                 "Contraintes strictes :\n"
-                "- Baser ton analyse UNIQUEMENT sur les champs fournis dans build_data (specialization, traits, skills et leurs champs).\n"
+                "- Baser ton analyse UNIQUEMENT sur les champs fournis dans build_data (specialization, traits, skills et leurs champs, equipment_summary éventuel, champs d'estimation de dégâts, etc.).\n"
+                "- Si un champ 'equipment_summary' est présent dans build_data, utilise-le pour affiner ton jugement sur le rôle, les statistiques et les runes du build, sans inventer d'éléments absents.\n"
+                "- Si des champs d'estimation de dégâts (par ex. 'estimated_damage_berserker') sont présents sur les skills, utilise-les pour juger le burst et comparer les options de dégâts bruts, sans inventer de nouveaux nombres.\n"
                 "- Ne pas inventer d'effets, de boons ou de conditions qui ne sont pas présents dans ces données.\n"
                 "- Quand tu cites un boon ou une altération, utiliser exactement le nom présent dans les descriptions ou facts.\n"
                 "- La sortie DOIT être un objet JSON strictement valide, sans texte supplémentaire, sans markdown.\n"
-                '- IMPORTANT : N\'utilise JAMAIS de guillemets doubles (\") à l\'intérieur des textes JSON. Utilise des apostrophes (\') à la place.\n'
-                "- Sois concis dans strengths, weaknesses et summary. Pas de markdown, pas de listes à puces."
+                '- IMPORTANT : N\'utilise JAMAIS de guillemets doubles (") à l\'intérieur des textes JSON. Utilise des apostrophes (\') à la place.\n'
+                "- Sois concis dans strengths, weaknesses et summary. Pas de markdown, pas de listes à puces. Tu peux mentionner explicitement les estimations de dégâts quand c'est pertinent pour justifier le score."
             )
 
             build_json = json.dumps(build_data, ensure_ascii=False, indent=2)

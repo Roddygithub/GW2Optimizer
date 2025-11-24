@@ -13,3 +13,6 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   }
   return config;
 });
+
+// Export services
+export { teamCommanderApi } from './teamCommander.service';
