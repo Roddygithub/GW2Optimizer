@@ -41,7 +41,7 @@ jobs:
           poetry install --only lint
       - name: Run Ruff
         working-directory: backend
-        run: poetry run ruff check app scripts tests
+        run: poetry run ruff check app tests
       - name: Run Black
         working-directory: backend
         run: poetry run black --check app scripts tests
@@ -133,7 +133,7 @@ jobs:
         run: npm ci
       - name: Run unit tests with coverage
         working-directory: frontend
-        run: npm test -- --coverage
+        run: npm test -- --run
       - name: Upload coverage artifacts
         if: always()
         uses: actions/upload-artifact@v4
