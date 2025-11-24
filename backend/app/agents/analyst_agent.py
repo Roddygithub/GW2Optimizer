@@ -245,7 +245,7 @@ class AnalystAgent(BaseAgent):
         # Supporter les réponses multi-lignes : on cherche la dernière ligne non vide
         # qui ressemble à une ligne de données (au moins 2 séparateurs '|').
         stripped = raw_text.strip()
-        lines = [l.strip() for l in stripped.splitlines() if l.strip()] if stripped else []
+        lines = [line.strip() for line in stripped.splitlines() if line.strip()] if stripped else []
         selected_index: int | None = None
         if lines:
             # Indices des lignes candidates (>= 2 séparateurs '|')

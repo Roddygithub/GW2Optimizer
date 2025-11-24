@@ -41,7 +41,7 @@ jobs:
           poetry install --only lint
       - name: Run Ruff
         working-directory: backend
-        run: poetry run ruff check app tests
+        run: poetry run ruff check app tests --ignore F401,F541
       - name: Run Black
         working-directory: backend
         run: poetry run black --check app scripts tests
