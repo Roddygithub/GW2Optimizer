@@ -36,13 +36,20 @@ def test_create_access_token_with_custom_expiration() -> None:
     subject = "test@example.com"
     expires_delta = timedelta(minutes=10)
 
+    # Capture le temps avant la création du token
+    before_creation = int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds())
     token = create_access_token(subject=subject, expires_delta=expires_delta)
+    after_creation = int((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds())
 
     decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
 
     # L'expiration doit être dans le futur (par rapport à maintenant)
-    now_ts = int(datetime.utcnow().timestamp())
-    assert decoded["exp"] > now_ts
+    assert decoded["exp"] > after_creation
 
-    # Et ne doit pas être démesurément loin (<= +20 minutes pour tolérer la latence)
-    assert decoded["exp"] <= now_ts + 20 * 60
+    # Vérifie que l'expiration est proche de ce qui est attendu (10 minutes)
+    # avec une tolérance de 2 minutes pour la latence du système
+    expected_min = before_creation + 8 * 60  # 8 minutes minimum
+    expected_max = before_creation + 12 * 60  # 12 minutes maximum
+    
+    assert decoded["exp"] >= expected_min, f"Token expires too early: {decoded['exp']} vs expected min {expected_min}"
+    assert decoded["exp"] <= expected_max, f"Token expires too late: {decoded['exp']} vs expected max {expected_max}"
