@@ -86,6 +86,12 @@ services:
     restart: unless-stopped
     networks:
       - gw2optimizer-network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U gw2user -d gw2optimizer"]
       interval: 10s
@@ -102,6 +108,11 @@ services:
     restart: unless-stopped
     networks:
       - gw2optimizer-network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -126,6 +137,12 @@ services:
     restart: unless-stopped
     networks:
       - gw2optimizer-network
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /prometheus/wal
     depends_on:
       - backend
 
@@ -146,6 +163,12 @@ services:
     restart: unless-stopped
     networks:
       - gw2optimizer-network
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /var/lib/grafana/sessions
+      - /var/lib/grafana/logs
     depends_on:
       - prometheus
 
