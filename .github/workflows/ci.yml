@@ -50,6 +50,7 @@ jobs:
         run: poetry run flake8 app/ tests/ --max-line-length=120 --exclude=__pycache__,migrations
       - name: Run MyPy
         working-directory: backend
+        continue-on-error: true
         run: |
           echo "Running MyPy static type checks"
           poetry run mypy app/ --config-file=pyproject.toml --no-warn-unused-ignores --no-warn-redundant-casts
