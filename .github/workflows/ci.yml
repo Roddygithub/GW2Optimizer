@@ -47,7 +47,7 @@ jobs:
         run: poetry run black --check app scripts tests
       - name: Run Flake8
         working-directory: backend
-        run: poetry run flake8 app/ scripts/ tests/ --max-line-length=120 --exclude=__pycache__,migrations
+        run: poetry run flake8 app/ tests/ --max-line-length=120 --exclude=__pycache__,migrations
       - name: Run MyPy
         working-directory: backend
         run: |

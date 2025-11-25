@@ -243,4 +243,3 @@ async def decode_chat_code(code: str) -> Dict[str, Any]:
 
     decoder = ChatCodeDecoder()
     return await decoder.decode_build(code)
-

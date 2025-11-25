@@ -6,6 +6,7 @@ from ..modifiers.conditions import TargetHealthCondition, TargetHasConditionChec
 
 # ==================== RUNES ====================
 
+
 def create_scholar_runes() -> List[Modifier]:
     """Rune of the Scholar: +25 Power, +35 Ferocity, ..., +10% damage above 90% health."""
     return [
@@ -23,6 +24,7 @@ def create_scholar_runes() -> List[Modifier]:
         ),
     ]
 
+
 def create_eagle_runes() -> List[Modifier]:
     """Rune of the Eagle: Power + Precision + Ferocity bonuses."""
     return [
@@ -33,6 +35,7 @@ def create_eagle_runes() -> List[Modifier]:
         Modifier("Eagle (5)", "Rune: Eagle", ModifierType.FLAT_STAT, 100, target_stat="ferocity"),
         Modifier("Eagle (6)", "Rune: Eagle", ModifierType.FLAT_STAT, 175, target_stat="ferocity"),
     ]
+
 
 def create_nightmare_runes() -> List[Modifier]:
     """Rune of the Nightmare: Condi damage + duration."""
@@ -45,6 +48,7 @@ def create_nightmare_runes() -> List[Modifier]:
         Modifier("Nightmare (6)", "Rune: Nightmare", ModifierType.CONDITION_DURATION, 0.15),
     ]
 
+
 def create_durability_runes() -> List[Modifier]:
     """Rune of Durability: Toughness + Vitality for survivability (WvW Tank/Support)."""
     return [
@@ -55,6 +59,7 @@ def create_durability_runes() -> List[Modifier]:
         Modifier("Durability (5)", "Rune: Durability", ModifierType.FLAT_STAT, 100, target_stat="toughness"),
         Modifier("Durability (6)", "Rune: Durability", ModifierType.FLAT_STAT, 125, target_stat="vitality"),
     ]
+
 
 def create_hoelbrak_runes() -> List[Modifier]:
     """Rune of Hoelbrak: Power + Ferocity for balanced DPS (WvW alternative to Scholar)."""
@@ -67,6 +72,7 @@ def create_hoelbrak_runes() -> List[Modifier]:
         Modifier("Hoelbrak (6)", "Rune: Hoelbrak", ModifierType.FLAT_STAT, 100, target_stat="ferocity"),
     ]
 
+
 def create_ogre_runes() -> List[Modifier]:
     """Rune of the Ogre: All-around defensive stats (WvW bruiser)."""
     return [
@@ -77,6 +83,7 @@ def create_ogre_runes() -> List[Modifier]:
         Modifier("Ogre (5)", "Rune: Ogre", ModifierType.FLAT_STAT, 100, target_stat="vitality"),
         Modifier("Ogre (6)", "Rune: Ogre", ModifierType.BOON_DURATION, 0.20),  # +20% boon duration
     ]
+
 
 def create_monk_runes() -> List[Modifier]:
     """Rune of the Monk: Healing Power for WvW healers/support."""
@@ -89,6 +96,7 @@ def create_monk_runes() -> List[Modifier]:
         Modifier("Monk (6)", "Rune: Monk", ModifierType.OUTGOING_HEALING, 0.10),  # +10% outgoing healing
     ]
 
+
 def create_water_runes() -> List[Modifier]:
     """Rune of the Water: Healing Power + regen on crit (WvW support/hybrid)."""
     return [
@@ -100,6 +108,7 @@ def create_water_runes() -> List[Modifier]:
         Modifier("Water (6)", "Rune: Water", ModifierType.OUTGOING_HEALING, 0.15),  # +15% heal to others
     ]
 
+
 def create_strength_runes() -> List[Modifier]:
     """Rune of Strength: Might duration and power (WvW might stacking)."""
     return [
@@ -110,6 +119,7 @@ def create_strength_runes() -> List[Modifier]:
         Modifier("Strength (5)", "Rune: Strength", ModifierType.FLAT_STAT, 100, target_stat="power"),
         Modifier("Strength (6)", "Rune: Strength", ModifierType.BOON_DURATION, 0.20),  # Total +35% boon duration
     ]
+
 
 def create_pack_runes() -> List[Modifier]:
     """Rune of the Pack: Movement speed for WvW mobility (roaming/scout)."""
@@ -123,6 +133,7 @@ def create_pack_runes() -> List[Modifier]:
         Modifier("Pack (6)", "Rune: Pack", ModifierType.FLAT_STAT, 100, target_stat="power"),  # Simplified
     ]
 
+
 def create_fireworks_runes() -> List[Modifier]:
     """Rune of Fireworks: Condition damage + duration for WvW condi builds."""
     return [
@@ -133,6 +144,7 @@ def create_fireworks_runes() -> List[Modifier]:
         Modifier("Fireworks (5)", "Rune: Fireworks", ModifierType.FLAT_STAT, 100, target_stat="condition_damage"),
         Modifier("Fireworks (6)", "Rune: Fireworks", ModifierType.CONDITION_DURATION, 0.10),
     ]
+
 
 def create_traveler_runes() -> List[Modifier]:
     """Rune of the Traveler: Balanced stats for WvW roaming."""
@@ -145,6 +157,7 @@ def create_traveler_runes() -> List[Modifier]:
         Modifier("Traveler (6)", "Rune: Traveler", ModifierType.FLAT_STAT, 100, target_stat="power"),
     ]
 
+
 def create_flock_runes() -> List[Modifier]:
     """Rune of the Flock: Power build alternative for WvW."""
     return [
@@ -155,6 +168,7 @@ def create_flock_runes() -> List[Modifier]:
         Modifier("Flock (5)", "Rune: Flock", ModifierType.FLAT_STAT, 100, target_stat="power"),
         Modifier("Flock (6)", "Rune: Flock", ModifierType.FLAT_STAT, 125, target_stat="ferocity"),
     ]
+
 
 def create_dolyak_runes() -> List[Modifier]:
     """Rune of the Dolyak: Ultimate tank rune for WvW frontline."""
@@ -167,6 +181,7 @@ def create_dolyak_runes() -> List[Modifier]:
         Modifier("Dolyak (6)", "Rune: Dolyak", ModifierType.FLAT_STAT, 125, target_stat="vitality"),
     ]
 
+
 def create_trooper_runes() -> List[Modifier]:
     """Rune of the Trooper: Condi damage + vitality for WvW condi bruiser."""
     return [
@@ -177,6 +192,7 @@ def create_trooper_runes() -> List[Modifier]:
         Modifier("Trooper (5)", "Rune: Trooper", ModifierType.FLAT_STAT, 100, target_stat="condition_damage"),
         Modifier("Trooper (6)", "Rune: Trooper", ModifierType.CONDITION_DURATION, 0.10),
     ]
+
 
 def create_balthazar_runes() -> List[Modifier]:
     """Rune of Balthazar: Burning specialist for WvW condi builds."""
@@ -189,6 +205,7 @@ def create_balthazar_runes() -> List[Modifier]:
         Modifier("Balthazar (6)", "Rune: Balthazar", ModifierType.CONDITION_DURATION, 0.20),  # Burning duration
     ]
 
+
 def create_druid_runes() -> List[Modifier]:
     """Rune of the Druid: WvW healer specialist."""
     return [
@@ -199,6 +216,7 @@ def create_druid_runes() -> List[Modifier]:
         Modifier("Druid (5)", "Rune: Druid", ModifierType.FLAT_STAT, 100, target_stat="healing_power"),
         Modifier("Druid (6)", "Rune: Druid", ModifierType.OUTGOING_HEALING, 0.12),
     ]
+
 
 def create_aristocracy_runes() -> List[Modifier]:
     """Rune of the Aristocracy: Boon duration for WvW support."""
@@ -211,6 +229,7 @@ def create_aristocracy_runes() -> List[Modifier]:
         Modifier("Aristocracy (6)", "Rune: Aristocracy", ModifierType.BOON_DURATION, 0.15),  # Total +30%
     ]
 
+
 def create_chronomancer_runes() -> List[Modifier]:
     """Rune of the Chronomancer: WvW boon support specialist."""
     return [
@@ -222,6 +241,7 @@ def create_chronomancer_runes() -> List[Modifier]:
         Modifier("Chronomancer (6)", "Rune: Chronomancer", ModifierType.BOON_DURATION, 0.20),  # Total +35%
     ]
 
+
 def create_herald_runes() -> List[Modifier]:
     """Rune of the Herald: WvW boon share builds."""
     return [
@@ -232,6 +252,7 @@ def create_herald_runes() -> List[Modifier]:
         Modifier("Herald (5)", "Rune: Herald", ModifierType.FLAT_STAT, 100, target_stat="concentration"),
         Modifier("Herald (6)", "Rune: Herald", ModifierType.BOON_DURATION, 0.15),
     ]
+
 
 def create_vampirism_runes() -> List[Modifier]:
     """Rune of Vampirism: Sustain for WvW roaming."""
@@ -245,6 +266,7 @@ def create_vampirism_runes() -> List[Modifier]:
         Modifier("Vampirism (6)", "Rune: Vampirism", ModifierType.FLAT_STAT, 100, target_stat="vitality"),
     ]
 
+
 def create_antitoxin_runes() -> List[Modifier]:
     """Rune of Antitoxin: Anti-condi for WvW."""
     return [
@@ -257,6 +279,7 @@ def create_antitoxin_runes() -> List[Modifier]:
         Modifier("Antitoxin (6)", "Rune: Antitoxin", ModifierType.FLAT_STAT, 100, target_stat="healing_power"),
     ]
 
+
 def create_afflicted_runes() -> List[Modifier]:
     """Rune of the Afflicted: Pure condi damage for WvW."""
     return [
@@ -267,6 +290,7 @@ def create_afflicted_runes() -> List[Modifier]:
         Modifier("Afflicted (5)", "Rune: Afflicted", ModifierType.FLAT_STAT, 100, target_stat="condition_damage"),
         Modifier("Afflicted (6)", "Rune: Afflicted", ModifierType.DAMAGE_MULTIPLIER, 0.10),  # +10% condi dmg
     ]
+
 
 def create_scavenging_runes() -> List[Modifier]:
     """Rune of Scavenging: Power + sustain for WvW."""
@@ -279,6 +303,7 @@ def create_scavenging_runes() -> List[Modifier]:
         Modifier("Scavenging (6)", "Rune: Scavenging", ModifierType.FLAT_STAT, 100, target_stat="vitality"),
     ]
 
+
 def create_ranger_runes() -> List[Modifier]:
     """Rune of the Ranger: Power + pet damage for WvW."""
     return [
@@ -290,6 +315,7 @@ def create_ranger_runes() -> List[Modifier]:
         Modifier("Ranger (6)", "Rune: Ranger", ModifierType.FLAT_STAT, 125, target_stat="precision"),
     ]
 
+
 RUNE_REGISTRY: Dict[str, Callable[[], List[Modifier]]] = {
     # Power DPS Runes
     "Scholar": create_scholar_runes,
@@ -300,14 +326,12 @@ RUNE_REGISTRY: Dict[str, Callable[[], List[Modifier]]] = {
     "Ranger": create_ranger_runes,
     "Pack": create_pack_runes,
     "Vampirism": create_vampirism_runes,
-    
     # Condi DPS Runes
     "Nightmare": create_nightmare_runes,
     "Fireworks": create_fireworks_runes,
     "Trooper": create_trooper_runes,
     "Balthazar": create_balthazar_runes,
     "Afflicted": create_afflicted_runes,
-    
     # Support/Heal Runes
     "Monk": create_monk_runes,
     "Water": create_water_runes,
@@ -316,22 +340,22 @@ RUNE_REGISTRY: Dict[str, Callable[[], List[Modifier]]] = {
     "Aristocracy": create_aristocracy_runes,
     "Chronomancer": create_chronomancer_runes,
     "Herald": create_herald_runes,
-    
     # Tank/Bruiser Runes
     "Durability": create_durability_runes,
     "Ogre": create_ogre_runes,
     "Dolyak": create_dolyak_runes,
     "Antitoxin": create_antitoxin_runes,
-    
     # Roaming/Hybrid Runes
     "Traveler": create_traveler_runes,
 }
 
 # ==================== SIGILS ====================
 
+
 def create_force_sigil() -> Modifier:
     """Sigil of Force: +5% damage."""
     return Modifier("Force", "Sigil: Force", ModifierType.DAMAGE_MULTIPLIER, 0.05)
+
 
 def create_impact_sigil() -> Modifier:
     """Sigil of Impact: 250 damage on crit (5s ICD)."""
@@ -343,6 +367,7 @@ def create_impact_sigil() -> Modifier:
         internal_cooldown=5.0,
         proc_chance=1.0,
     )
+
 
 def create_bloodlust_sigil(stacks: int = 25) -> Modifier:
     """Sigil of Bloodlust: +10 Power per stack (max 25)."""
@@ -356,6 +381,7 @@ def create_bloodlust_sigil(stacks: int = 25) -> Modifier:
         max_stacks=25,
     )
 
+
 def create_air_sigil() -> Modifier:
     """Sigil of Air: Lightning strike on crit (50% chance, 3s ICD)."""
     return Modifier(
@@ -367,6 +393,7 @@ def create_air_sigil() -> Modifier:
         proc_chance=0.50,
     )
 
+
 def create_bursting_sigil() -> Modifier:
     """Sigil of Bursting: +5% damage to foes with conditions."""
     return Modifier(
@@ -376,6 +403,7 @@ def create_bursting_sigil() -> Modifier:
         0.05,
         condition=TargetHasConditionCheck("Burning", 1),  # Simplified: any condition
     )
+
 
 def create_energy_sigil() -> Modifier:
     """Sigil of Energy: Gain endurance on kill (WvW sustain for mobility)."""
@@ -388,6 +416,7 @@ def create_energy_sigil() -> Modifier:
         target_stat="power",  # Minimal power bonus for tracking
     )
 
+
 def create_strength_sigil() -> Modifier:
     """Sigil of Strength: Gain Might on kill (WvW might stacking)."""
     # Note: Might gain on kill not modeled as proc, simplified
@@ -398,6 +427,7 @@ def create_strength_sigil() -> Modifier:
         25,  # Tracks the sigil, might stacking happens dynamically
         target_stat="power",
     )
+
 
 def create_battle_sigil() -> Modifier:
     """Sigil of Battle: Gain adrenaline on weapon swap (WvW warrior)."""
@@ -410,6 +440,7 @@ def create_battle_sigil() -> Modifier:
         target_stat="power",
     )
 
+
 def create_absorption_sigil() -> Modifier:
     """Sigil of Absorption: Shield on hit (WvW defense)."""
     # Note: Shield not modeled in damage calc
@@ -420,6 +451,7 @@ def create_absorption_sigil() -> Modifier:
         50,
         target_stat="toughness",  # Defensive sigil
     )
+
 
 def create_hydromancy_sigil() -> Modifier:
     """Sigil of Hydromancy: Extra damage vs burning foes (WvW condition synergy)."""
@@ -433,17 +465,21 @@ def create_hydromancy_sigil() -> Modifier:
         condition=TargetHasConditionCheck("Burning", 1),
     )
 
+
 def create_accuracy_sigil() -> Modifier:
     """Sigil of Accuracy: +7% crit chance (WvW)."""
     return Modifier("Accuracy", "Sigil: Accuracy", ModifierType.FLAT_STAT, 140, target_stat="precision")  # ~7% crit
+
 
 def create_agility_sigil() -> Modifier:
     """Sigil of Agility: Mobility on kill (WvW roaming)."""
     return Modifier("Agility", "Sigil: Agility", ModifierType.FLAT_STAT, 25, target_stat="power")  # Placeholder
 
+
 def create_concentration_sigil() -> Modifier:
     """Sigil of Concentration: Boon duration (WvW support)."""
     return Modifier("Concentration", "Sigil: Concentration", ModifierType.BOON_DURATION, 0.10)
+
 
 def create_doom_sigil() -> Modifier:
     """Sigil of Doom: Poison on crit (WvW condi)."""
@@ -456,6 +492,7 @@ def create_doom_sigil() -> Modifier:
         proc_chance=0.50,
     )
 
+
 def create_earth_sigil() -> Modifier:
     """Sigil of Earth: Bleeding on crit (WvW condi)."""
     return Modifier(
@@ -466,6 +503,7 @@ def create_earth_sigil() -> Modifier:
         internal_cooldown=2.0,
         proc_chance=1.0,
     )
+
 
 def create_fire_sigil() -> Modifier:
     """Sigil of Fire: Burning on crit (WvW condi)."""
@@ -478,6 +516,7 @@ def create_fire_sigil() -> Modifier:
         proc_chance=1.0,
     )
 
+
 def create_geomancy_sigil() -> Modifier:
     """Sigil of Geomancy: Damage on attune (WvW ele)."""
     return Modifier(
@@ -488,6 +527,7 @@ def create_geomancy_sigil() -> Modifier:
         internal_cooldown=9.0,
         proc_chance=1.0,
     )
+
 
 def create_ice_sigil() -> Modifier:
     """Sigil of Ice: Chill on crit (WvW CC)."""
@@ -500,33 +540,41 @@ def create_ice_sigil() -> Modifier:
         proc_chance=1.0,
     )
 
+
 def create_leeching_sigil() -> Modifier:
     """Sigil of Leeching: Lifesteal on hit (WvW sustain)."""
     return Modifier("Leeching", "Sigil: Leeching", ModifierType.FLAT_STAT, 50, target_stat="healing_power")
+
 
 def create_paralyzation_sigil() -> Modifier:
     """Sigil of Paralyzation: Stun on swap (WvW CC)."""
     return Modifier("Paralyzation", "Sigil: Paralyzation", ModifierType.FLAT_STAT, 25, target_stat="power")
 
+
 def create_perception_sigil() -> Modifier:
     """Sigil of Perception: +6% crit chance (WvW)."""
     return Modifier("Perception", "Sigil: Perception", ModifierType.FLAT_STAT, 120, target_stat="precision")
+
 
 def create_corruption_sigil() -> Modifier:
     """Sigil of Corruption: Convert boons to conditions (WvW strip)."""
     return Modifier("Corruption", "Sigil: Corruption", ModifierType.FLAT_STAT, 50, target_stat="condition_damage")
 
+
 def create_cleansing_sigil() -> Modifier:
     """Sigil of Cleansing: Remove condition on swap (WvW anti-condi)."""
     return Modifier("Cleansing", "Sigil: Cleansing", ModifierType.FLAT_STAT, 25, target_stat="healing_power")
+
 
 def create_transference_sigil() -> Modifier:
     """Sigil of Transference: Lifesteal on crit (WvW sustain)."""
     return Modifier("Transference", "Sigil: Transference", ModifierType.FLAT_STAT, 50, target_stat="healing_power")
 
+
 def create_smoldering_sigil() -> Modifier:
     """Sigil of Smoldering: Burning duration (WvW condi)."""
     return Modifier("Smoldering", "Sigil: Smoldering", ModifierType.CONDITION_DURATION, 0.10)  # Burning +10%
+
 
 def create_torment_sigil() -> Modifier:
     """Sigil of Torment: Torment on hit (WvW condi)."""
@@ -539,9 +587,11 @@ def create_torment_sigil() -> Modifier:
         proc_chance=1.0,
     )
 
+
 def create_malice_sigil() -> Modifier:
     """Sigil of Malice: +10% condition damage (WvW condi)."""
     return Modifier("Malice", "Sigil: Malice", ModifierType.FLAT_STAT, 175, target_stat="condition_damage")
+
 
 def create_agony_sigil() -> Modifier:
     """Sigil of Agony: Confusion on crit (WvW condi)."""
@@ -554,29 +604,36 @@ def create_agony_sigil() -> Modifier:
         proc_chance=1.0,
     )
 
+
 def create_draining_sigil() -> Modifier:
     """Sigil of Draining: Life drain (WvW sustain)."""
     return Modifier("Draining", "Sigil: Draining", ModifierType.FLAT_STAT, 40, target_stat="healing_power")
+
 
 def create_generosity_sigil() -> Modifier:
     """Sigil of Generosity: Share boons on kill (WvW support)."""
     return Modifier("Generosity", "Sigil: Generosity", ModifierType.BOON_DURATION, 0.05)
 
+
 def create_demons_sigil() -> Modifier:
     """Sigil of Demons: Damage vs guardians (WvW specific)."""
     return Modifier("Demons", "Sigil: Demons", ModifierType.DAMAGE_MULTIPLIER, 0.05)  # Simplified
+
 
 def create_frailty_sigil() -> Modifier:
     """Sigil of Frailty: Weakness on crit (WvW debuff)."""
     return Modifier("Frailty", "Sigil: Frailty", ModifierType.FLAT_STAT, 25, target_stat="condition_damage")
 
+
 def create_momentum_sigil() -> Modifier:
     """Sigil of Momentum: Speed on kill (WvW mobility)."""
     return Modifier("Momentum", "Sigil: Momentum", ModifierType.FLAT_STAT, 25, target_stat="power")
 
+
 def create_luck_sigil() -> Modifier:
     """Sigil of Luck: +3% crit chance (WvW)."""
     return Modifier("Luck", "Sigil: Luck", ModifierType.FLAT_STAT, 60, target_stat="precision")
+
 
 SIGIL_REGISTRY: Dict[str, Callable[..., Modifier]] = {
     # Power DPS Sigils
@@ -587,7 +644,6 @@ SIGIL_REGISTRY: Dict[str, Callable[..., Modifier]] = {
     "Accuracy": create_accuracy_sigil,
     "Perception": create_perception_sigil,
     "Luck": create_luck_sigil,
-    
     # Condi DPS Sigils
     "Bursting": create_bursting_sigil,
     "Hydromancy": create_hydromancy_sigil,
@@ -600,19 +656,16 @@ SIGIL_REGISTRY: Dict[str, Callable[..., Modifier]] = {
     "Torment": create_torment_sigil,
     "Malice": create_malice_sigil,
     "Agony": create_agony_sigil,
-    
     # Support Sigils
     "Energy": create_energy_sigil,
     "Strength": create_strength_sigil,
     "Concentration": create_concentration_sigil,
     "Generosity": create_generosity_sigil,
-    
     # Tank/Sustain Sigils
     "Absorption": create_absorption_sigil,
     "Leeching": create_leeching_sigil,
     "Transference": create_transference_sigil,
     "Draining": create_draining_sigil,
-    
     # Utility Sigils
     "Battle": create_battle_sigil,
     "Paralyzation": create_paralyzation_sigil,
@@ -626,6 +679,7 @@ SIGIL_REGISTRY: Dict[str, Callable[..., Modifier]] = {
 
 # ==================== CONSUMABLES (Food & Utility) ====================
 
+
 def create_sweet_and_spicy_beans() -> List[Modifier]:
     """Food: +100 Power, +70 Ferocity."""
     return [
@@ -633,11 +687,13 @@ def create_sweet_and_spicy_beans() -> List[Modifier]:
         Modifier("Food: S&S Beans", "Food", ModifierType.FLAT_STAT, 70, target_stat="ferocity"),
     ]
 
+
 def create_toxic_focusing_crystal() -> List[Modifier]:
     """Utility: +10% damage, +15% experience."""
     return [
         Modifier("Utility: Toxic Crystal", "Utility", ModifierType.DAMAGE_MULTIPLIER, 0.10),
     ]
+
 
 FOOD_REGISTRY: Dict[str, Callable[[], List[Modifier]]] = {
     "Sweet_and_Spicy_Beans": create_sweet_and_spicy_beans,
