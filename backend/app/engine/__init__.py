@@ -9,7 +9,7 @@ including damage calculations, condition damage, healing, modifiers, boons, and 
 from .damage import ARMOR_LIGHT, ARMOR_HEAVY, WEAPON_STRENGTH_AVG, calculate_damage
 
 # New engine exports
-from .core import *
+from .core import *  # noqa: F403
 from .core.attributes import AttributeCalculator
 from .modifiers import Modifier, ModifierType, ModifierCondition
 from .combat import CombatContext

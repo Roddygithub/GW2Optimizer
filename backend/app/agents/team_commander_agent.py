@@ -272,7 +272,7 @@ class TeamCommanderAgent:
         groups: List[TeamGroup] = []
         for group_idx in range(request.groups):
             group_slots = [
-                slot_build for g_idx, slot_build in optimized_slots 
+                slot_build for g_idx, slot_build in optimized_slots
                 if g_idx == group_idx and not isinstance(slot_build, Exception)
             ]
             groups.append(TeamGroup(index=group_idx + 1, slots=group_slots))
@@ -362,8 +362,8 @@ class TeamCommanderAgent:
         
         # Optimiser via BuildEquipmentOptimizer
         optimizer_role = "dps" if role in [Role.DPS, Role.STRIP] else \
-                        "support" if role in [Role.HEAL, Role.BOON, Role.CLEANSE, Role.SUPPORT] else \
-                        "tank"
+                         "support" if role in [Role.HEAL, Role.BOON, Role.CLEANSE, Role.SUPPORT] else \
+                         "tank"
         
         optimization_result = await self.optimizer.optimize_build(
             base_stats=base_stats,

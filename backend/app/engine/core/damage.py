@@ -18,8 +18,8 @@ def calculate_strike_damage(
     Calculate GW2 strike (power-based) damage with full formula.
 
     Formula:
-    Damage = (WeaponStrength × Power × SkillCoef / Armor) 
-             × CritMultiplier 
+    Damage = (WeaponStrength × Power × SkillCoef / Armor)
+             × CritMultiplier
              × VulnerabilityMultiplier
              × OtherMultipliers
 
