@@ -115,7 +115,7 @@ class TestAIService:
                     agent._client.post = AsyncMock(side_effect=Exception("Network error"))
 
             result = await service.run_agent("recommender", {
-                "profession": "Guardian", 
+                "profession": "Guardian",
                 "role": "Support",
                 "game_mode": "WvW"
             })
