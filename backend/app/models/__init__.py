@@ -9,6 +9,7 @@ database operations, and API request/response schemas.
 # Build models
 from app.models.build import Build, BuildCreate, BuildResponse, BuildDB  # noqa: F401
 from app.models.build import GameMode, Profession, Role  # noqa: F401
+from app.models.saved_build import SavedBuildDB  # noqa: F401
 
 # Team models
 from app.models.team import (  # noqa: F401
@@ -38,6 +39,7 @@ __all__ = [
     "BuildCreate",
     "BuildResponse",
     "BuildDB",
+    "SavedBuildDB",
     "GameMode",
     "Profession",
     "Role",

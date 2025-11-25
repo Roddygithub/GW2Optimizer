@@ -25,6 +25,7 @@ from . import (  # noqa: F401
     teams_db,
     websocket_mcm,
     sentry_debug,
+    saved_builds,
 )
 
 # Import individual routers for direct access
@@ -54,6 +55,7 @@ __all__ = [
     "teams_db",
     "websocket_mcm",
     "sentry_debug",
+    "saved_builds",
     # Router instances
     "auth_router",
     "builds_router",

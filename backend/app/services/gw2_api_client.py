@@ -133,6 +133,17 @@ class GW2APIClient:
         """
         return await self._request(f"professions/{profession_id}")
 
+    async def get_profession_with_skills(self, profession_id: str) -> Dict[str, Any]:
+        """Récupère les détails d'une profession avec les champs étendus.
+
+        Utilise la version "latest" de l'API pour exposer notamment
+        ``skills_by_palette`` qui permet de résoudre les palette IDs des
+        templates de build en IDs de compétences GW2.
+        """
+
+        params = {"v": "latest"}
+        return await self._request(f"professions/{profession_id}", params=params)
+
     async def get_all_professions_details(self) -> List[Dict[str, Any]]:
         """
         Récupère les détails de toutes les professions.

@@ -12,12 +12,19 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
       - '--web.enable-lifecycle'
     networks:
       - monitoring
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /prometheus/wal
 
   grafana:
     image: grafana/grafana:latest
@@ -38,6 +45,12 @@ services:
     networks:
       - monitoring
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+      - /var/lib/grafana/sessions
+      - /var/lib/grafana/logs
 
   # Optional: Node exporter for system metrics
   node-exporter:
@@ -56,6 +69,9 @@ services:
     networks:
       - monitoring
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
 
 volumes:
   prometheus_data:

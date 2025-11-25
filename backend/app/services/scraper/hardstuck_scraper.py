@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Optional
+from typing import Optional, Tuple
 
 import httpx
 from bs4 import BeautifulSoup
@@ -40,6 +40,7 @@ class HardstuckScraper(BaseScraper):
         chat_code = self._extract_chat_code(soup, html)
         name = self._extract_name(soup)
         context = self._infer_context(html)
+        stats_text, runes_text = self._extract_equipment_text(soup)
 
         if not chat_code:
             logger.warning("No chat code found on Hardstuck page", extra={"url": url})
@@ -49,6 +50,8 @@ class HardstuckScraper(BaseScraper):
             chat_code=chat_code,
             name=name,
             context=context,
+            stats_text=stats_text,
+            runes_text=runes_text,
         )
 
     def _extract_chat_code(self, soup: BeautifulSoup, html: str) -> Optional[str]:
@@ -92,3 +95,38 @@ class HardstuckScraper(BaseScraper):
         if "raid" in lowered or "raids" in lowered:
             return "Raid"
         return None
+
+    def _extract_equipment_text(self, soup: BeautifulSoup) -> Tuple[Optional[str], Optional[str]]:
+        """Heuristically extract equipment-related text (stats / runes).
+
+        This is a best-effort approach: we scan common text containers and
+        pick the first occurrences that mention stats/equipment or runes.
+        """
+
+        stats_text: Optional[str] = None
+        runes_text: Optional[str] = None
+
+        candidate_tags = ("p", "span", "li", "h2", "h3", "h4")
+        for tag_name in candidate_tags:
+            for el in soup.find_all(tag_name):
+                text = el.get_text(" ", strip=True)
+                if not text:
+                    continue
+                lowered = text.lower()
+
+                if runes_text is None and ("rune" in lowered or "runes" in lowered):
+                    runes_text = text
+
+                if stats_text is None and (
+                    "stat" in lowered
+                    or "equipment" in lowered
+                    or "gear" in lowered
+                ):
+                    stats_text = text
+
+                if stats_text is not None and runes_text is not None:
+                    break
+            if stats_text is not None and runes_text is not None:
+                break
+
+        return stats_text, runes_text

@@ -37,6 +37,18 @@ const Layout: React.FC = () => {
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             <span>Build Lab</span>
           </NavLink>
+          <NavLink to="/ai-url-import" className={navLinkClasses}>
+            <span className="h-2 w-2 rounded-full bg-violet-500" />
+            <span>Import URL</span>
+          </NavLink>
+          <NavLink to="/team-commander" className={navLinkClasses}>
+            <span className="h-2 w-2 rounded-full bg-purple-500" />
+            <span>🎮 Team Commander</span>
+          </NavLink>
+          <NavLink to="/my-builds" className={navLinkClasses}>
+            <span className="h-2 w-2 rounded-full bg-sky-500" />
+            <span>Mes Builds</span>
+          </NavLink>
         </nav>
         <div className="mt-auto px-3 py-4 border-t border-slate-800">
           <button

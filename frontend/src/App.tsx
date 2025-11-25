@@ -4,6 +4,9 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AiLab from './pages/AiLab';
 import AiBuildLab from './pages/AiBuildLab';
+import AiUrlImport from './pages/AiUrlImport';
+import MyBuilds from './pages/MyBuilds';
+import TeamCommander from './pages/TeamCommander';
 import Layout from './layouts/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -23,6 +26,9 @@ const App: React.FC = () => {
           <Route path="/" element={<Dashboard />} />
           <Route path="/ai-lab" element={<AiLab />} />
           <Route path="/ai-build-lab" element={<AiBuildLab />} />
+          <Route path="/ai-url-import" element={<AiUrlImport />} />
+          <Route path="/team-commander" element={<TeamCommander />} />
+          <Route path="/my-builds" element={<MyBuilds />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

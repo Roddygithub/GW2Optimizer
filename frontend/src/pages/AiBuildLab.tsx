@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { aiService, BuildAnalysisResult } from '../services/ai.service';
+import { savedBuildsService } from '../services/savedBuilds.service';
 
 const AiBuildLab: React.FC = () => {
   const [specId, setSpecId] = useState<string>('');
@@ -9,6 +10,8 @@ const AiBuildLab: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<BuildAnalysisResult | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
   const parseIds = (value: string, label: string): number[] => {
     const parts = value
@@ -46,6 +49,7 @@ const AiBuildLab: React.FC = () => {
   const handleAnalyze = async () => {
     setError(null);
     setResult(null);
+    setSaveMessage(null);
 
     let specIdValue: number | null = null;
     const trimmedSpec = specId.trim();
@@ -78,6 +82,39 @@ const AiBuildLab: React.FC = () => {
       setError(message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!result) return;
+
+    setError(null);
+    setSaveMessage(null);
+
+    const defaultName = 'Build analysé';
+    const nameInput = window.prompt('Nom du build à sauvegarder :', defaultName);
+    if (!nameInput || !nameInput.trim()) {
+      return;
+    }
+
+    const name = nameInput.trim();
+
+    try {
+      setSaving(true);
+      await savedBuildsService.create({
+        name,
+        game_mode: (result.context as string | undefined) ?? context,
+        synergy_score: result.synergy_score as string | undefined,
+        notes: (result.summary as string | undefined) ?? undefined,
+      });
+      setSaveMessage('Build sauvegardé dans "Mes Builds".');
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        'Erreur lors de la sauvegarde du build.';
+      setError(message);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -209,6 +246,18 @@ const AiBuildLab: React.FC = () => {
                 {JSON.stringify(result, null, 2)}
               </pre>
             </details>
+
+            <div className="mt-3 flex items-center justify-between gap-3">
+              {saveMessage && <p className="text-xs text-emerald-400">{saveMessage}</p>}
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="inline-flex items-center justify-center rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {saving ? 'Sauvegarde…' : 'Sauvegarder ce build'}
+              </button>
+            </div>
           </div>
         )}
       </div>

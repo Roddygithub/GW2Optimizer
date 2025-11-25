@@ -5,6 +5,9 @@ from typing import List
 from app.core.logging import logger
 from app.services.scraper.base import BaseScraper, ScrapedBuildData
 from app.services.scraper.hardstuck_scraper import HardstuckScraper
+from app.services.scraper.snowcrows_scraper import SnowcrowsScraper
+from app.services.scraper.guildjen_scraper import GuildJenScraper
+from app.services.scraper.gw2mists_scraper import GW2MistsScraper
 
 
 class ScraperService:
@@ -16,7 +19,12 @@ class ScraperService:
     """
 
     def __init__(self, scrapers: List[BaseScraper] | None = None) -> None:
-        self.scrapers: List[BaseScraper] = scrapers or [HardstuckScraper()]
+        self.scrapers: List[BaseScraper] = scrapers or [
+            HardstuckScraper(),
+            SnowcrowsScraper(),
+            GuildJenScraper(),
+            GW2MistsScraper(),
+        ]
 
     async def scrape_build(self, url: str) -> ScrapedBuildData:
         for scraper in self.scrapers:

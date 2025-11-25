@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 from app.core.logging import logger
 from app.services.gw2_api_client import GW2APIClient
 from app.agents.analyst_agent import AnalystAgent
+from app.engine.damage import ARMOR_HEAVY, WEAPON_STRENGTH_AVG, calculate_damage
 
 
 class BuildAnalysisService:
@@ -71,12 +72,49 @@ class BuildAnalysisService:
 
         return view
 
+    def _estimate_skill_damage_berserker(self, skill: Dict[str, Any]) -> Optional[float]:
+        power = 2500
+        facts = skill.get("facts")
+        if not isinstance(facts, list):
+            return None
+
+        total = 0.0
+        found = False
+        for f in facts:
+            if not isinstance(f, dict):
+                continue
+            if f.get("type") != "Damage":
+                continue
+
+            coeff = f.get("dmg_multiplier")
+            if not isinstance(coeff, (int, float)):
+                continue
+
+            hit_count = f.get("hit_count")
+            if not isinstance(hit_count, (int, float)):
+                hit_count = 1
+
+            per_hit = calculate_damage(
+                power=power,
+                weapon_strength=WEAPON_STRENGTH_AVG,
+                coefficient=float(coeff),
+                armor=ARMOR_HEAVY,
+            )
+            total += per_hit * float(hit_count)
+            found = True
+
+        if not found:
+            return None
+
+        return total
+
     async def analyze_build_synergy(
         self,
         specialization_id: Optional[int],
         trait_ids: List[int],
         skill_ids: List[int],
         context: str = "WvW Zerg",
+        equipment_summary: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Analyse la synergie d'un build GW2.
 
@@ -174,7 +212,11 @@ class BuildAnalysisService:
         skills_view: List[Dict[str, Any]] = []
         for s in skills_data:
             # Garder: id, name, description, type, slot, flags, facts/traited_facts minifiés
-            skills_view.append(self._minify_gw2_object(s, extra_fields=["type", "slot", "flags"]))
+            view = self._minify_gw2_object(s, extra_fields=["type", "slot", "flags"])
+            estimated = self._estimate_skill_damage_berserker(s)
+            if estimated is not None:
+                view["estimated_damage_berserker"] = estimated
+            skills_view.append(view)
 
         build_payload: Dict[str, Any] = {
             "context": context,
@@ -182,6 +224,9 @@ class BuildAnalysisService:
             "traits": traits_view,
             "skills": skills_view,
         }
+
+        if equipment_summary:
+            build_payload["equipment_summary"] = equipment_summary
 
         # ==================== Delegate to AnalystAgent ====================
         envelope = await self.analyst_agent.execute({"build_data": build_payload, "context": context})
