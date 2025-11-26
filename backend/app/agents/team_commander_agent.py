@@ -20,8 +20,11 @@ from functools import lru_cache
 
 from app.core.logging import logger
 from app.core.performance import async_timed, batch_processor, async_timer
-from app.agents.build_equipment_optimizer import get_build_optimizer
+from app.agents.build_equipment_optimizer import get_build_optimizer, OptimizationResult
 from app.engine.combat.context import CombatContext
+from app.engine.gear.prefixes import get_prefix_stats
+from app.agents.build_advisor_agent import BuildAdvisorAgent, BuildCandidate
+from app.services.gear_prefix_validator import filter_prefix_names_by_itemstats
 
 
 class Role(str, Enum):
@@ -44,6 +47,8 @@ class TeamRequest:
     roles_per_group: List[Role]
     constraints: Dict[str, Any]  # Ex: {"classes": ["Firebrand", "Druid"]}
     user_message: str  # Message original
+    experience: str  # beginner, intermediate, expert
+    mode: str  # wvw_zerg, wvw_outnumber, wvw_roam
 
 
 @dataclass
@@ -56,6 +61,8 @@ class SlotBuild:
     sigils: List[str]
     stats_priority: str  # "Berserker", "Minstrel", etc.
     performance: Dict[str, float]  # DPS, heal, survivability
+    advisor_reason: Optional[str] = None
+    advisor_alternatives: Optional[List[Dict[str, Any]]] = None
 
 
 @dataclass
@@ -113,8 +120,14 @@ class TeamCommanderAgent:
     
     def __init__(self):
         self.optimizer = get_build_optimizer()
+        self.build_advisor = BuildAdvisorAgent()
     
-    async def run(self, message: str) -> TeamResult:
+    async def run(
+        self,
+        message: str,
+        experience: Optional[str] = None,
+        mode: Optional[str] = None,
+    ) -> TeamResult:
         """
         Entry point principal.
         
@@ -128,6 +141,14 @@ class TeamCommanderAgent:
         
         # 1. Parse request
         request = self._parse_request(message)
+
+        # Permettre au frontend/API de forcer le niveau d'expérience
+        if experience is not None:
+            request.experience = experience.lower()
+
+        # Permettre au frontend/API de forcer le mode de jeu (zerg/outnumber/roam)
+        if mode is not None:
+            request.mode = mode.lower()
         
         # 2. Build team
         result = await self._build_team(request)
@@ -216,6 +237,8 @@ class TeamCommanderAgent:
             roles_per_group=roles,
             constraints=constraints,
             user_message=message,
+            experience="beginner",
+            mode="wvw_zerg",
         )
     
     @async_timed
@@ -259,7 +282,16 @@ class TeamCommanderAgent:
         # Optimiser TOUS les slots en parallèle (BOOST PERFORMANCE !)
         async def optimize_single_slot(spec_tuple):
             group_idx, role, profession, specialization = spec_tuple
-            return (group_idx, await self._optimize_slot(role, profession, specialization))
+            return (
+                group_idx,
+                await self._optimize_slot(
+                    role=role,
+                    profession=profession,
+                    specialization=specialization,
+                    experience=request.experience,
+                    mode=request.mode,
+                ),
+            )
         
         async with async_timer("Build all slots"):
             optimized_slots = await batch_processor.batch_process(
@@ -344,103 +376,162 @@ class TeamCommanderAgent:
         role: Role,
         profession: str,
         specialization: str,
+        experience: str = "beginner",
+        mode: str = "wvw_zerg",
     ) -> SlotBuild:
+        """Optimise un slot individuel (runes, sigils, stats).
+
+        Cette version V2 teste plusieurs presets de stats par rôle
+        (ex: Berserker/Marauder pour DPS, Minstrel/Harrier/Cleric pour Heal)
+        et laisse le moteur choisir la meilleure combinaison complète.
         """
-        Optimise un slot individuel (runes, sigils, stats).
-        
-        Utilise BuildEquipmentOptimizer pour trouver le meilleur gear.
-        """
-        # Base stats selon le rôle
-        base_stats = self._get_base_stats_for_role(role)
-        
         # Skill rotation simplifiée (placeholder)
         skill_rotation = [
             {"name": "Burst 1", "damage_coefficient": 2.0},
             {"name": "Burst 2", "damage_coefficient": 1.5},
             {"name": "Auto Attack", "damage_coefficient": 0.8},
         ]
-        
-        # Optimiser via BuildEquipmentOptimizer
-        optimizer_role = "dps" if role in [Role.DPS, Role.STRIP] else \
-                         "support" if role in [Role.HEAL, Role.BOON, Role.CLEANSE, Role.SUPPORT] else \
-                         "tank"
-        
-        optimization_result = await self.optimizer.optimize_build(
-            base_stats=base_stats,
-            skill_rotation=skill_rotation,
-            role=optimizer_role,
-        )
-        
-        # Stats priority selon le rôle
-        stats_priority = self._get_stats_priority_for_role(role)
-        
+
+        # Optimiser via BuildEquipmentOptimizer avec des rôles fins
+        if role in [Role.DPS, Role.STRIP]:
+            optimizer_role = "dps"
+        elif role == Role.HEAL:
+            optimizer_role = "heal"
+        elif role == Role.BOON:
+            optimizer_role = "boon"
+        elif role in [Role.TANK, Role.STAB]:
+            optimizer_role = "tank"
+        else:
+            optimizer_role = "support"
+
+        stat_presets = self._get_stat_presets_for_role(role)
+        candidates: List[BuildCandidate] = []
+        results_by_id: Dict[str, OptimizationResult] = {}
+
+        for idx, (preset_name, base_stats) in enumerate(stat_presets):
+            try:
+                opt = await self.optimizer.optimize_build(
+                    base_stats=base_stats,
+                    skill_rotation=skill_rotation,
+                    role=optimizer_role,
+                )
+            except Exception as e:  # pragma: no cover - robust à l'échec isolé
+                logger.error(f"Slot optimization failed for preset {preset_name}: {e}")
+                continue
+
+            candidate_id = f"{preset_name}-{idx}"
+            results_by_id[candidate_id] = opt
+            candidates.append(
+                BuildCandidate(
+                    id=candidate_id,
+                    prefix=preset_name,
+                    role=optimizer_role,
+                    rune=opt.rune_name,
+                    sigils=opt.sigil_names,
+                    total_damage=opt.total_damage,
+                    survivability=opt.survivability_score,
+                    overall_score=opt.overall_score,
+                )
+            )
+
+        best_result: OptimizationResult
+        best_preset_name: str
+        advisor_reason: Optional[str] = None
+        advisor_alternatives: Optional[List[Dict[str, Any]]] = None
+
+        if candidates:
+            try:
+                decision = self.build_advisor.choose_best_candidate(
+                    candidates=candidates,
+                    role=optimizer_role,
+                    context={"mode": mode, "experience": experience},
+                )
+                advised = decision.candidate
+                advisor_reason = decision.reason
+                ranked = decision.ranked_candidates or []
+                # Construire une petite liste d'alternatives (hors meilleur)
+                alts: List[Dict[str, Any]] = []
+                for cand in ranked:
+                    if cand.id == advised.id:
+                        continue
+                    alts.append(
+                        {
+                            "prefix": cand.prefix,
+                            "rune": cand.rune,
+                            "sigils": list(cand.sigils),
+                            "total_damage": cand.total_damage,
+                            "survivability": cand.survivability,
+                            "overall_score": cand.overall_score,
+                        }
+                    )
+                    if len(alts) >= 2:
+                        break
+                advisor_alternatives = alts or None
+                best_result = results_by_id[advised.id]
+                best_preset_name = advised.prefix
+            except Exception as e:  # pragma: no cover - robust fallback
+                logger.error(f"BuildAdvisorAgent failed, falling back to max score: {e}")
+                # Fallback: max overall_score
+                best_candidate = max(candidates, key=lambda c: c.overall_score)
+                best_result = results_by_id[best_candidate.id]
+                best_preset_name = best_candidate.prefix
+        else:
+            base_stats = self._get_base_stats_for_role(role)
+            best_result = await self.optimizer.optimize_build(
+                base_stats=base_stats,
+                skill_rotation=skill_rotation,
+                role=optimizer_role,
+            )
+            best_preset_name = self._get_stats_priority_for_role(role)
+
+        stats_priority = best_preset_name or self._get_stats_priority_for_role(role)
+
         return SlotBuild(
             role=role,
             profession=profession,
             specialization=specialization,
-            rune=optimization_result.rune_name,
-            sigils=optimization_result.sigil_names,
+            rune=best_result.rune_name,
+            sigils=best_result.sigil_names,
             stats_priority=stats_priority,
             performance={
-                "burst_damage": optimization_result.total_damage,
-                "survivability": optimization_result.survivability_score,
-                "dps_increase": optimization_result.dps_increase_percent,
+                "burst_damage": best_result.total_damage,
+                "survivability": best_result.survivability_score,
+                "dps_increase": best_result.dps_increase_percent,
             },
+            advisor_reason=advisor_reason,
+            advisor_alternatives=advisor_alternatives,
         )
     
-    def _get_base_stats_for_role(self, role: Role) -> Dict[str, int]:
-        """Retourne des stats de base selon le rôle."""
+    def _get_stat_presets_for_role(self, role: Role) -> List[tuple[str, Dict[str, int]]]:
+        """Retourne plusieurs presets de stats réalistes par rôle.
+
+        Ces presets approximatifs représentent différents splits de gear
+        (par ex. full Berserker vs Marauder pour DPS, Minstrel vs Harrier
+        pour Heal), sans modéliser chaque pièce individuellement.
+        """
         if role in [Role.DPS, Role.STRIP]:
-            # Power DPS
-            return {
-                "power": 2800,
-                "precision": 2200,
-                "ferocity": 1200,
-                "toughness": 1000,
-                "vitality": 1000,
-                "condition_damage": 0,
-                "expertise": 0,
-                "concentration": 0,
-                "healing_power": 0,
-            }
+            # DPS: presets classiques + une option plus tanky (Valkyrie)
+            names = ["Berserker", "Marauder", "Dragon", "Valkyrie"]
         elif role in [Role.HEAL, Role.SUPPORT, Role.CLEANSE]:
-            # Support/Heal
-            return {
-                "power": 1200,
-                "precision": 1000,
-                "ferocity": 0,
-                "toughness": 1400,
-                "vitality": 1400,
-                "condition_damage": 0,
-                "expertise": 0,
-                "concentration": 1200,
-                "healing_power": 1800,
-            }
+            names = ["Minstrel", "Harrier", "Cleric", "Magi"]
         elif role == Role.BOON:
-            # Boon share
-            return {
-                "power": 1800,
-                "precision": 1400,
-                "ferocity": 600,
-                "toughness": 1200,
-                "vitality": 1200,
-                "condition_damage": 0,
-                "expertise": 0,
-                "concentration": 1600,
-                "healing_power": 400,
-            }
-        else:  # Tank, Stab
-            return {
-                "power": 1600,
-                "precision": 1200,
-                "ferocity": 400,
-                "toughness": 1800,
-                "vitality": 1800,
-                "condition_damage": 0,
-                "expertise": 0,
-                "concentration": 1400,
-                "healing_power": 600,
-            }
+            names = ["Diviner", "Minstrel", "Harrier"]
+        else:
+            # Tank / fallback support: ajouter quelques variantes plus off-meta (Trailblazer/Dire)
+            names = ["Minstrel", "Soldier", "Trailblazer", "Dire"]
+
+        filtered_names = filter_prefix_names_by_itemstats(names)
+        return [(name, get_prefix_stats(name)) for name in filtered_names]
+
+    def _get_base_stats_for_role(self, role: Role) -> Dict[str, int]:
+        """Retourne des stats de base selon le rôle (fallback V1) via préfixes."""
+        if role in [Role.DPS, Role.STRIP]:
+            return get_prefix_stats("Berserker")
+        if role in [Role.HEAL, Role.SUPPORT, Role.CLEANSE]:
+            return get_prefix_stats("Minstrel")
+        if role == Role.BOON:
+            return get_prefix_stats("Diviner")
+        return get_prefix_stats("Soldier")
     
     def _get_stats_priority_for_role(self, role: Role) -> str:
         """Retourne la stat priority (gear) selon le rôle."""

@@ -30,7 +30,7 @@ import numpy as np
 try:
     from sklearn.ensemble import GradientBoostingRegressor
     from sklearn.preprocessing import StandardScaler
-except ImportError:  # pragma: no cover - optional dependency for docs builds
+except Exception:  # pragma: no cover - optional dependency for docs builds and env issues
     GradientBoostingRegressor = None  # type: ignore[assignment]
     StandardScaler = None  # type: ignore[assignment]
 

@@ -1,8 +1,6 @@
-"""
-Pydantic schemas for User data.
-"""
+"""Pydantic schemas for User data."""
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 from pydantic_core.core_schema import FieldValidationInfo
 from typing import Optional, Dict, Any, TYPE_CHECKING
 from datetime import datetime
@@ -21,14 +19,13 @@ else:
 
 
 class UserBase(BaseModel):
-    email: EmailStr = Field(..., description="User's unique email address.", example="user@example.com")
+    email: EmailStr = Field(..., description="User's unique email address.")
     username: str = Field(
         ...,
         min_length=3,
         max_length=50,
         pattern=r"^[a-zA-Z0-9_]+$",
         description="User's unique username. Must be alphanumeric with underscores.",
-        example="player_123",
     )
 
 
@@ -77,14 +74,14 @@ class UserLogin(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    full_name: Optional[str] = Field(None, max_length=100, example="John Doe")
-    bio: Optional[str] = Field(None, max_length=500, example="Experienced GW2 player.")
-    profile_picture_url: Optional[str] = Field(None, example="https://example.com/avatar.png")
-    preferences: Optional[Dict[str, Any]] = Field(None, example={"theme": "dark", "language": "en"})
+    full_name: Optional[str] = Field(None, max_length=100)
+    bio: Optional[str] = Field(None, max_length=500)
+    profile_picture_url: Optional[str] = Field(None)
+    preferences: Optional[Dict[str, Any]] = Field(None)
 
 
 class UserPreferencesUpdate(BaseModel):
-    preferences: Dict[str, Any] = Field(..., example={"theme": "dark", "notifications_enabled": True})
+    preferences: Dict[str, Any] = Field(...)
 
 
 class UserOut(UserBase):
@@ -98,8 +95,7 @@ class UserOut(UserBase):
     preferences: Dict[str, Any]
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LoginHistoryOut(BaseModel):
@@ -107,8 +103,7 @@ class LoginHistoryOut(BaseModel):
     user_agent: str
     login_timestamp: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PasswordResetRequest(BaseModel):

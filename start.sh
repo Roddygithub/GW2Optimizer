@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# 🚀 GW2 Optimizer - Team Commander - Script de Démarrage Automatique
+# 🚀 GW2 Optimizer - Script de Démarrage (Backend + Frontend + Redis optionnel)
 
 echo "════════════════════════════════════════════════════════════════"
-echo "🚀 GW2 OPTIMIZER - TEAM COMMANDER"
+echo "🚀 GW2 OPTIMIZER - AI DASHBOARD & TEAM COMMANDER"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 
@@ -102,13 +102,19 @@ echo "   Backend:  http://localhost:8000"
 echo "   Frontend: http://localhost:5173"
 echo "   API Docs: http://localhost:8000/docs"
 echo ""
+echo "📊 Pour consulter le Meta Dashboard (archétypes & méta):"
+echo "   1. Ouvrir http://localhost:5173"
+echo "   2. Se connecter"
+echo "   3. Cliquer sur 'Méta' dans le menu de gauche"
+echo "   4. Choisir un mode de jeu (ex: WvW Zerg)"
+echo ""
 echo "🎮 Pour utiliser Team Commander:"
 echo "   1. Ouvrir http://localhost:5173"
 echo "   2. Se connecter"
 echo "   3. Cliquer sur '🎮 Team Commander'"
 echo "   4. Taper une commande naturelle"
 echo ""
-echo "📝 Exemples de commandes:"
+echo "📝 Exemples de commandes Team Commander:"
 echo "   • 2 groupes de 5 avec Firebrand, Druid, Harbinger..."
 echo "   • Je veux 10 joueurs avec stabeur, healer, booner..."
 echo ""

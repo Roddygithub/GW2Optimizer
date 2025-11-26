@@ -1,0 +1,156 @@
+{
+  "version": "4.1.0",
+  "timestamp": "2025-11-26T17:13:16.009451",
+  "sources": {
+    "metabattle": {
+      "trending_professions": [
+        {
+          "name": "Guardian",
+          "popularity": 0.95,
+          "role": "Support"
+        },
+        {
+          "name": "Necromancer",
+          "popularity": 0.9,
+          "role": "DPS"
+        },
+        {
+          "name": "Warrior",
+          "popularity": 0.75,
+          "role": "Tank"
+        }
+      ],
+      "trending_builds": [
+        {
+          "name": "Firebrand Support",
+          "profession": "Guardian",
+          "mode": "zerg"
+        },
+        {
+          "name": "Scourge DPS",
+          "profession": "Necromancer",
+          "mode": "zerg"
+        }
+      ]
+    },
+    "guildjen": {
+      "trending_professions": [
+        {
+          "name": "Guardian",
+          "popularity": 0.92
+        },
+        {
+          "name": "Mesmer",
+          "popularity": 0.8
+        }
+      ]
+    },
+    "snowcrows": {
+      "trending_professions": [
+        {
+          "name": "Warrior",
+          "popularity": 0.88,
+          "role": "DPS"
+        },
+        {
+          "name": "Revenant",
+          "popularity": 0.85,
+          "role": "Support"
+        }
+      ]
+    },
+    "hardstuck": {
+      "trending_professions": [
+        {
+          "name": "Guardian",
+          "popularity": 0.95
+        },
+        {
+          "name": "Mesmer",
+          "popularity": 0.9
+        }
+      ]
+    },
+    "gw2mists": {
+      "trending_professions": [
+        {
+          "name": "Guardian",
+          "popularity": 0.93
+        },
+        {
+          "name": "Necromancer",
+          "popularity": 0.87
+        }
+      ]
+    }
+  },
+  "trending": {
+    "professions": [
+      {
+        "name": "Guardian",
+        "popularity": 0.9375000000000001,
+        "n_sources": 4,
+        "trending_up": true
+      },
+      {
+        "name": "Necromancer",
+        "popularity": 0.885,
+        "n_sources": 2,
+        "trending_up": true
+      },
+      {
+        "name": "Mesmer",
+        "popularity": 0.8500000000000001,
+        "n_sources": 2,
+        "trending_up": true
+      },
+      {
+        "name": "Revenant",
+        "popularity": 0.85,
+        "n_sources": 1,
+        "trending_up": true
+      },
+      {
+        "name": "Warrior",
+        "popularity": 0.815,
+        "n_sources": 2,
+        "trending_up": true
+      }
+    ],
+    "builds": [
+      {
+        "name": "Firebrand Support",
+        "profession": "Guardian",
+        "mode": "zerg"
+      },
+      {
+        "name": "Scourge DPS",
+        "profession": "Necromancer",
+        "mode": "zerg"
+      }
+    ],
+    "by_mode": {
+      "zerg": {
+        "top_professions": [
+          "Guardian",
+          "Necromancer",
+          "Warrior"
+        ]
+      },
+      "raid": {
+        "top_professions": [
+          "Guardian",
+          "Warrior",
+          "Revenant"
+        ]
+      },
+      "fractals": {
+        "top_professions": [
+          "Guardian",
+          "Mesmer",
+          "Warrior"
+        ]
+      }
+    }
+  }
+}

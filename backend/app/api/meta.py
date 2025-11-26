@@ -92,6 +92,90 @@ async def analyze_meta(request: MetaAnalysisRequest):
         raise HTTPException(status_code=500, detail="Meta analysis failed")
 
 
+@router.get("/overview/{game_mode}")
+async def get_meta_overview(
+    game_mode: str,
+    time_range: int = Query(30, ge=1, le=365, description="Période d'analyse en jours"),
+    profession: Optional[str] = Query(None, description="Profession à filtrer (optionnel)"),
+):
+    """Retourne une vue agrégée du méta pour un mode de jeu.
+
+    Cette vue est pensée pour le Meta Dashboard frontend et fournit :
+    - la répartition des professions (basée sur les archétypes les plus fréquents)
+    - la liste des archétypes (profession + spécialisation) avec fréquence
+    - les synergies communes telles que calculées par le MetaAgent
+    """
+
+    logger.info(f"Meta overview requested for game_mode={game_mode}, profession={profession}")
+
+    try:
+        from app.agents.meta_agent import MetaAgent
+
+        agent = MetaAgent()
+        await agent.initialize()
+
+        meta_result = await agent.run(
+            {
+                "game_mode": game_mode,
+                "profession": profession,
+                "time_range": time_range,
+            }
+        )
+
+        meta_snapshot = meta_result.get("meta_snapshot", {}) or {}
+        common_synergies = meta_snapshot.get("common_synergies", []) or []
+
+        # Agrégation par profession à partir des archétypes/synergies courants
+        profession_counts: dict[str, int] = {}
+        total_occurrences = 0
+
+        for item in common_synergies:
+            prof = item.get("profession") or "Unknown"
+            occ = int(item.get("occurrences", 0) or 0)
+            profession_counts[prof] = profession_counts.get(prof, 0) + occ
+            total_occurrences += occ
+
+        professions = []
+        if total_occurrences > 0:
+            for prof, count in sorted(profession_counts.items(), key=lambda x: x[1], reverse=True):
+                professions.append(
+                    {
+                        "profession": prof,
+                        "count": count,
+                        "ratio": round(count / total_occurrences, 4),
+                    }
+                )
+
+        # Les archétypes sont pour l'instant un alias structuré de common_synergies
+        archetypes = [
+            {
+                "profession": item.get("profession"),
+                "specialization": item.get("specialization"),
+                "synergy_score": item.get("synergy_score"),
+                "occurrences": int(item.get("occurrences", 0) or 0),
+                "frequency": float(item.get("frequency", 0.0) or 0.0),
+            }
+            for item in common_synergies
+        ]
+
+        return {
+            "success": True,
+            "game_mode": game_mode,
+            "professions": professions,
+            "archetypes": archetypes,
+            "synergies": common_synergies,
+            "raw_meta": meta_result,
+            "timestamp": meta_result.get("analysis_timestamp"),
+        }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    except Exception:
+        logger.exception("Failed to get meta overview")
+        raise HTTPException(status_code=500, detail="Failed to get meta overview")
+
+
 @router.get("/snapshot/{game_mode}")
 async def get_meta_snapshot(
     game_mode: str, profession: Optional[str] = Query(None, description="Profession à filtrer")

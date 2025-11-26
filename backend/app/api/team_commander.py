@@ -19,6 +19,8 @@ router = APIRouter(tags=["AI Team Commander"])
 class TeamCommandRequest(BaseModel):
     """Request body for team command."""
     message: str
+    experience: Optional[str] = None
+    mode: Optional[str] = None
 
 
 class TeamCommandResponse(BaseModel):
@@ -55,8 +57,12 @@ async def command_team(
         # Get agent
         agent = get_team_commander()
         
-        # Run command
-        result: TeamResult = await agent.run(request.message)
+        # Run command (experience permet d'ajuster le curseur de skill level, mode ajuste le contexte WvW)
+        result: TeamResult = await agent.run(
+            request.message,
+            experience=request.experience,
+            mode=request.mode,
+        )
         
         # Format response
         response = {
@@ -76,6 +82,8 @@ async def command_team(
                                 "sigils": slot.sigils,
                             },
                             "performance": slot.performance,
+                            "advisor_reason": getattr(slot, "advisor_reason", None),
+                            "advisor_alternatives": getattr(slot, "advisor_alternatives", None),
                         }
                         for slot in group.slots
                     ],

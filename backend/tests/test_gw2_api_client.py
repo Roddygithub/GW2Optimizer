@@ -220,6 +220,42 @@ class TestGW2APIClient:
         assert "traits" in result
         assert "import_timestamp" in result
 
+    async def test_get_all_items(self):
+        client = GW2APIClient()
+
+        # Première requête: liste d'IDs, seconde requête: détails paginés
+        client._request = AsyncMock(side_effect=[[1, 2], [{"id": 1}, {"id": 2}]])  # type: ignore[assignment]
+
+        items = await client.get_all_items()
+
+        assert isinstance(items, list)
+        assert len(items) == 2
+        assert items[0]["id"] == 1
+        assert items[1]["id"] == 2
+
+    async def test_get_upgrade_components_all(self):
+        client = GW2APIClient()
+
+        # Première requête: liste d'IDs de composants, seconde: détails
+        client._request = AsyncMock(side_effect=[[10, 11], [{"id": 10}, {"id": 11}]])  # type: ignore[assignment]
+
+        components = await client.get_upgrade_components()
+
+        assert isinstance(components, list)
+        assert len(components) == 2
+        assert components[0]["id"] == 10
+        assert components[1]["id"] == 11
+
+    async def test_get_upgrade_component_single(self):
+        client = GW2APIClient()
+
+        client._request = AsyncMock(return_value={"id": 42})  # type: ignore[assignment]
+
+        component = await client.get_upgrade_component(42)
+
+        assert isinstance(component, dict)
+        assert component["id"] == 42
+
     def test_get_cache_stats(self):
         """Test la récupération des statistiques du cache."""
         client = GW2APIClient()

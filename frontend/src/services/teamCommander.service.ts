@@ -19,6 +19,7 @@ interface TeamCommandResponse {
         survivability: number;
         dps_increase: number;
       };
+      advisor_reason?: string;
     }>;
   }>;
   synergy: {
@@ -45,10 +46,22 @@ export const teamCommanderApi = {
   /**
    * Send a natural language command to build a WvW team
    */
-  async command(message: string): Promise<TeamCommandResponse> {
-    const response = await api.post<TeamCommandResponse>('/ai/teams/command', {
-      message,
-    });
+  async command(
+    message: string,
+    experience?: 'beginner' | 'intermediate' | 'expert',
+    mode?: 'wvw_zerg' | 'wvw_outnumber' | 'wvw_roam'
+  ): Promise<TeamCommandResponse> {
+    const payload: { message: string; experience?: string; mode?: string } = { message };
+
+    if (experience) {
+      payload.experience = experience;
+    }
+
+    if (mode) {
+      payload.mode = mode;
+    }
+
+    const response = await api.post<TeamCommandResponse>('/ai/teams/command', payload);
     return response.data;
   },
 

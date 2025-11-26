@@ -16,6 +16,28 @@ export interface BuildAnalysisResult {
   strengths?: string[];
   weaknesses?: string[];
   summary?: string;
+   gear_optimization?: {
+     role: string;
+     experience: string;
+     mode: string;
+     chosen: {
+       prefix: string;
+       rune: string;
+       sigils: string[];
+       total_damage: number;
+       survivability: number;
+       overall_score: number;
+       reason?: string;
+     };
+     alternatives?: Array<{
+       prefix: string;
+       rune: string;
+       sigils: string[];
+       total_damage: number;
+       survivability: number;
+       overall_score: number;
+     }>;
+   };
   [key: string]: unknown;
 }
 
@@ -64,7 +86,7 @@ class AiService {
       payload.specialization_id = specId;
     }
 
-    const { data } = await api.post<BuildAnalysisResult>('/ai/analyze/build', payload);
+    const { data } = await api.post<BuildAnalysisResult>('/ai/analyze/build-full', payload);
     return data;
   }
 

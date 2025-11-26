@@ -29,6 +29,10 @@ const Layout: React.FC = () => {
             <span className="h-2 w-2 rounded-full bg-indigo-500" />
             <span>Dashboard</span>
           </NavLink>
+          <NavLink to="/meta" className={navLinkClasses}>
+            <span className="h-2 w-2 rounded-full bg-amber-500" />
+            <span>Méta</span>
+          </NavLink>
           <NavLink to="/ai-lab" className={navLinkClasses}>
             <span className="h-2 w-2 rounded-full bg-indigo-500" />
             <span>AI Lab</span>

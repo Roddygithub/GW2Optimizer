@@ -60,7 +60,7 @@ fi
 
 # Test 4: Protected Endpoint
 if [ ! -z "$TOKEN" ]; then
-    PROFILE=$(curl -s -H "Authorization: Bearer $TOKEN" "$BACKEND_URL/api/v1/auth/me")
+    PROFILE=$(curl -s -H "Authorization: Bearer $TOKEN" "$BACKEND_URL/api/v1/users/me")
     if echo "$PROFILE" | grep -q '"email"'; then
         log_success "Protected endpoint access"
     else

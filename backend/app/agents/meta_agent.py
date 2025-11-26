@@ -6,10 +6,15 @@ Analyse les tendances, détecte les changements de méta, et propose des adaptat
 """
 
 from typing import Any, Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
+
+from sqlalchemy import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.base import BaseAgent
 from app.core.logging import logger
+from app.db.base import SessionLocal
+from app.models import SavedBuildDB
 
 
 class MetaAgent(BaseAgent):
@@ -60,8 +65,39 @@ class MetaAgent(BaseAgent):
 
     async def _load_meta_history(self) -> None:
         """Charge l'historique des métas depuis le stockage."""
-        # TODO: Implémenter le chargement depuis la base de données
-        logger.info("Meta history loaded successfully")
+        self.meta_history = []
+
+        try:
+            async with SessionLocal() as session:  # type: AsyncSession
+                stmt = (
+                    select(
+                        SavedBuildDB.game_mode,
+                        func.date(SavedBuildDB.created_at).label("day"),
+                        func.count().label("count"),
+                    )
+                    .group_by("day", SavedBuildDB.game_mode)
+                    .order_by("day")
+                )
+                result = await session.execute(stmt)
+                rows = result.all()
+
+            for row in rows:
+                day_value = row.day.isoformat() if hasattr(row.day, "isoformat") else str(row.day)
+                self.meta_history.append(
+                    {
+                        "game_mode": row.game_mode,
+                        "day": day_value,
+                        "count": int(row.count),
+                    }
+                )
+
+            logger.info(
+                "Meta history loaded successfully",
+                extra={"entries": len(self.meta_history)},
+            )
+        except Exception as exc:  # pragma: no cover - defensive logging
+            logger.error(f"Failed to load meta history: {exc}")
+            self.meta_history = []
 
     async def run(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -128,9 +164,6 @@ class MetaAgent(BaseAgent):
         """
         logger.info(f"Analyzing current meta for {game_mode}")
 
-        # TODO: Récupérer les données réelles depuis la base de données
-        # Pour l'instant, retourner une structure de base
-
         meta_data = {
             "game_mode": game_mode,
             "profession": profession,
@@ -146,8 +179,39 @@ class MetaAgent(BaseAgent):
         self, game_mode: str, profession: Optional[str] = None, limit: int = 10
     ) -> List[Dict[str, Any]]:
         """Récupère les builds les plus populaires."""
-        # TODO: Implémenter la récupération depuis la base de données
-        return []
+        builds: List[Dict[str, Any]] = []
+
+        try:
+            async with SessionLocal() as session:  # type: AsyncSession
+                stmt = select(SavedBuildDB).where(SavedBuildDB.game_mode == game_mode)
+
+                if profession:
+                    stmt = stmt.where(SavedBuildDB.profession == profession)
+
+                # Utiliser la date de création comme proxy de "popularité récente"
+                stmt = stmt.order_by(SavedBuildDB.created_at.desc()).limit(limit)
+
+                result = await session.execute(stmt)
+                rows = list(result.scalars().all())
+
+            for row in rows:
+                builds.append(
+                    {
+                        "id": row.id,
+                        "name": row.name,
+                        "profession": row.profession,
+                        "specialization": row.specialization,
+                        "game_mode": row.game_mode,
+                        "synergy_score": row.synergy_score,
+                        "created_at": row.created_at.isoformat() if row.created_at else None,
+                        "source_url": row.source_url,
+                    }
+                )
+
+            return builds
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            logger.error(f"Failed to load top builds: {exc}")
+            return []
 
     async def _get_popular_roles(self, game_mode: str) -> List[Dict[str, Any]]:
         """Récupère les rôles les plus populaires."""
@@ -176,8 +240,48 @@ class MetaAgent(BaseAgent):
 
     async def _get_common_synergies(self, game_mode: str) -> List[Dict[str, Any]]:
         """Récupère les synergies communes."""
-        # TODO: Implémenter l'analyse des synergies depuis les données
-        return []
+        synergies: List[Dict[str, Any]] = []
+
+        try:
+            async with SessionLocal() as session:  # type: AsyncSession
+                stmt = (
+                    select(
+                        SavedBuildDB.profession,
+                        SavedBuildDB.specialization,
+                        SavedBuildDB.synergy_score,
+                        func.count().label("count"),
+                    )
+                    .where(SavedBuildDB.game_mode == game_mode)
+                    .group_by(
+                        SavedBuildDB.profession,
+                        SavedBuildDB.specialization,
+                        SavedBuildDB.synergy_score,
+                    )
+                    .order_by(func.count().desc())
+                    .limit(20)
+                )
+
+                result = await session.execute(stmt)
+                rows = result.all()
+
+            total = sum(int(row.count) for row in rows) or 1
+
+            for row in rows:
+                count = int(row.count)
+                synergies.append(
+                    {
+                        "profession": row.profession,
+                        "specialization": row.specialization,
+                        "synergy_score": row.synergy_score,
+                        "occurrences": count,
+                        "frequency": round(count / total, 4),
+                    }
+                )
+
+            return synergies
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            logger.error(f"Failed to compute common synergies: {exc}")
+            return []
 
     async def _detect_trends(self, game_mode: str, profession: Optional[str], time_range: int) -> List[Dict[str, Any]]:
         """
@@ -191,24 +295,82 @@ class MetaAgent(BaseAgent):
         Returns:
             Liste des tendances détectées
         """
-        logger.info(f"Detecting trends over {time_range} days")
+        logger.info(f"Detecting trends over {time_range} days for game_mode={game_mode}, profession={profession}")
 
-        trends = []
+        now = datetime.utcnow()
+        recent_start = now - timedelta(days=time_range)
+        previous_start = now - timedelta(days=2 * time_range)
 
-        # TODO: Analyser l'historique réel des builds
-        # Pour l'instant, retourner des tendances génériques
+        try:
+            async with SessionLocal() as session:  # type: AsyncSession
+                # Fenêtre récente
+                recent_stmt = select(
+                    SavedBuildDB.specialization,
+                    func.count().label("count"),
+                ).where(
+                    SavedBuildDB.game_mode == game_mode,
+                    SavedBuildDB.created_at >= recent_start,
+                )
 
-        trends.append(
-            {
-                "type": "build_popularity",
-                "description": "Augmentation de la popularité des builds support",
-                "change_percentage": 0.18,
-                "confidence": 0.85,
-                "detected_at": datetime.utcnow().isoformat(),
-            }
-        )
+                if profession:
+                    recent_stmt = recent_stmt.where(SavedBuildDB.profession == profession)
 
-        return trends
+                recent_stmt = recent_stmt.group_by(SavedBuildDB.specialization)
+                recent_rows = (await session.execute(recent_stmt)).all()
+
+                # Fenêtre précédente
+                previous_stmt = select(
+                    SavedBuildDB.specialization,
+                    func.count().label("count"),
+                ).where(
+                    SavedBuildDB.game_mode == game_mode,
+                    SavedBuildDB.created_at >= previous_start,
+                    SavedBuildDB.created_at < recent_start,
+                )
+
+                if profession:
+                    previous_stmt = previous_stmt.where(SavedBuildDB.profession == profession)
+
+                previous_stmt = previous_stmt.group_by(SavedBuildDB.specialization)
+                previous_rows = (await session.execute(previous_stmt)).all()
+
+            recent_counts = {row.specialization or "Unknown": int(row.count) for row in recent_rows}
+            previous_counts = {row.specialization or "Unknown": int(row.count) for row in previous_rows}
+
+            recent_total = sum(recent_counts.values())
+            previous_total = sum(previous_counts.values()) or 1
+
+            trends: List[Dict[str, Any]] = []
+
+            if recent_total == 0:
+                # Pas de données récentes → aucune tendance fiable
+                return trends
+
+            for spec, recent_count in recent_counts.items():
+                prev_count = previous_counts.get(spec, 0)
+
+                recent_share = recent_count / recent_total
+                previous_share = prev_count / previous_total
+                change = recent_share - previous_share
+
+                if change <= 0 or change < self.trend_threshold:
+                    continue
+
+                trends.append(
+                    {
+                        "type": "specialization_trend",
+                        "specialization": spec,
+                        "description": f"Augmentation de la popularité de {spec}",
+                        "change_percentage": round(change, 4),
+                        "confidence": 0.8,
+                        "detected_at": datetime.utcnow().isoformat(),
+                    }
+                )
+
+            return trends
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            logger.error(f"Failed to detect trends: {exc}")
+            return []
 
     async def _calculate_viability_scores(
         self, builds: List[Dict[str, Any]], meta_snapshot: Dict[str, Any]
@@ -256,13 +418,60 @@ class MetaAgent(BaseAgent):
 
     async def _score_profession_viability(self, profession: str, meta_snapshot: Dict[str, Any]) -> float:
         """Score la viabilité d'une profession dans le méta actuel."""
-        # TODO: Implémenter le scoring basé sur les données réelles
-        return 0.7  # Score par défaut
+        game_mode = meta_snapshot.get("game_mode")
+
+        if not profession or not game_mode:
+            return 0.7  # Score par défaut
+
+        try:
+            async with SessionLocal() as session:  # type: AsyncSession
+                total_stmt = select(func.count()).where(SavedBuildDB.game_mode == game_mode)
+                total_builds = await session.scalar(total_stmt) or 0
+
+                if total_builds == 0:
+                    return 0.7
+
+                prof_stmt = select(func.count()).where(
+                    SavedBuildDB.game_mode == game_mode,
+                    SavedBuildDB.profession == profession,
+                )
+                prof_builds = await session.scalar(prof_stmt) or 0
+
+            popularity = prof_builds / total_builds
+
+            # Mapper la popularité [0, 1] vers un score [0.4, 0.95]
+            score = 0.4 + 0.55 * min(popularity, 1.0)
+            return round(score, 2)
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            logger.error(f"Failed to score profession viability: {exc}")
+            return 0.7
 
     async def _score_synergy_potential(self, build: Dict[str, Any], meta_snapshot: Dict[str, Any]) -> float:
         """Score le potentiel de synergie d'un build."""
-        # TODO: Implémenter l'analyse de synergie
-        return 0.6  # Score par défaut
+        specialization = build.get("specialization")
+        common_synergies: List[Dict[str, Any]] = meta_snapshot.get("common_synergies", [])
+
+        if not specialization or not common_synergies:
+            return 0.6
+
+        try:
+            total_occurrences = sum(int(item.get("occurrences", 0)) for item in common_synergies) or 1
+
+            for item in common_synergies:
+                if item.get("specialization") != specialization:
+                    continue
+
+                occ = int(item.get("occurrences", 0))
+                freq = occ / total_occurrences
+
+                # Mapper la fréquence vers un score [0.5, 0.95]
+                score = 0.5 + 0.45 * min(freq * 2, 1.0)
+                return round(score, 2)
+
+            return 0.6
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            logger.error(f"Failed to score synergy potential: {exc}")
+            return 0.6
 
     async def _generate_recommendations(
         self, meta_snapshot: Dict[str, Any], trends: List[Dict[str, Any]], viability_scores: Dict[str, float]

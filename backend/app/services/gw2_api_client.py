@@ -354,6 +354,20 @@ class GW2APIClient:
             all_ids = await self._request("itemstats")
             return await self._get_paginated("itemstats", all_ids, page_size=200)
 
+    async def get_all_items(self) -> List[Dict[str, Any]]:
+        all_ids = await self._request("items")
+        return await self._get_paginated("items", all_ids, page_size=200)
+
+    async def get_upgrade_components(self, component_ids: Optional[List[int]] = None) -> List[Dict[str, Any]]:
+        if component_ids:
+            params = {"ids": ",".join(map(str, component_ids))}
+            return await self._request("upgrade_components", params=params)
+        all_ids = await self._request("upgrade_components")
+        return await self._get_paginated("upgrade_components", all_ids, page_size=200)
+
+    async def get_upgrade_component(self, component_id: int) -> Dict[str, Any]:
+        return await self._request(f"upgrade_components/{component_id}")
+
     # ==================== Helpers ====================
 
     async def _get_paginated(self, endpoint: str, all_ids: List[int], page_size: int = 200) -> List[Dict[str, Any]]:
@@ -369,18 +383,52 @@ class GW2APIClient:
             Liste complète des données
         """
         results = []
+        total_batches = (len(all_ids) + page_size - 1) // page_size
 
         for i in range(0, len(all_ids), page_size):
             batch_ids = all_ids[i : i + page_size]
             params = {"ids": ",".join(map(str, batch_ids))}
+            batch_num = i // page_size + 1
 
             try:
                 batch_data = await self._request(endpoint, params=params)
                 results.extend(batch_data)
+                
+                # Progress logging for large datasets
+                if total_batches > 10:  # Only log for significant imports
+                    logger.info(f"Fetched batch {batch_num}/{total_batches} for {endpoint} ({len(results)} items)")
+                
+                # Rate limiting: small delay between batches for large endpoints
+                if endpoint in ("items", "upgrade_components") and batch_num < total_batches:
+                    await asyncio.sleep(0.1)  # 100ms delay to avoid API throttling
+                    
             except Exception as e:
-                logger.error(f"Failed to fetch batch {i}-{i + page_size}: {e}")
+                logger.error(f"Failed to fetch batch {batch_num}/{total_batches} for {endpoint}: {e}")
 
+        logger.info(f"Completed pagination for {endpoint}: {len(results)} total items")
         return results
+
+    async def get_build_id(self) -> int:
+        """Récupère l'identifiant de build du jeu depuis l'API GW2.
+
+        L'endpoint /v2/build peut renvoyer soit un entier brut, soit un
+        objet JSON de la forme {"id": 191645}. Cette méthode gère les deux
+        formats et lève Gw2ApiError en cas de payload inattendu.
+        """
+
+        payload = await self._request("build")
+
+        # Ancien format: entier direct
+        if isinstance(payload, int):
+            return payload
+
+        # Nouveau format: {"id": <int>}
+        if isinstance(payload, dict):
+            value = payload.get("id")
+            if isinstance(value, int):
+                return value
+
+        raise Gw2ApiError(f"Unexpected build id payload: {payload!r}")
 
     async def import_all_game_data(self) -> Dict[str, Any]:
         """

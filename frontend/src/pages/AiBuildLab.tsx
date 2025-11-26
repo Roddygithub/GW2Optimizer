@@ -240,6 +240,71 @@ const AiBuildLab: React.FC = () => {
               </div>
             )}
 
+            {result.gear_optimization && (
+              <div className="pt-3 border-t border-slate-800 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Recommandation d'équipement</p>
+                    <p className="text-xs text-slate-500">
+                      Rôle optimisé&nbsp;: {result.gear_optimization.role} · Mode&nbsp;:{' '}
+                      {result.gear_optimization.mode} · Niveau&nbsp;:{' '}
+                      {result.gear_optimization.experience}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Preset choisi</p>
+                    <div className="rounded-md border border-slate-700 bg-slate-900 p-3 space-y-2 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Stats</span>
+                        <span className="text-indigo-400 font-medium">
+                          {result.gear_optimization.chosen.prefix}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Rune</span>
+                        <span className="text-blue-400 font-medium">
+                          {result.gear_optimization.chosen.rune}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Sigils</span>
+                        <span className="text-emerald-400 font-medium">
+                          {result.gear_optimization.chosen.sigils.join(', ')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Autres presets testés</p>
+                    <div className="flex flex-wrap gap-1">
+                      {(result.gear_optimization.alternatives ?? []).map((alt, idx) => (
+                        <span
+                          key={`${alt.prefix}-${idx}`}
+                          className="inline-flex items-center rounded-full bg-slate-900 px-2 py-0.5 text-[10px] text-gray-300 border border-indigo-500/30"
+                        >
+                          {alt.prefix} · {alt.rune}
+                        </span>
+                      ))}
+                      {(!result.gear_optimization.alternatives ||
+                        result.gear_optimization.alternatives.length === 0) && (
+                        <span className="text-[11px] text-slate-500">Aucune alternative significative.</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {result.gear_optimization.chosen.reason && (
+                  <p className="text-[11px] text-slate-500 italic">
+                    {result.gear_optimization.chosen.reason}
+                  </p>
+                )}
+              </div>
+            )}
+
             <details className="mt-2">
               <summary className="text-xs text-slate-500 cursor-pointer">Voir le JSON brut</summary>
               <pre className="mt-2 max-h-64 overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-300">

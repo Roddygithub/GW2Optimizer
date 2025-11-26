@@ -138,3 +138,10 @@ Thumbs.db
 # Allow frontend TS sources in src/lib (otherwise blocked by generic 'lib/' rule)
 !frontend/src/lib/
 !frontend/src/lib/**
+
+# Local PID files (dev servers)
+.backend.pid
+.frontend.pid
+
+# Local test output
+test_report.txt

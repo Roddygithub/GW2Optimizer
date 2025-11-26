@@ -1,6 +1,9 @@
 """Tests for AI Agents."""
 
+import json
 import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
+
 from app.agents.recommender_agent import RecommenderAgent
 from app.agents.synergy_agent import SynergyAgent
 from app.agents.optimizer_agent import OptimizerAgent
@@ -147,3 +150,79 @@ class TestOptimizerAgent:
 
         with pytest.raises(ValueError, match="max_changes must be between"):
             await agent.validate_inputs(inputs)
+
+    async def test_run_success_with_mocked_synergy_and_llm(self):
+        """Test optimizer run() succeeds with mocked SynergyAgent and LLM response.
+
+        This focuses on wiring and post-processing logic rather than real HTTP calls.
+        """
+
+        # Mocked LLM response payload compatible with OptimizerAgent expectations
+        mock_payload = {
+            "optimized_composition": ["Guardian", "Necromancer"],
+            "changes": [
+                {
+                    "position": 1,
+                    "from": "Warrior",
+                    "to": "Necromancer",
+                    "reason": "Better boon support and condition pressure",
+                }
+            ],
+            "rationale": "Mocked rationale for testing.",
+            "expected_improvements": ["More boons", "Better sustain"],
+            "trade_offs": ["Slightly lower burst damage"],
+            "alternative_options": [],
+        }
+
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "response": json.dumps(mock_payload),
+            "created_at": "2025-01-01T00:00:00Z",
+        }
+        mock_response.raise_for_status.return_value = None
+
+        async def fake_post(url: str, json: dict | None = None):  # type: ignore[override]
+            return mock_response
+
+        async def fake_synergy_execute(_inputs):  # type: ignore[override]
+            # Mimic BaseAgent.execute() contract for SynergyAgent
+            return {
+                "success": True,
+                "agent": "SynergyAgent",
+                "execution_time": 0.01,
+                "result": {
+                    "overall_rating": 7.0,
+                    "weaknesses": ["Low boon uptime"],
+                },
+            }
+
+        class DummyClient:
+            async def post(self, url: str, json: dict | None = None):  # type: ignore[override]
+                return await fake_post(url, json)
+
+        class DummySynergyAgent:
+            async def execute(self, inputs):  # type: ignore[override]
+                return await fake_synergy_execute(inputs)
+
+        agent = OptimizerAgent()
+        # Bypass initialize() to keep our fakes
+        agent._is_initialized = True
+        agent._client = DummyClient()  # type: ignore[assignment]
+        agent._synergy_agent = DummySynergyAgent()  # type: ignore[assignment]
+
+        result = await agent.execute(
+            {
+                "current_composition": ["Guardian", "Warrior"],
+                "objectives": ["optimize_synergy"],
+                "game_mode": "Raids",
+                "max_changes": 2,
+            }
+        )
+
+        assert result["success"] is True
+        assert result["agent"] == "OptimizerAgent"
+        data = result["result"]
+        assert data["optimized_composition"] == ["Guardian", "Necromancer"]
+        assert data["before_analysis"]["overall_rating"] == 7.0
+        assert "improvement_score" in data
+

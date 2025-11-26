@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class BuildSuggestionCreate(BaseModel):
@@ -25,8 +25,7 @@ class BuildSuggestionOut(BaseModel):
     build: Dict[str, Any]
     explanation: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PaginatedBuildSuggestions(BaseModel):

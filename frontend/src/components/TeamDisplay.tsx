@@ -19,6 +19,15 @@ interface TeamDisplayProps {
           survivability: number;
           dps_increase: number;
         };
+        advisor_reason?: string;
+        advisor_alternatives?: {
+          prefix: string;
+          rune: string;
+          sigils: string[];
+          total_damage: number;
+          survivability: number;
+          overall_score: number;
+        }[];
       }>;
     }>;
     synergy: {
@@ -229,6 +238,28 @@ export default function TeamDisplay({ data }: TeamDisplayProps) {
                       />
                     </div>
                   </div>
+
+                  {slot.advisor_reason && (
+                    <p className="mt-2 text-[11px] text-gray-400 italic">
+                      {slot.advisor_reason}
+                    </p>
+                  )}
+
+                  {slot.advisor_alternatives && slot.advisor_alternatives.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-slate-800">
+                      <p className="text-[11px] text-gray-500 mb-1">Autres presets testés :</p>
+                      <div className="flex flex-wrap gap-1">
+                        {slot.advisor_alternatives.map((alt, idx) => (
+                          <span
+                            key={`${alt.prefix}-${idx}`}
+                            className="inline-flex items-center rounded-full bg-slate-900 px-2 py-0.5 text-[10px] text-gray-300 border border-purple-500/30"
+                          >
+                            {alt.prefix} · {alt.rune}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -1,0 +1,13 @@
+{
+  "build_id": 191645,
+  "import_timestamp": "2025-11-26T22:18:59.198482+00:00",
+  "counts": {
+    "professions": 9,
+    "specializations": 81,
+    "traits": 999,
+    "skills": 4684,
+    "items": 71218,
+    "upgrade_components": 1440,
+    "itemstats": 191
+  }
+}

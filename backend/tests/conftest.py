@@ -302,9 +302,6 @@ class TestUser(UserOut):
 
     password: str
 
-    class Config:
-        arbitrary_types_allowed = True
-
 
 @pytest_asyncio.fixture
 async def test_user(db_session: AsyncSession) -> TestUser:

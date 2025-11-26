@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# 🛑 GW2 Optimizer - Script d'Arrêt
+# 🛑 GW2 Optimizer - Script d'Arrêt (Backend + Frontend)
 
 echo "════════════════════════════════════════════════════════════════"
-echo "🛑 ARRÊT GW2 OPTIMIZER"
+echo "🛑 ARRÊT GW2 OPTIMIZER - AI DASHBOARD & TEAM COMMANDER"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 

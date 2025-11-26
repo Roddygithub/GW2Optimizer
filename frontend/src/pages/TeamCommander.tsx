@@ -42,6 +42,8 @@ export default function TeamCommander() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [experience, setExperience] = useState<'beginner' | 'intermediate' | 'expert'>('beginner');
+  const [mode, setMode] = useState<'wvw_zerg' | 'wvw_outnumber' | 'wvw_roam'>('wvw_zerg');
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -58,7 +60,7 @@ export default function TeamCommander() {
     setIsLoading(true);
 
     try {
-      const response = await teamCommanderApi.command(input);
+      const response = await teamCommanderApi.command(input, experience, mode);
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -177,7 +179,87 @@ export default function TeamCommander() {
         </div>
 
         {/* Input */}
-        <div className="sticky bottom-0 bg-slate-900/90 backdrop-blur-sm border border-purple-500/20 rounded-lg p-4">
+        <div className="sticky bottom-0 bg-slate-900/90 backdrop-blur-sm border border-purple-500/20 rounded-lg p-4 space-y-3">
+          {/* Team Experience Selector */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-xs text-gray-400 uppercase tracking-wider">Niveau de l'équipe</div>
+            <div className="flex items-center gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setExperience('beginner')}
+                className={`px-3 py-1 rounded-full border text-xs transition-colors ${
+                  experience === 'beginner'
+                    ? 'bg-purple-600 text-white border-purple-400'
+                    : 'bg-slate-800 text-gray-300 border-purple-500/30 hover:border-purple-400/60'
+                }`}
+              >
+                Débutant
+              </button>
+              <button
+                type="button"
+                onClick={() => setExperience('intermediate')}
+                className={`px-3 py-1 rounded-full border text-xs transition-colors ${
+                  experience === 'intermediate'
+                    ? 'bg-purple-600 text-white border-purple-400'
+                    : 'bg-slate-800 text-gray-300 border-purple-500/30 hover:border-purple-400/60'
+                }`}
+              >
+                Intermédiaire
+              </button>
+              <button
+                type="button"
+                onClick={() => setExperience('expert')}
+                className={`px-3 py-1 rounded-full border text-xs transition-colors ${
+                  experience === 'expert'
+                    ? 'bg-purple-600 text-white border-purple-400'
+                    : 'bg-slate-800 text-gray-300 border-purple-500/30 hover:border-purple-400/60'
+                }`}
+              >
+                Expert
+              </button>
+            </div>
+          </div>
+
+          {/* WvW Mode Selector */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-xs text-gray-400 uppercase tracking-wider">Mode de jeu</div>
+            <div className="flex items-center gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setMode('wvw_zerg')}
+                className={`px-3 py-1 rounded-full border text-xs transition-colors ${
+                  mode === 'wvw_zerg'
+                    ? 'bg-purple-600 text-white border-purple-400'
+                    : 'bg-slate-800 text-gray-300 border-purple-500/30 hover:border-purple-400/60'
+                }`}
+              >
+                Zerg
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('wvw_outnumber')}
+                className={`px-3 py-1 rounded-full border text-xs transition-colors ${
+                  mode === 'wvw_outnumber'
+                    ? 'bg-purple-600 text-white border-purple-400'
+                    : 'bg-slate-800 text-gray-300 border-purple-500/30 hover:border-purple-400/60'
+                }`}
+              >
+                Outnumber
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('wvw_roam')}
+                className={`px-3 py-1 rounded-full border text-xs transition-colors ${
+                  mode === 'wvw_roam'
+                    ? 'bg-purple-600 text-white border-purple-400'
+                    : 'bg-slate-800 text-gray-300 border-purple-500/30 hover:border-purple-400/60'
+                }`}
+              >
+                Roam
+              </button>
+            </div>
+          </div>
+
           <div className="flex gap-3">
             <input
               type="text"

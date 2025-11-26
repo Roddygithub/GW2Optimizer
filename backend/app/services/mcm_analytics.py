@@ -5,7 +5,7 @@ Provides analytics and metrics for World vs World combat.
 """
 
 from typing import Dict, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import asyncio
 
 
@@ -32,7 +32,7 @@ class McMAnalyticsService:
                 "blue": 12,
                 "green": 10,
             },
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(timezone.utc).isoformat(),
         }
 
     async def get_live_metrics(self) -> Dict:
@@ -76,7 +76,7 @@ class McMAnalyticsService:
                 "blue": 312,
                 "green": 198,
             },
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     async def get_zerg_analytics(self, zerg_id: str) -> Optional[Dict]:
@@ -159,12 +159,12 @@ class McMAnalyticsService:
             "capture_history": [
                 {
                     "team": "red",
-                    "timestamp": (datetime.utcnow() - timedelta(minutes=30)).isoformat(),
+                    "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=30)).isoformat(),
                     "duration_held_minutes": 25,
                 },
                 {
                     "team": "blue",
-                    "timestamp": (datetime.utcnow() - timedelta(minutes=5)).isoformat(),
+                    "timestamp": (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat(),
                     "duration_held_minutes": 5,
                 },
             ],
@@ -185,7 +185,7 @@ class McMAnalyticsService:
         return {
             "battle_id": battle_id,
             "location": "Hills",
-            "start_time": (datetime.utcnow() - timedelta(minutes=3)).isoformat(),
+            "start_time": (datetime.now(timezone.utc) - timedelta(minutes=3)).isoformat(),
             "participants": {
                 "red": 25,
                 "blue": 18,
