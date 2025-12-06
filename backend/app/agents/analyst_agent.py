@@ -26,6 +26,7 @@ class AnalystAgent(BaseAgent):
         # ==================== Build synergy mode ====================
         if "build_data" in inputs:
             build_data = inputs["build_data"]
+            meta_context = inputs.get("meta_context")
 
             system_prompt = (
                 "Tu es un expert theorycrafter Guild Wars 2 spécialisé en WvW. "
@@ -37,6 +38,7 @@ class AnalystAgent(BaseAgent):
                 "- Baser ton analyse UNIQUEMENT sur les champs fournis dans build_data (specialization, traits, skills et leurs champs, equipment_summary éventuel, champs d'estimation de dégâts, etc.).\n"
                 "- Si un champ 'equipment_summary' est présent dans build_data, utilise-le pour affiner ton jugement sur le rôle, les statistiques et les runes du build, sans inventer d'éléments absents.\n"
                 "- Si des champs d'estimation de dégâts (par ex. 'estimated_damage_berserker') sont présents sur les skills, utilise-les pour juger le burst et comparer les options de dégâts bruts, sans inventer de nouveaux nombres.\n"
+                "- Si un champ 'meta_context' est fourni, considère-le comme un résumé de la meta actuelle (builds/roles populaires) mais ne l'utilise PAS comme une contrainte dure: la cohérence interne du build, le contexte WvW et la robustesse restent prioritaires.\n"
                 "- Ne pas inventer d'effets, de boons ou de conditions qui ne sont pas présents dans ces données.\n"
                 "- Quand tu cites un boon ou une altération, utiliser exactement le nom présent dans les descriptions ou facts.\n"
                 "- La sortie DOIT être un objet JSON strictement valide, sans texte supplémentaire, sans markdown.\n"
@@ -44,11 +46,16 @@ class AnalystAgent(BaseAgent):
                 "- Sois concis dans strengths, weaknesses et summary. Pas de markdown, pas de listes à puces. Tu peux mentionner explicitement les estimations de dégâts quand c'est pertinent pour justifier le score."
             )
 
-            build_json = json.dumps(build_data, ensure_ascii=False, indent=2)
+            build_json = json.dumps(build_data, ensure_ascii=False, separators=(",", ":"))
             prompt = (
                 f"Contexte: {context}\n\n"
                 "Build au format JSON (build_data):\n"
                 f"{build_json}\n\n"
+            )
+            if meta_context:
+                prompt += "Contexte meta (meta_context):\n"
+                prompt += f"{meta_context}\n\n"
+            prompt += (
                 "Réponds avec un objet JSON de la forme EXACTE suivante (sans commentaire ni texte autour) :\n"
                 "{"
                 '"synergy_score": "S|A|B|C",'
@@ -58,27 +65,6 @@ class AnalystAgent(BaseAgent):
                 "}"
             )
 
-            schema: Dict[str, Any] = {
-                "type": "object",
-                "properties": {
-                    "synergy_score": {
-                        "type": "string",
-                        "enum": ["S", "A", "B", "C"],
-                    },
-                    "strengths": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                    },
-                    "weaknesses": {
-                        "type": "array",
-                        "items": {"type": "string"},
-                    },
-                    "summary": {"type": "string"},
-                },
-                "required": ["synergy_score", "strengths", "weaknesses", "summary"],
-                "additionalProperties": True,
-            }
-
             logger.info("Running build synergy analysis with AnalystAgent (Ollama)")
             ai_result: Any = {}
             for attempt in range(2):
@@ -86,7 +72,7 @@ class AnalystAgent(BaseAgent):
                     ai_result = await self._ollama.generate_structured(
                         prompt=prompt,
                         system_prompt=system_prompt,
-                        schema=schema,
+                        schema=None,
                     )
                     break
                 except ValueError as e:

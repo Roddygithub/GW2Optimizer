@@ -28,6 +28,26 @@ fi
 
 echo ""
 echo "════════════════════════════════════════════════════════════════"
+echo "🧠 LLM / OLLAMA"
+echo "════════════════════════════════════════════════════════════════"
+echo ""
+
+if command -v ollama &> /dev/null; then
+    if pgrep -x "ollama" > /dev/null 2>&1; then
+        echo "✅ Ollama déjà en cours d'exécution"
+    else
+        echo "🚀 Démarrage du serveur Ollama (ollama serve)..."
+        ollama serve > ollama.log 2>&1 &
+        OLLAMA_PID=$!
+        echo "✅ Ollama démarré (PID: $OLLAMA_PID)"
+        echo "$OLLAMA_PID" > .ollama.pid
+    fi
+else
+    echo "⚠️ Ollama non installé - les fonctionnalités IA (synergie, Team Commander, Build Lab) ne fonctionneront pas."
+fi
+
+echo ""
+echo "════════════════════════════════════════════════════════════════"
 echo "🔧 BACKEND"
 echo "════════════════════════════════════════════════════════════════"
 echo ""

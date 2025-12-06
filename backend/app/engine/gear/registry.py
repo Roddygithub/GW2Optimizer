@@ -677,6 +677,126 @@ SIGIL_REGISTRY: Dict[str, Callable[..., Modifier]] = {
     "Demons": create_demons_sigil,
 }
 
+# ==================== RELICS ====================
+
+
+def create_fireworks_relic() -> List[Modifier]:
+    """Relic of Fireworks: offensive relic for power DPS.
+
+    Approximation: small global strike damage bonus.
+    """
+
+    return [
+        Modifier(
+            "Relic of Fireworks",
+            "Relic: Fireworks",
+            ModifierType.DAMAGE_MULTIPLIER,
+            0.05,
+        )
+    ]
+
+
+def create_flock_relic() -> List[Modifier]:
+    """Relic of the Flock: sustain/heal oriented relic.
+
+    Approximation: outgoing healing bonus.
+    """
+
+    return [
+        Modifier(
+            "Relic of the Flock",
+            "Relic: Flock",
+            ModifierType.OUTGOING_HEALING,
+            0.06,
+        )
+    ]
+
+
+def create_monk_relic() -> List[Modifier]:
+    """Relic of the Monk: boon-based healing support.
+
+    Approximation: outgoing healing + slight boon duration.
+    """
+
+    return [
+        Modifier(
+            "Relic of the Monk",
+            "Relic: Monk",
+            ModifierType.OUTGOING_HEALING,
+            0.08,
+        ),
+        Modifier(
+            "Relic of the Monk",
+            "Relic: Monk",
+            ModifierType.BOON_DURATION,
+            0.05,
+        ),
+    ]
+
+
+def create_herald_relic() -> List[Modifier]:
+    """Relic of the Herald: pure boon support relic.
+
+    Approximation: boon duration bonus.
+    """
+
+    return [
+        Modifier(
+            "Relic of the Herald",
+            "Relic: Herald",
+            ModifierType.BOON_DURATION,
+            0.12,
+        )
+    ]
+
+
+def create_centaur_relic() -> List[Modifier]:
+    """Relic of the Centaur: defensive/stability-oriented relic.
+
+    Approximation: extra toughness for survivability.
+    """
+
+    return [
+        Modifier(
+            "Relic of the Centaur",
+            "Relic: Centaur",
+            ModifierType.FLAT_STAT,
+            120,
+            target_stat="toughness",
+        )
+    ]
+
+
+def create_scourge_relic() -> List[Modifier]:
+    """Relic of the Scourge: condi support relic.
+
+    Approximation: condition duration bonus.
+    """
+
+    return [
+        Modifier(
+            "Relic of the Scourge",
+            "Relic: Scourge",
+            ModifierType.CONDITION_DURATION,
+            0.10,
+        )
+    ]
+
+
+RELIC_REGISTRY: Dict[str, Callable[[], List[Modifier]]] = {
+    # Offensive relics
+    "Fireworks": create_fireworks_relic,
+    # Healing / support relics
+    "Flock": create_flock_relic,
+    "Monk": create_monk_relic,
+    # Boon support
+    "Herald": create_herald_relic,
+    # Defensive / tanky relics
+    "Centaur": create_centaur_relic,
+    # Condi / barrier support
+    "Scourge": create_scourge_relic,
+}
+
 # ==================== CONSUMABLES (Food & Utility) ====================
 
 

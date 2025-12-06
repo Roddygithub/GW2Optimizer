@@ -1,0 +1,142 @@
+{
+  "builds": [
+    {
+      "id": "hardstuck-wvw-index",
+      "url": "https://hardstuck.gg/gw2/builds/?t=wvw",
+      "kind": "index",
+      "source": "hardstuck",
+      "tags": ["wvw", "index", "hardstuck"]
+    },
+    {
+      "id": "snowcrows-wvw-index",
+      "url": "https://snowcrows.com/builds/wvw/",
+      "kind": "index",
+      "source": "snowcrows",
+      "tags": ["wvw", "index", "snowcrows"]
+    },
+    {
+      "id": "guildjen-wvw-zerg-index",
+      "url": "https://guildjen.com/gw2-wvw-zerg-builds/",
+      "kind": "index",
+      "source": "guildjen",
+      "tags": ["wvw", "index", "guildjen", "zerg"]
+    },
+    {
+      "id": "guildjen-wvw-roam-index",
+      "url": "https://guildjen.com/gw2-wvw-builds/",
+      "kind": "index",
+      "source": "guildjen",
+      "tags": ["wvw", "index", "guildjen", "roam"]
+    },
+    {
+      "id": "hardstuck-heal-firebrand-zerg",
+      "url": "https://hardstuck.gg/gw2/builds/guardian/heal-firebrand/",
+      "name": "Heal Firebrand WvW Zerg (Hardstuck)",
+      "game_mode": "wvw_zerg",
+      "role": "support",
+      "source": "hardstuck",
+      "tags": ["wvw", "zerg", "guardian", "firebrand", "support", "heal"]
+    },
+    {
+      "id": "hardstuck-power-reaper-zerg",
+      "url": "https://hardstuck.gg/gw2/builds/necromancer/power-reaper-2/",
+      "name": "Power Reaper WvW Zerg (Hardstuck)",
+      "game_mode": "wvw_zerg",
+      "role": "dps",
+      "source": "hardstuck",
+      "tags": ["wvw", "zerg", "necromancer", "reaper", "dps"]
+    },
+    {
+      "id": "hardstuck-condi-harbinger-roam",
+      "url": "https://hardstuck.gg/gw2/builds/necromancer/condition-harbinger-2/",
+      "name": "Condition Harbinger WvW Roaming (Hardstuck)",
+      "game_mode": "wvw_roam",
+      "role": "dps",
+      "source": "hardstuck",
+      "tags": ["wvw", "roam", "necromancer", "harbinger", "condition", "dps"]
+    },
+    {
+      "id": "hardstuck-confusion-virtuoso-roam",
+      "url": "https://hardstuck.gg/gw2/builds/mesmer/confusion-virtuoso/",
+      "name": "Confusion Virtuoso WvW Roaming (Hardstuck)",
+      "game_mode": "wvw_roam",
+      "role": "dps",
+      "source": "hardstuck",
+      "tags": ["wvw", "roam", "mesmer", "virtuoso", "condition", "dps"]
+    },
+    {
+      "id": "hardstuck-condi-catalyst-roam",
+      "url": "https://hardstuck.gg/gw2/builds/elementalist/condition-signet-catalyst/",
+      "name": "Condition Catalyst WvW Roaming (Hardstuck)",
+      "game_mode": "wvw_roam",
+      "role": "dps",
+      "source": "hardstuck",
+      "tags": ["wvw", "roam", "elementalist", "catalyst", "condition", "dps"]
+    },
+
+    {
+      "id": "snowcrows-power-warrior-zerg",
+      "url": "https://snowcrows.com/builds/wvw/warrior/power-warrior",
+      "name": "Power Warrior WvW Zerg (Snow Crows)",
+      "game_mode": "wvw_zerg",
+      "role": "dps",
+      "source": "snowcrows",
+      "tags": ["wvw", "zerg", "warrior", "power", "dps"]
+    },
+
+    {
+      "id": "guildjen-dps-untamed-zerg",
+      "url": "https://guildjen.com/dps-untamed-wvw-zerg-build/",
+      "name": "DPS Untamed WvW Zerg (GuildJen)",
+      "game_mode": "wvw_zerg",
+      "role": "dps",
+      "source": "guildjen",
+      "tags": ["wvw", "zerg", "ranger", "untamed", "dps"]
+    },
+    {
+      "id": "guildjen-support-vindicator-zerg",
+      "url": "https://guildjen.com/support-vindicator-wvw-zerg-build/",
+      "name": "Support Vindicator WvW Zerg (GuildJen)",
+      "game_mode": "wvw_zerg",
+      "role": "support",
+      "source": "guildjen",
+      "tags": ["wvw", "zerg", "revenant", "vindicator", "support", "heal"]
+    },
+    {
+      "id": "guildjen-support-scourge-zerg",
+      "url": "https://guildjen.com/support-scourge-wvw-zerg-build/",
+      "name": "Support Scourge WvW Zerg (GuildJen)",
+      "game_mode": "wvw_zerg",
+      "role": "support",
+      "source": "guildjen",
+      "tags": ["wvw", "zerg", "necromancer", "scourge", "support"]
+    },
+    {
+      "id": "guildjen-power-willbender-roam",
+      "url": "https://guildjen.com/power-willbender-roaming-build/",
+      "name": "Power Willbender WvW Roaming (GuildJen)",
+      "game_mode": "wvw_roam",
+      "role": "dps",
+      "source": "guildjen",
+      "tags": ["wvw", "roam", "guardian", "willbender", "power", "dps"]
+    },
+    {
+      "id": "guildjen-power-luminary-roam",
+      "url": "https://guildjen.com/power-luminary-roaming-build/",
+      "name": "Power Luminary WvW Roaming (GuildJen)",
+      "game_mode": "wvw_roam",
+      "role": "dps",
+      "source": "guildjen",
+      "tags": ["wvw", "roam", "guardian", "luminary", "power", "dps"]
+    },
+    {
+      "id": "guildjen-power-virtuoso-roam",
+      "url": "https://guildjen.com/power-virtuoso-roaming-build/",
+      "name": "Power Virtuoso WvW Roaming (GuildJen)",
+      "game_mode": "wvw_roam",
+      "role": "dps",
+      "source": "guildjen",
+      "tags": ["wvw", "roam", "mesmer", "virtuoso", "power", "dps"]
+    }
+  ]
+}

@@ -9,10 +9,18 @@ interface TeamDisplayProps {
         role: string;
         profession: string;
         specialization: string;
+        gear_mix?: Record<string, string>;
         equipment: {
           stats: string;
           rune: string;
           sigils: string[];
+          relic?: string | null;
+          example_armor?: Array<{
+            slot: string;
+            id: number;
+            name: string;
+            stats?: string | null;
+          }>;
         };
         performance: {
           burst_damage: number;
@@ -64,7 +72,7 @@ const roleColors: Record<string, { bg: string; text: string; icon: LucideIcon }>
   heal: { bg: 'bg-green-500/20', text: 'text-green-400', icon: Heart },
   boon: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', icon: Zap },
   strip: { bg: 'bg-red-500/20', text: 'text-red-400', icon: Target },
-  dps: { bg: 'bg-orange-500/20', text: 'text-orange-400', icon: Swords },
+  dps: { bg: 'bg-red-500/20', text: 'text-red-400', icon: Swords },
   tank: { bg: 'bg-cyan-500/20', text: 'text-cyan-400', icon: Shield },
   support: { bg: 'bg-purple-500/20', text: 'text-purple-400', icon: Heart },
   cleanse: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', icon: Activity },
@@ -199,7 +207,12 @@ export default function TeamDisplay({ data }: TeamDisplayProps) {
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-gray-400">Rune</span>
-                      <span className="text-blue-400 font-medium">{slot.equipment.rune}</span>
+                      <span
+                        className="text-blue-400 font-medium"
+                        title="Rune recommandée pour ce build (issue de l'analyse)"
+                      >
+                        {slot.equipment.rune}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-gray-400">Sigils</span>
@@ -207,6 +220,59 @@ export default function TeamDisplay({ data }: TeamDisplayProps) {
                         {slot.equipment.sigils.join(', ')}
                       </span>
                     </div>
+                    {slot.equipment.relic && (
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">Relique</span>
+                        <span
+                          className="text-amber-400 font-medium"
+                          title="Relique recommandée pour ce build (issue de l'analyse)"
+                        >
+                          {slot.equipment.relic}
+                        </span>
+                      </div>
+                    )}
+                    {/* Mix d'armure détaillé issu du greedy solver, si disponible */}
+                    {slot.gear_mix && Object.keys(slot.gear_mix).length > 0 && (
+                      <div className="pt-2 border-t border-slate-700 mt-1 space-y-1">
+                        <div className="flex items-center justify-between text-[11px] text-gray-400">
+                          <span>Mix d'armure (préfixes)</span>
+                        </div>
+                        <div className="space-y-0.5">
+                          {Object.entries(slot.gear_mix).map(([armorSlot, prefix]) => (
+                            <div
+                              key={armorSlot}
+                              className="flex items-center justify-between text-[11px] text-gray-300"
+                            >
+                              <span className="text-gray-500">{armorSlot}</span>
+                              <span className="text-right text-purple-300">{prefix}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {Array.isArray(slot.equipment.example_armor) &&
+                      slot.equipment.example_armor.length > 0 && (
+                        <div className="pt-2 border-t border-slate-700 mt-1 space-y-1">
+                          <div className="flex items-center justify-between text-[11px] text-gray-400">
+                            <span>Exemple d'armure</span>
+                          </div>
+                          <div className="space-y-0.5">
+                            {slot.equipment.example_armor.map((piece) => (
+                              <div
+                                key={`${piece.slot}-${piece.id}`}
+                                className="flex items-center justify-between text-[11px] text-gray-300"
+                              >
+                                <span className="text-gray-500">{piece.slot}</span>
+                                <span className="text-right">
+                                  {piece.name}
+                                  {piece.stats && <span className="text-gray-500"> · {piece.stats}</span>}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                   </div>
 
                   {/* Performance */}

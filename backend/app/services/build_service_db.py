@@ -8,8 +8,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import logger
-from app.models.build import BuildCreate, BuildDB, BuildUpdate, GameMode, Profession, Role
+from app.models.build import Build, BuildCreate, BuildDB, BuildUpdate, GameMode, Profession, Role
 from app.db.models import UserDB
+from app.models.learning import DataSource
+from app.services.learning.data_collector import DataCollector
 
 
 class BuildService:
@@ -23,6 +25,7 @@ class BuildService:
             db: Async database session
         """
         self.db = db
+        self.collector = DataCollector()
 
     async def create_build(self, build_data: BuildCreate, user: UserDB) -> BuildDB:
         """
@@ -50,6 +53,15 @@ class BuildService:
             await self.db.refresh(build_db)
 
             logger.info(f"✅ Created build {build_db.id} for user {user.id}")
+            try:
+                build_model = Build.model_validate(build_db)
+                await self.collector.collect_build(build_model, source=DataSource.USER_IMPORT)
+            except Exception as e:
+                logger.error(
+                    "Failed to collect user build for learning",
+                    extra={"build_id": build_db.id, "user_id": str(user.id), "error": str(e)},
+                )
+
             return build_db
 
         except Exception as e:

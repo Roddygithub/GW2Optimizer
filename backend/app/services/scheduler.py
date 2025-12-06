@@ -6,6 +6,7 @@ from apscheduler.triggers.cron import CronTrigger
 from app.core.logging import logger
 from app.models.learning import FineTuningConfig, StorageConfig
 from app.services.learning.pipeline import LearningPipeline
+from scripts.sync_meta_builds import sync_from_config as sync_meta_builds
 
 
 class PipelineScheduler:
@@ -22,6 +23,18 @@ class PipelineScheduler:
     async def run_pipeline_task(self) -> None:
         """Task to run the learning pipeline."""
         try:
+            logger.info("Scheduled meta build sync starting...")
+            try:
+                await sync_meta_builds()
+            except Exception as e:
+                logger.error("Scheduled meta build sync failed", extra={"error": str(e)})
+
+            try:
+                ingested = await self.pipeline.ingest_meta_builds()
+                logger.info("Ingested meta builds into training data", extra={"count": ingested})
+            except Exception as e:
+                logger.error("Failed to ingest meta builds into training data", extra={"error": str(e)})
+
             logger.info("Scheduled pipeline execution starting...")
             stats = await self.pipeline.run_full_pipeline()
             logger.info(f"Scheduled pipeline completed: {stats.get('status')}")

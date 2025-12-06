@@ -13,6 +13,13 @@ interface TeamCommandResponse {
         stats: string;
         rune: string;
         sigils: string[];
+        relic?: string | null;
+        example_armor?: Array<{
+          slot: string;
+          id: number;
+          name: string;
+          stats?: string | null;
+        }>;
       };
       performance: {
         burst_damage: number;

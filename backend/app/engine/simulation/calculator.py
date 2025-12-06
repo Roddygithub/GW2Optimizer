@@ -5,7 +5,7 @@ from ..core.damage import calculate_average_damage, calculate_multi_hit_damage
 from ..core.condition import calculate_all_condition_damage
 from ..core.attributes import AttributeCalculator
 from ..combat.context import CombatContext
-from ..combat.boons import apply_boon_stats
+from ..combat.boons import apply_boon_stats, BOON_MODIFIERS
 from ..modifiers.base import Modifier
 from ..modifiers.stacking import ModifierStacker
 
@@ -34,11 +34,58 @@ class BuildCalculator:
         Returns:
             Dictionary with effective stats
         """
-        # Apply boon stat bonuses first
+        # Apply boon stat bonuses first (handles Might, etc.)
         stats_with_boons = apply_boon_stats(base_stats, context.player_boons)
 
-        # Stack all modifiers
-        mod_summary = self.stacker.stack_all_modifiers(modifiers, context.to_dict())
+        def _scale_modifiers_for_uptime(mods: List[Modifier], uptime: float) -> List[Modifier]:
+            if uptime >= 0.999:
+                return mods
+            factor = max(0.0, min(1.0, float(uptime)))
+            scaled: List[Modifier] = []
+            for m in mods:
+                scaled.append(
+                    Modifier(
+                        name=m.name,
+                        source=m.source,
+                        modifier_type=m.modifier_type,
+                        value=m.value * factor,
+                        condition=m.condition,
+                        target_stat=m.target_stat,
+                        stacks=m.stacks,
+                        max_stacks=m.max_stacks,
+                        duration=m.duration,
+                        cooldown=m.cooldown,
+                        internal_cooldown=m.internal_cooldown,
+                        proc_chance=m.proc_chance,
+                        is_multiplicative=m.is_multiplicative,
+                        metadata=dict(m.metadata) if m.metadata else None,
+                    )
+                )
+            return scaled
+
+        # Convert selected boons into explicit modifiers (Quickness, Protection, ...).
+        # We deliberately skip Might and Fury here to avoid double-counting, since
+        # their effects are already modeled via stats_with_boons and derived stats.
+        boon_mods: List[Modifier] = []
+        for boon_name, stacks in context.player_boons.items():
+            if boon_name in {"Might", "Fury"}:
+                continue
+            mod_def = BOON_MODIFIERS.get(boon_name)
+            if mod_def is None:
+                continue
+            uptime = context.get_boon_uptime(boon_name)
+            if callable(mod_def):
+                try:
+                    raw_mods = mod_def(stacks)  # type: ignore[arg-type]
+                except TypeError:
+                    raw_mods = mod_def()  # type: ignore[call-arg]
+                boon_mods.extend(_scale_modifiers_for_uptime(list(raw_mods), uptime))
+            else:
+                boon_mods.extend(_scale_modifiers_for_uptime([mod_def], uptime))
+
+        # Stack all modifiers (gear + boons)
+        all_mods = list(modifiers) + boon_mods
+        mod_summary = self.stacker.stack_all_modifiers(all_mods, context.to_dict())
 
         # Apply flat stat bonuses
         for stat, bonus in mod_summary["stat_bonuses"].items():
@@ -61,6 +108,7 @@ class BuildCalculator:
         derived["damage_multiplier"] = mod_summary["damage_multiplier"]
         derived["strike_multiplier"] = mod_summary["strike_multiplier"]
         derived["condition_multiplier"] = mod_summary["condition_multiplier"]
+        derived["incoming_damage_multiplier"] = mod_summary.get("incoming_damage_multiplier", 1.0)
 
         return derived
 
@@ -114,7 +162,7 @@ class BuildCalculator:
                 conditions=skill_data["conditions"],
                 condition_damage_stat=int(effective_stats["effective_condition_damage"]),
                 expertise=int(effective_stats.get("expertise", 0)),
-                target_has_resolution=context.target_has_condition("Resolution"),
+                target_has_resolution=context.target_has_boon("Resolution"),
                 additional_duration_percent=effective_stats.get("condition_duration_bonus", 0.0),
             )
 

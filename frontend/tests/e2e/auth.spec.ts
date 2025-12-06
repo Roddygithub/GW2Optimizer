@@ -1,3 +1,4 @@
+import process from 'node:process';
 import { test, expect } from '@playwright/test';
 import { login, logout, firstVisible } from './utils/login';
 import { ROUTES, LABELS } from './constants';
@@ -32,8 +33,8 @@ test.describe('Authentication', () => {
 
     await page.goto(ROUTES.login);
 
-    const emailField = page.getByLabel(/email/i);
-    const passwordField = page.getByLabel(/password/i);
+    const emailField = page.getByLabel(/email|pseudo/i);
+    const passwordField = page.getByLabel(/mot de passe|password/i);
 
     if (!(await emailField.isVisible()) || !(await passwordField.isVisible())) {
       test.skip(true, 'Login form fields not accessible');

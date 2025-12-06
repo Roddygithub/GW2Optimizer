@@ -10,7 +10,6 @@ from unittest.mock import AsyncMock, patch, MagicMock
 from app.services.gw2_api_client import GW2APIClient
 
 
-@pytest.mark.asyncio
 class TestGW2APIClient:
     """Tests pour le client API GW2."""
 
@@ -32,6 +31,7 @@ class TestGW2APIClient:
         assert "Authorization" in client.headers
         assert client.headers["Authorization"] == f"Bearer {api_key}"
 
+    @pytest.mark.asyncio
     @patch("httpx.AsyncClient")
     async def test_get_professions(self, mock_client):
         """Test la récupération de la liste des professions."""
@@ -62,6 +62,7 @@ class TestGW2APIClient:
         assert "Guardian" in professions
         assert "Revenant" in professions
 
+    @pytest.mark.asyncio
     @patch("httpx.AsyncClient")
     async def test_get_profession(self, mock_client):
         """Test la récupération des détails d'une profession."""
@@ -87,6 +88,7 @@ class TestGW2APIClient:
         assert "specializations" in profession
         assert isinstance(profession["specializations"], list)
 
+    @pytest.mark.asyncio
     @patch("httpx.AsyncClient")
     async def test_get_skills(self, mock_client):
         """Test la récupération des compétences."""
@@ -107,6 +109,7 @@ class TestGW2APIClient:
         assert len(skills) > 0
         assert skills[0]["id"] == 12345
 
+    @pytest.mark.asyncio
     @patch("httpx.AsyncClient")
     async def test_get_specializations(self, mock_client):
         """Test la récupération des spécialisations."""
@@ -126,6 +129,7 @@ class TestGW2APIClient:
         assert specs[0]["name"] == "Dragonhunter"
         assert specs[0]["elite"] is True
 
+    @pytest.mark.asyncio
     async def test_cache_functionality(self):
         """Test le système de cache."""
         client = GW2APIClient()
@@ -145,6 +149,7 @@ class TestGW2APIClient:
         stats = client.get_cache_stats()
         assert stats["cache_size"] == 0
 
+    @pytest.mark.asyncio
     @patch("httpx.AsyncClient")
     async def test_request_retry_on_failure(self, mock_client):
         """Test le retry en cas d'échec."""
@@ -167,6 +172,7 @@ class TestGW2APIClient:
             # La première tentative échoue
             await client.get_professions()
 
+    @pytest.mark.asyncio
     @patch("httpx.AsyncClient")
     async def test_import_all_game_data(self, mock_client):
         """Test l'importation complète des données de jeu."""
@@ -220,6 +226,7 @@ class TestGW2APIClient:
         assert "traits" in result
         assert "import_timestamp" in result
 
+    @pytest.mark.asyncio
     async def test_get_all_items(self):
         client = GW2APIClient()
 
@@ -233,6 +240,7 @@ class TestGW2APIClient:
         assert items[0]["id"] == 1
         assert items[1]["id"] == 2
 
+    @pytest.mark.asyncio
     async def test_get_upgrade_components_all(self):
         client = GW2APIClient()
 
@@ -246,6 +254,7 @@ class TestGW2APIClient:
         assert components[0]["id"] == 10
         assert components[1]["id"] == 11
 
+    @pytest.mark.asyncio
     async def test_get_upgrade_component_single(self):
         client = GW2APIClient()
 

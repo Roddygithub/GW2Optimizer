@@ -4,6 +4,18 @@ import { defineConfig, devices } from '@playwright/test';
 const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:5173';
 const isCI = Boolean(process.env.CI);
 
+// En mode Docker/CI avec E2E_BASE_URL défini, on cible un frontend déjà démarré
+// (par ex. Nginx sur host.docker.internal:80) et on évite de lancer Vite/preview
+// dans le conteneur Playwright, ce qui contourne la contrainte de version Node.
+const webServer = process.env.E2E_BASE_URL
+  ? undefined
+  : {
+      command: 'npm run build && npm run preview -- --host --port 5173',
+      url: baseURL,
+      reuseExistingServer: !isCI,
+      timeout: 120_000,
+    };
+
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 30_000,
@@ -30,10 +42,5 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'npm run build && npm run preview -- --host --port 5173',
-    url: baseURL,
-    reuseExistingServer: !isCI,
-    timeout: 120_000,
-  },
+  webServer,
 });

@@ -188,7 +188,7 @@ async def test_register_weak_password(client: AsyncClient):
         "/api/v1/auth/register",
         json={"email": "weakpass@example.com", "username": "weakpass", "password": "short"},
     )
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     data = response.json()
     assert data["error_code"] == "VALIDATION_ERROR"
 
@@ -199,7 +199,7 @@ async def test_register_empty_fields(client: AsyncClient):
         "/api/v1/auth/register",
         json={"email": "", "username": "", "password": ""},
     )
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     data = response.json()
     assert data["error_code"] == "VALIDATION_ERROR"
     assert "email" in data["fields"]
@@ -213,7 +213,7 @@ async def test_register_invalid_email_format(client: AsyncClient, email: str):
         "/api/v1/auth/register",
         json={"email": email, "username": "validuser", "password": "ValidPassword!123"},
     )
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     data = response.json()
     assert data["error_code"] == "VALIDATION_ERROR"
     assert "email" in data["fields"]
@@ -226,7 +226,7 @@ async def test_register_invalid_username(client: AsyncClient, username: str):
         "/api/v1/auth/register",
         json={"email": "valid@example.com", "username": username, "password": "ValidPassword!123"},
     )
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     data = response.json()
     assert data["error_code"] == "VALIDATION_ERROR"
     assert "username" in data["fields"]
@@ -248,7 +248,7 @@ async def test_register_weak_password_scenarios(client: AsyncClient, password: s
         "/api/v1/auth/register",
         json={"email": "weakpass@example.com", "username": "weakpassuser", "password": password},
     )
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     data = response.json()
     assert "password" in data["fields"]
     assert expected_msg_part in data["fields"]["password"]
@@ -349,7 +349,7 @@ async def test_get_login_history(client: AsyncClient, auth_headers: dict):
 async def test_invalid_login_form_data(client: AsyncClient):
     """Test login with invalid form data structure."""
     response = await client.post("/api/v1/auth/token", data={"invalid_field": "some_value"})
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     data = response.json()
     assert data["error_code"] == "VALIDATION_ERROR"
     assert "username" in data["fields"]

@@ -67,8 +67,10 @@ async def full_import_if_needed() -> None:
     # Derive upgrade components from items (type == "UpgradeComponent")
     if items:
         upgrade_components = [it for it in items if it.get("type") == "UpgradeComponent"]
+        relics = [it for it in items if it.get("type") == "Relic"]
     else:
         upgrade_components = []
+        relics = []
 
     # Log any failures
     if isinstance(skills_result, Exception):
@@ -97,6 +99,9 @@ async def full_import_if_needed() -> None:
     (data_dir / "upgrade_components.json").write_text(
         json.dumps(upgrade_components, ensure_ascii=False, indent=2), encoding="utf-8"
     )
+    (data_dir / "relics.json").write_text(
+        json.dumps(relics, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     (data_dir / "itemstats.json").write_text(
         json.dumps(itemstats, ensure_ascii=False, indent=2), encoding="utf-8"
     )
@@ -112,6 +117,7 @@ async def full_import_if_needed() -> None:
             "skills": len(skills),
             "items": len(items),
             "upgrade_components": len(upgrade_components),
+            "relics": len(relics),
             "itemstats": len(itemstats),
         },
     }
@@ -126,6 +132,7 @@ async def full_import_if_needed() -> None:
         f"skills={len(skills)}",
         f"items={len(items)}",
         f"upgrade_components={len(upgrade_components)}",
+        f"relics={len(relics)}",
         f"itemstats={len(itemstats)}",
     )
 

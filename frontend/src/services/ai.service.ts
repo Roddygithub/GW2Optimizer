@@ -10,34 +10,76 @@ export interface SkillAnalysisResult {
   [key: string]: unknown;
 }
 
+export interface MetaComparison {
+  closest_meta?: {
+    id: string;
+    name: string;
+    profession: string;
+    specialization: string;
+    role: string;
+    stats_text?: string | null;
+    runes_text?: string | null;
+    source?: string | null;
+    notes?: string | null;
+  } | null;
+  similarity_score?: number;
+  recommendations?: string[];
+  equipment_comparison?: {
+    user_stats?: string | null;
+    meta_stats?: string | null;
+    stats_match?: boolean;
+    user_rune?: string | null;
+    meta_rune?: string | null;
+    rune_match?: boolean;
+    user_sigils?: string[];
+    user_relic?: string | null;
+  } | null;
+  user_role?: string;
+  role_confidence?: number;
+}
+
 export interface BuildAnalysisResult {
   context?: string;
   synergy_score?: string;
   strengths?: string[];
   weaknesses?: string[];
   summary?: string;
-   gear_optimization?: {
-     role: string;
-     experience: string;
-     mode: string;
-     chosen: {
-       prefix: string;
-       rune: string;
-       sigils: string[];
-       total_damage: number;
-       survivability: number;
-       overall_score: number;
-       reason?: string;
-     };
-     alternatives?: Array<{
-       prefix: string;
-       rune: string;
-       sigils: string[];
-       total_damage: number;
-       survivability: number;
-       overall_score: number;
-     }>;
-   };
+  gear_optimization?: {
+    role: string;
+    experience: string;
+    mode: string;
+    chosen: {
+      prefix: string;
+      rune: string;
+      sigils: string[];
+      total_damage: number;
+      survivability: number;
+      overall_score: number;
+      reason?: string;
+      relic?: string | null;
+      rotation_dps_10s?: number | null;
+      rotation_total_damage_10s?: number | null;
+      rotation_hps_10s?: number | null;
+      rotation_total_heal_10s?: number | null;
+      example_armor?: Array<{
+        slot: string;
+        id: number;
+        name: string;
+        stats?: string | null;
+      }>;
+    };
+    alternatives?: Array<{
+      prefix: string;
+      rune: string;
+      sigils: string[];
+      total_damage: number;
+      survivability: number;
+      overall_score: number;
+      relic?: string | null;
+    }>;
+  };
+  meta_comparison?: MetaComparison | null;
+  chat_code?: string | null;
   [key: string]: unknown;
 }
 

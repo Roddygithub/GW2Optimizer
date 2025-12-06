@@ -31,6 +31,18 @@ const AiBuildLab: React.FC = () => {
     return numbers;
   };
 
+  const handleCopyChatCode = async () => {
+    if (!result?.chat_code) return;
+
+    try {
+      await navigator.clipboard.writeText(result.chat_code);
+    } catch (err) {
+      // Fallback minimal en cas d'échec de l'API clipboard
+      // eslint-disable-next-line no-alert
+      window.alert('Impossible de copier le chat code automatiquement. Copiez-le manuellement.');
+    }
+  };
+
   const getScoreClasses = (score?: string): string => {
     switch (score) {
       case 'S':
@@ -44,6 +56,20 @@ const AiBuildLab: React.FC = () => {
       default:
         return 'bg-slate-700 text-slate-50';
     }
+  };
+
+  const getRoleBadgeClasses = (role?: string): string => {
+    if (!role) {
+      return 'bg-slate-700 text-slate-200 border border-slate-500/30';
+    }
+    const normalized = role.toLowerCase();
+    if (normalized.includes('heal')) {
+      return 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+    }
+    if (normalized.includes('dps')) {
+      return 'bg-red-500/20 text-red-300 border border-red-500/40';
+    }
+    return 'bg-slate-700 text-slate-200 border border-slate-500/30';
   };
 
   const handleAnalyze = async () => {
@@ -245,9 +271,18 @@ const AiBuildLab: React.FC = () => {
                 <div className="flex items-center justify-between gap-3">
                   <div className="space-y-1">
                     <p className="text-xs uppercase tracking-wide text-slate-400">Recommandation d'équipement</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500">Rôle optimisé&nbsp;:</span>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${getRoleBadgeClasses(
+                          result.gear_optimization.role,
+                        )}`}
+                      >
+                        {result.gear_optimization.role}
+                      </span>
+                    </div>
                     <p className="text-xs text-slate-500">
-                      Rôle optimisé&nbsp;: {result.gear_optimization.role} · Mode&nbsp;:{' '}
-                      {result.gear_optimization.mode} · Niveau&nbsp;:{' '}
+                      Mode&nbsp;: {result.gear_optimization.mode} · Niveau&nbsp;:{' '}
                       {result.gear_optimization.experience}
                     </p>
                   </div>
@@ -265,7 +300,10 @@ const AiBuildLab: React.FC = () => {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-slate-400">Rune</span>
-                        <span className="text-blue-400 font-medium">
+                        <span
+                          className="text-blue-400 font-medium"
+                          title="Rune recommandée pour ce build (issue de l'analyse)"
+                        >
                           {result.gear_optimization.chosen.rune}
                         </span>
                       </div>
@@ -275,6 +313,35 @@ const AiBuildLab: React.FC = () => {
                           {result.gear_optimization.chosen.sigils.join(', ')}
                         </span>
                       </div>
+                      {result.gear_optimization.chosen.relic && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-400">Relique</span>
+                          <span className="text-amber-400 font-medium">
+                            {result.gear_optimization.chosen.relic}
+                          </span>
+                        </div>
+                      )}
+                      {(typeof result.gear_optimization.chosen.rotation_hps_10s === 'number' ||
+                        typeof result.gear_optimization.chosen.rotation_dps_10s === 'number') && (
+                        <div className="pt-1 mt-1 border-t border-slate-700/60 space-y-1">
+                          {typeof result.gear_optimization.chosen.rotation_dps_10s === 'number' && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-400">DPS rotation (10s)</span>
+                              <span className="text-slate-100 font-medium">
+                                {Math.round(result.gear_optimization.chosen.rotation_dps_10s)}
+                              </span>
+                            </div>
+                          )}
+                          {typeof result.gear_optimization.chosen.rotation_hps_10s === 'number' && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-400">HPS estimé (rotation 10s)</span>
+                              <span className="text-emerald-300 font-semibold">
+                                {Math.round(result.gear_optimization.chosen.rotation_hps_10s)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -297,9 +364,211 @@ const AiBuildLab: React.FC = () => {
                   </div>
                 </div>
 
+                {Array.isArray(result.gear_optimization.chosen.example_armor) &&
+                  result.gear_optimization.chosen.example_armor.length > 0 && (
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <p className="text-xs uppercase tracking-wide text-slate-400">Exemple d'armure</p>
+                        <div className="rounded-md border border-slate-700 bg-slate-900 p-3 space-y-1 text-xs">
+                          {result.gear_optimization.chosen.example_armor.map((piece) => (
+                            <div
+                              key={`${piece.slot}-${piece.id}`}
+                              className="flex items-center justify-between gap-2"
+                            >
+                              <span className="text-slate-400">{piece.slot}</span>
+                              <span className="text-slate-200 text-right">
+                                {piece.name}
+                                {piece.stats && (
+                                  <span className="text-slate-500"> · {piece.stats}</span>
+                                )}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {result.chat_code && (
+                        <div className="space-y-2">
+                          <p className="text-xs uppercase tracking-wide text-slate-400">Export (Chat Code)</p>
+                          <div className="rounded-md border border-slate-700 bg-slate-900 p-3 flex items-center justify-between gap-2">
+                            <code className="text-[11px] text-slate-100 break-all">
+                              {result.chat_code}
+                            </code>
+                            <button
+                              type="button"
+                              onClick={handleCopyChatCode}
+                              className="inline-flex items-center justify-center rounded-md bg-slate-800 px-2 py-1 text-[11px] font-medium text-slate-100 hover:bg-slate-700"
+                            >
+                              Copier
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                 {result.gear_optimization.chosen.reason && (
                   <p className="text-[11px] text-slate-500 italic">
                     {result.gear_optimization.chosen.reason}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Meta Comparison Section */}
+            {result.meta_comparison?.closest_meta && (
+              <div className="rounded-lg border border-purple-500/30 bg-purple-950/20 p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-purple-300">🎯 Comparaison avec la Méta</h3>
+                  <span
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      (result.meta_comparison.similarity_score ?? 0) >= 0.9
+                        ? 'bg-emerald-500/30 text-emerald-300'
+                        : (result.meta_comparison.similarity_score ?? 0) >= 0.7
+                          ? 'bg-amber-500/30 text-amber-300'
+                          : 'bg-red-500/30 text-red-300'
+                    }`}
+                  >
+                    {Math.round((result.meta_comparison.similarity_score ?? 0) * 100)}% similaire
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Build méta le plus proche</span>
+                    <span className="text-purple-300 font-medium">
+                      {result.meta_comparison.closest_meta.name}
+                    </span>
+                  </div>
+
+                  {/* Similarity Progress Bar */}
+                  <div className="w-full bg-slate-800 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${
+                        (result.meta_comparison.similarity_score ?? 0) >= 0.9
+                          ? 'bg-emerald-500'
+                          : (result.meta_comparison.similarity_score ?? 0) >= 0.7
+                            ? 'bg-amber-500'
+                            : 'bg-red-500'
+                      }`}
+                      style={{ width: `${(result.meta_comparison.similarity_score ?? 0) * 100}%` }}
+                    />
+                  </div>
+
+                  <div className="grid gap-2 md:grid-cols-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500">Source</span>
+                      <span className="text-slate-300">
+                        {result.meta_comparison.closest_meta.source ?? 'Community'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500">Stats recommandées</span>
+                      <span className="text-indigo-400">
+                        {result.meta_comparison.closest_meta.stats_text ?? 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500">Rune recommandée</span>
+                      <span className="text-blue-400">
+                        {result.meta_comparison.closest_meta.runes_text ?? 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500">Rôle détecté</span>
+                      <span className="text-slate-300">
+                        {result.meta_comparison.user_role ?? 'N/A'}
+                        {result.meta_comparison.role_confidence && (
+                          <span className="text-slate-500 text-[10px] ml-1">
+                            ({Math.round(result.meta_comparison.role_confidence * 100)}%)
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Equipment Comparison */}
+                {result.meta_comparison.equipment_comparison && (
+                  <div className="pt-2 border-t border-purple-500/20 space-y-2">
+                    <p className="text-xs text-slate-400">Comparaison équipement</p>
+                    <div className="grid gap-2 md:grid-cols-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            result.meta_comparison.equipment_comparison.stats_match
+                              ? 'bg-emerald-500'
+                              : 'bg-amber-500'
+                          }`}
+                        />
+                        <span className="text-slate-400">Stats:</span>
+                        <span
+                          className={
+                            result.meta_comparison.equipment_comparison.stats_match
+                              ? 'text-emerald-400'
+                              : 'text-amber-400'
+                          }
+                        >
+                          {result.meta_comparison.equipment_comparison.user_stats ?? 'N/A'}
+                          {!result.meta_comparison.equipment_comparison.stats_match &&
+                            result.meta_comparison.equipment_comparison.meta_stats && (
+                              <span className="text-slate-500">
+                                {' '}
+                                → {result.meta_comparison.equipment_comparison.meta_stats}
+                              </span>
+                            )}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`w-2 h-2 rounded-full ${
+                            result.meta_comparison.equipment_comparison.rune_match
+                              ? 'bg-emerald-500'
+                              : 'bg-amber-500'
+                          }`}
+                        />
+                        <span className="text-slate-400">Rune:</span>
+                        <span
+                          className={
+                            result.meta_comparison.equipment_comparison.rune_match
+                              ? 'text-emerald-400'
+                              : 'text-amber-400'
+                          }
+                        >
+                          {result.meta_comparison.equipment_comparison.user_rune ?? 'N/A'}
+                          {!result.meta_comparison.equipment_comparison.rune_match &&
+                            result.meta_comparison.equipment_comparison.meta_rune && (
+                              <span className="text-slate-500">
+                                {' '}
+                                → {result.meta_comparison.equipment_comparison.meta_rune}
+                              </span>
+                            )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendations */}
+                {result.meta_comparison.recommendations &&
+                  result.meta_comparison.recommendations.length > 0 && (
+                    <div className="pt-2 border-t border-purple-500/20 space-y-2">
+                      <p className="text-xs text-slate-400">💡 Recommandations</p>
+                      <ul className="space-y-1">
+                        {result.meta_comparison.recommendations.map((rec, idx) => (
+                          <li key={idx} className="text-xs text-slate-300 pl-3 relative">
+                            <span className="absolute left-0 text-purple-400">•</span>
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                {/* Meta build notes */}
+                {result.meta_comparison.closest_meta.notes && (
+                  <p className="text-[11px] text-slate-500 italic">
+                    ℹ️ {result.meta_comparison.closest_meta.notes}
                   </p>
                 )}
               </div>

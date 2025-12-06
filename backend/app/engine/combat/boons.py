@@ -70,7 +70,7 @@ BOON_MODIFIERS = {
         name="Quickness",
         source="Boon: Quickness",
         modifier_type=ModifierType.DAMAGE_MULTIPLIER,
-        value=0.50,  # Effectively 50% more DPS
+        value=0.50,  # Effectively 50% more DPS (scaled by uptime in calculator)
         metadata={"affects_dps_only": True},
     ),
     "Protection": Modifier(
@@ -78,6 +78,34 @@ BOON_MODIFIERS = {
         source="Boon: Protection",
         modifier_type=ModifierType.DAMAGE_MULTIPLIER,
         value=-0.33,  # -33% incoming damage
+        metadata={"incoming_only": True},
+    ),
+    "Alacrity": Modifier(
+        name="Alacrity",
+        source="Boon: Alacrity",
+        modifier_type=ModifierType.DAMAGE_MULTIPLIER,
+        value=0.15,  # Approximate DPS gain from 25% cooldown reduction
+        metadata={"affects_dps_only": True},
+    ),
+    "Regeneration": Modifier(
+        name="Regeneration",
+        source="Boon: Regeneration",
+        modifier_type=ModifierType.FLAT_STAT,
+        value=150,  # Extra sustain via healing power
+        target_stat="healing_power",
+    ),
+    "Stability": Modifier(
+        name="Stability",
+        source="Boon: Stability",
+        modifier_type=ModifierType.DAMAGE_MULTIPLIER,
+        value=-0.10,  # Treat CC immunity as ~10% less effective incoming damage
+        metadata={"incoming_only": True},
+    ),
+    "Resistance": Modifier(
+        name="Resistance",
+        source="Boon: Resistance",
+        modifier_type=ModifierType.DAMAGE_MULTIPLIER,
+        value=-0.20,  # Treat condi immunity as significant incoming mitigation
         metadata={"incoming_only": True},
     ),
 }

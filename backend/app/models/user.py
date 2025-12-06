@@ -36,7 +36,7 @@ class UserCreate(UserBase):
     password: str = Field(
         ...,
         description="User's password. Must be at least 12 characters long and contain uppercase, lowercase, a digit, and a special character.",
-        example="ValidPass!123",
+        json_schema_extra={"example": "ValidPass!123"},
     )
 
     @field_validator("password")

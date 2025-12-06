@@ -1,10 +1,12 @@
 """Automatic learning pipeline orchestrator."""
 
 from datetime import datetime
+from pathlib import Path
 from typing import Dict
+import json
 
 from app.core.logging import logger
-from app.models.learning import FineTuningConfig, LearningStats, StorageConfig
+from app.models.learning import DataSource, FineTuningConfig, LearningStats, StorageConfig
 from app.services.learning.data_collector import DataCollector
 from app.services.learning.evaluator import Evaluator
 from app.services.learning.selector import DataSelector
@@ -31,6 +33,46 @@ class LearningPipeline:
         self.storage_config = storage_config
 
         self.last_training_date: datetime | None = None
+
+    async def ingest_meta_builds(self) -> int:
+        try:
+            base_dir = Path(__file__).resolve().parents[3]
+            json_path = base_dir / "data" / "learning" / "external" / "meta_builds_wvw.json"
+            if not json_path.is_file():
+                return 0
+            try:
+                payload = json.loads(json_path.read_text(encoding="utf-8"))
+            except Exception as e:
+                logger.error("Failed to read meta builds file", extra={"error": str(e)})
+                return 0
+            items = payload.get("builds") if isinstance(payload, dict) else None
+            if not isinstance(items, list):
+                return 0
+            existing_datapoints = await self.collector.get_all_datapoints()
+            existing_ids = {
+                dp.build_id
+                for dp in existing_datapoints
+                if dp.build_id and dp.source == DataSource.COMMUNITY_SCRAPE
+            }
+
+            count = 0
+            for meta in items:
+                if not isinstance(meta, dict):
+                    continue
+                try:
+                    build_id = str(meta.get("id")) if meta.get("id") is not None else None
+                    if build_id and build_id in existing_ids:
+                        continue
+                    dp = await self.collector.collect_meta_build(meta)
+                    if dp.build_id:
+                        existing_ids.add(dp.build_id)
+                    count += 1
+                except Exception as e:
+                    logger.error("Failed to collect meta build into training data", extra={"error": str(e)})
+            return count
+        except Exception as e:
+            logger.error("Meta builds ingestion failed", extra={"error": str(e)})
+            return 0
 
     async def run_full_pipeline(self) -> Dict:
         """

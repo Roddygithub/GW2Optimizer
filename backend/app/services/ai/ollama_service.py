@@ -5,6 +5,7 @@ import re
 import time
 from typing import Any, Dict, List, Optional
 
+import asyncio
 import httpx
 
 from app.core.config import settings
@@ -81,6 +82,11 @@ class OllamaService:
             else:
                 logger.error(f"Ollama /api/chat error: {e}")
                 raise
+        except asyncio.CancelledError:
+            # Interruption explicite (Ctrl-C, arrêt serveur, etc.) :
+            # ne pas logguer comme une erreur applicative, simplement relayer.
+            logger.info("Ollama /api/chat call cancelled (shutdown in progress)")
+            raise
         except Exception as e:
             logger.error(f"Error generating with Ollama via /api/chat: {e}")
             raise
@@ -106,6 +112,9 @@ class OllamaService:
                 response.raise_for_status()
                 data = response.json()
                 return data.get("response", "")
+        except asyncio.CancelledError:
+            logger.info("Ollama /api/generate call cancelled (shutdown in progress)")
+            raise
         except Exception as e:
             logger.error(f"Error generating with Ollama via /api/generate: {e}")
             raise
@@ -136,7 +145,7 @@ class OllamaService:
         prompt: str,
         system_prompt: Optional[str] = None,
         schema: Optional[Dict[str, Any]] = None,
-        max_tokens: int = 512,
+        max_tokens: int = 256,
     ) -> Dict[str, Any]:
         """
         Generate structured JSON response.
@@ -171,12 +180,25 @@ class OllamaService:
             cleaned = self._clean_json_string(candidate)
             try:
                 return json.loads(cleaned)
-            except json.JSONDecodeError as e:
+            except json.JSONDecodeError:
+                # Troisième tentative: tronquer au dernier '}' pour gérer les réponses coupées.
+                last_brace = cleaned.rfind("}")
+                if last_brace != -1:
+                    truncated = cleaned[: last_brace + 1]
+                    try:
+                        return json.loads(truncated)
+                    except json.JSONDecodeError:
+                        pass
+
+                # Si tout échoue, logguer une erreur compacte et remonter.
+                raw_snippet = raw_response[:2000]
+                cleaned_snippet = cleaned[:2000]
                 logger.error(
-                    f"Failed to parse JSON response after cleaning: {e}\n"
-                    f"Raw response: {raw_response}\nCleaned candidate: {cleaned}"
+                    "Failed to parse JSON response after cleaning. "
+                    f"Raw response (truncated): {raw_snippet}\n"
+                    f"Cleaned candidate (truncated): {cleaned_snippet}"
                 )
-                raise ValueError(f"Failed to parse JSON response: {e}")
+                raise ValueError("Failed to parse JSON response")
 
     async def chat(
         self,

@@ -23,13 +23,16 @@ class SavedBuildService:
     async def create_saved_build(self, payload: SavedBuildCreate, user: UserDB) -> SavedBuildDB:
         """Create a new saved build for the given user."""
 
+        raw_game_mode = payload.game_mode or None
+        safe_game_mode = raw_game_mode[:50] if raw_game_mode is not None else None
+
         saved = SavedBuildDB(
             user_id=user.id,
             name=payload.name,
             chat_code=payload.chat_code,
             profession=payload.profession,
             specialization=payload.specialization,
-            game_mode=payload.game_mode,
+            game_mode=safe_game_mode,
             synergy_score=payload.synergy_score,
             source_url=payload.source_url,
             notes=payload.notes,

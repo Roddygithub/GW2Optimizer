@@ -95,7 +95,7 @@ def add_exception_handlers(app: FastAPI) -> None:
         )
 
         return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             content={
                 "error_code": "VALIDATION_ERROR",
                 "detail": "One or more validation errors occurred.",

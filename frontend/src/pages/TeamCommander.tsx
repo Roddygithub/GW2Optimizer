@@ -11,10 +11,18 @@ interface TeamData {
       role: string;
       profession: string;
       specialization: string;
+      gear_mix?: Record<string, string>;
       equipment: {
         stats: string;
         rune: string;
         sigils: string[];
+        relic?: string | null;
+        example_armor?: Array<{
+          slot: string;
+          id: number;
+          name: string;
+          stats?: string | null;
+        }>;
       };
       performance: {
         burst_damage: number;
@@ -42,7 +50,7 @@ export default function TeamCommander() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [experience, setExperience] = useState<'beginner' | 'intermediate' | 'expert'>('beginner');
+  const [experience, setExperience] = useState<'beginner' | 'intermediate' | 'expert'>('intermediate');
   const [mode, setMode] = useState<'wvw_zerg' | 'wvw_outnumber' | 'wvw_roam'>('wvw_zerg');
 
   const handleSend = async () => {

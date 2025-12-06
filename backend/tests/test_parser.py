@@ -1,6 +1,7 @@
 """Test GW2Skill parser."""
 
 import pytest
+from app.services.parser import gw2skill_parser as gw2skill_module
 from app.services.parser.gw2skill_parser import GW2SkillParser
 
 
@@ -123,3 +124,48 @@ async def test_parse_equipment():
 
     assert len(equipment) > 0
     assert all(hasattr(eq, "slot") for eq in equipment)
+
+
+@pytest.mark.asyncio
+async def test_ai_profession_inference_french_synonym(monkeypatch):
+    """AI fallback should map French profession names to internal enums.
+
+    This exercises _infer_profession_from_page by mocking both the HTTP
+    client (httpx.AsyncClient) and the Ollama service so that the test is
+    fully deterministic and offline.
+    """
+
+    # Mock HTTP client used inside _infer_profession_from_page
+    class DummyResponse:
+        def __init__(self) -> None:
+            self.text = "<html><body>Build Gardien WvW</body></html>"
+
+        def raise_for_status(self) -> None:  # pragma: no cover - trivial
+            return None
+
+    class DummyClient:
+        def __init__(self, *args, **kwargs) -> None:
+            pass
+
+        async def __aenter__(self):  # type: ignore[override]
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb) -> None:  # type: ignore[override]
+            return None
+
+        async def get(self, url: str) -> DummyResponse:  # type: ignore[override]
+            return DummyResponse()
+
+    monkeypatch.setattr(gw2skill_module.httpx, "AsyncClient", DummyClient)
+
+    # Mock AI service to return a French profession name
+    class DummyAI:
+        async def generate_structured(self, **kwargs):  # type: ignore[override]
+            return {"profession": "Gardien"}
+
+    parser = GW2SkillParser(ai_service=DummyAI())
+
+    profession = await parser._infer_profession_from_page("https://gw2skills.net/editor/?dummy")
+
+    assert profession is not None
+    assert profession.value == "Guardian"

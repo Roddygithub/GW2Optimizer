@@ -7,10 +7,13 @@ export interface RouteMap {
 
 export const ROUTES: RouteMap = {
   home: '/',
-  login: null,
-  composer: null,
-  export: null,
+  login: '/login',
+  composer: '/ai-build-lab',
+  export: '/my-builds',
 };
+
+// Base URL for API requests in E2E tests
+export const API_BASE_URL = process.env.E2E_API_URL || 'http://gw2optimizer-backend:8000/api/v1';
 
 export interface LabelMap {
   login: RegExp[];
@@ -19,7 +22,7 @@ export interface LabelMap {
 }
 
 export const LABELS: LabelMap = {
-  login: [/login/i, /sign in/i, /connexion/i],
+  login: [/login/i, /sign in/i, /connexion/i, /se connecter/i],
   composer: [/composer/i, /build/i, /optimizer/i],
   export: [/export/i, /share/i],
 };

@@ -18,6 +18,7 @@ class GW2DataStore:
         self._items: Optional[List[Dict[str, Any]]] = None
         self._upgrade_components: Optional[List[Dict[str, Any]]] = None
         self._itemstats: Optional[List[Dict[str, Any]]] = None
+        self._relics: Optional[List[Dict[str, Any]]] = None
         self._professions: Optional[List[Dict[str, Any]]] = None
         self._specializations: Optional[List[Dict[str, Any]]] = None
         self._traits: Optional[List[Dict[str, Any]]] = None
@@ -66,6 +67,23 @@ class GW2DataStore:
         if self._itemstats is None:
             self._itemstats = self._load_list("itemstats")
         return self._itemstats
+
+    def get_relics(self) -> List[Dict[str, Any]]:
+        """Return relic items from GW2 data.
+
+        Prefer a dedicated relics.json dump if present; otherwise derive
+        relics from items.json by filtering on type == "Relic".
+        """
+
+        if self._relics is None:
+            relics = self._load_list("relics")
+            if not relics:
+                items = self.get_items()
+                relics = [it for it in items if it.get("type") == "Relic"]
+                if relics:
+                    logger.info("GW2DataStore: derived relics from items.json")
+            self._relics = relics
+        return self._relics
 
     def get_professions(self) -> List[Dict[str, Any]]:
         if self._professions is None:

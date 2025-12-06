@@ -63,4 +63,7 @@ __all__ = [
     "ai_router",
     "meta_router",
     "health_router",
+    "team_commander_router",
 ]
+
+from .team_commander import router as team_commander_router  # noqa: F401

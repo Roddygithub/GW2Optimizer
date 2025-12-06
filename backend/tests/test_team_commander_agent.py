@@ -5,9 +5,6 @@ import pytest
 from app.agents.team_commander_agent import TeamCommanderAgent, Role
 
 
-pytestmark = pytest.mark.asyncio
-
-
 class TestTeamCommanderAgentParsing:
     """Tests de parsing de requêtes naturelles."""
 
@@ -52,6 +49,7 @@ class TestTeamCommanderAgentParsing:
 class TestTeamCommanderAgentRun:
     """Tests de bout-en-bout sur run()."""
 
+    @pytest.mark.asyncio
     async def test_run_by_roles_builds_two_groups_of_five(self) -> None:
         """Vérifie qu'une requête par rôles produit bien 2x5 slots."""
         agent = TeamCommanderAgent()
@@ -78,6 +76,7 @@ class TestTeamCommanderAgentRun:
         }
         assert isinstance(result.notes, list)
 
+    @pytest.mark.asyncio
     async def test_run_by_classes_uses_requested_specs(self) -> None:
         """Vérifie qu'une requête avec classes figées respecte les spés données."""
         agent = TeamCommanderAgent()
@@ -103,3 +102,46 @@ class TestTeamCommanderAgentRun:
 
         # Score de synergie valide
         assert result.synergy_score in {"S", "A", "B", "C"}
+
+
+@pytest.mark.asyncio
+async def test_team_commander_api_collects_team_for_learning(monkeypatch) -> None:
+    from app.api import team_commander as tc
+    from app.models.learning import DataSource
+
+    class DummyCollector:
+        def __init__(self) -> None:
+            self.called = False
+            self.last_payload = {}
+
+        async def collect_team_from_dict(self, team_data, game_mode, source):
+            self.called = True
+            self.last_payload = {
+                "team_data": team_data,
+                "game_mode": game_mode,
+                "source": source,
+            }
+
+    class DummyPresetService:
+        def get_example_armor_for_prefix(self, stats_prefix):
+            return []
+
+    class DummyUser:
+        def __init__(self, user_id: str) -> None:
+            self.id = user_id
+
+    dummy_collector = DummyCollector()
+    monkeypatch.setattr(tc, "collector", dummy_collector)
+    monkeypatch.setattr(tc, "get_gear_preset_service", lambda: DummyPresetService())
+
+    req = tc.TeamCommandRequest(message="Je veux une équipe de 5 joueurs pour WvW zerg.", experience=None, mode="wvw_zerg")
+    user = DummyUser("user-123")
+
+    resp = await tc.command_team(req, current_user=user)
+
+    assert resp["success"] is True
+    assert dummy_collector.called is True
+    payload = dummy_collector.last_payload
+    assert isinstance(payload.get("team_data"), dict)
+    assert payload.get("game_mode") == "zerg"
+    assert payload.get("source") is DataSource.AI_GENERATED

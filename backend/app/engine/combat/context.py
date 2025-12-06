@@ -16,6 +16,7 @@ class CombatContext:
     player_endurance_percent: float = 1.0
     player_boons: Dict[str, int] = field(default_factory=dict)  # {boon_name: stacks}
     player_conditions: Dict[str, int] = field(default_factory=dict)  # {condition_name: stacks}
+    boon_uptime: Dict[str, float] = field(default_factory=dict)  # {boon_name: uptime 0..1}
 
     # Target state
     target_health_percent: float = 1.0
@@ -72,6 +73,19 @@ class CombatContext:
         """Check if target has a condition with minimum stacks."""
         return self.target_conditions.get(condition_name, 0) >= min_stacks
 
+    def target_has_boon(self, boon_name: str, min_stacks: int = 1) -> bool:
+        """Check if target has a boon with minimum stacks."""
+        return self.target_boons.get(boon_name, 0) >= min_stacks
+
+    def set_boon_uptime(self, boon_name: str, uptime: float) -> None:
+        """Set average uptime (0..1) for a boon on the player."""
+        clamped = max(0.0, min(1.0, float(uptime)))
+        self.boon_uptime[boon_name] = clamped
+
+    def get_boon_uptime(self, boon_name: str) -> float:
+        """Get average uptime for a boon, defaulting to 1.0 when unspecified."""
+        return self.boon_uptime.get(boon_name, 1.0)
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for condition evaluation."""
         return {
@@ -79,6 +93,7 @@ class CombatContext:
             "player_health_percent": self.player_health_percent,
             "player_boons": self.player_boons,
             "player_conditions": self.player_conditions,
+            "boon_uptime": self.boon_uptime,
             "target_health_percent": self.target_health_percent,
             "target_armor": self.target_armor,
             "target_conditions": self.target_conditions,

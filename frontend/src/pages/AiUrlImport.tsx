@@ -107,6 +107,17 @@ const AiUrlImport: React.FC = () => {
   const analysis = result?.analysis;
   const source = result?.source;
 
+  const handleCopyChatCode = async () => {
+    const chatCode = (source?.chat_code as string | undefined) ?? undefined;
+    if (!chatCode) return;
+
+    try {
+      await navigator.clipboard.writeText(chatCode);
+    } catch (err) {
+      // Ignore clipboard errors silently
+    }
+  };
+
   const effectiveContext =
     (analysis?.context as string | undefined) || (source?.context as string | undefined) || context;
 
@@ -184,6 +195,26 @@ const AiUrlImport: React.FC = () => {
                 <div className="space-y-1 text-right">
                   <p className="text-xs uppercase tracking-wide text-slate-400">Contexte</p>
                   <p className="text-sm font-semibold text-slate-50">{effectiveContext}</p>
+                </div>
+              </div>
+            )}
+
+            {source?.chat_code && (
+              <div className="grid gap-3 md:grid-cols-[minmax(0,3fr)_auto] items-center">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-wide text-slate-400">Chat Code (build)</p>
+                  <code className="block rounded-md bg-slate-950 border border-slate-700 px-3 py-2 text-xs text-slate-100 break-all">
+                    {source.chat_code}
+                  </code>
+                </div>
+                <div className="flex flex-col gap-2 justify-center">
+                  <button
+                    type="button"
+                    onClick={handleCopyChatCode}
+                    className="inline-flex items-center justify-center rounded-md bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-700"
+                 >
+                    Copier
+                  </button>
                 </div>
               </div>
             )}

@@ -52,7 +52,7 @@ class TestBuildAPI:
 
         response = await client.post("/api/v1/builds", json=invalid_data, headers=auth_headers)
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     async def test_get_build_by_id(self, client: AsyncClient, auth_headers: dict, sample_build_data: dict):
         """Test getting a build by ID."""

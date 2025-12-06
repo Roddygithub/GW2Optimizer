@@ -51,11 +51,31 @@ else
     pkill -f "vite" && echo "✅ Frontend arrêté" && STOPPED=1
 fi
 
+# Arrêter Ollama (LLM)
+if [ -f ".ollama.pid" ]; then
+    OLLAMA_PID=$(cat .ollama.pid)
+    if ps -p $OLLAMA_PID > /dev/null 2>&1; then
+        echo "🛑 Arrêt d'Ollama (PID: $OLLAMA_PID)..."
+        kill $OLLAMA_PID 2>/dev/null || kill -9 $OLLAMA_PID 2>/dev/null
+        echo "✅ Ollama arrêté"
+        STOPPED=1
+    else
+        echo "⚠️ Ollama déjà arrêté"
+    fi
+    rm .ollama.pid
+else
+    # Fallback : chercher le processus ollama serve
+    if command -v ollama &> /dev/null; then
+        echo "🔍 Recherche processus Ollama..."
+        pkill -f "ollama serve" && echo "✅ Ollama arrêté" && STOPPED=1 || echo "⚠️ Aucun processus Ollama trouvé"
+    fi
+fi
+
 # Nettoyer les logs si demandé
 if [ "$1" = "--clean" ]; then
     echo ""
     echo "🧹 Nettoyage des logs..."
-    rm -f backend.log frontend.log
+    rm -f backend.log frontend.log ollama.log
     echo "✅ Logs supprimés"
 fi
 

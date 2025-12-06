@@ -31,7 +31,10 @@ class AttributeCalculator:
         Returns:
             Critical chance as a float (0.0 to 1.0, capped at 100%)
         """
-        crit_from_precision = precision / PRECISION_TO_CRIT / 100
+        # PRECISION_TO_CRIT already encodes the 100x factor for conversion
+        # (e.g. 21 precision = 1% crit => PRECISION_TO_CRIT = 21 * 100 = 2100),
+        # so we only divide once to get the crit chance as a decimal.
+        crit_from_precision = precision / PRECISION_TO_CRIT
         fury_bonus = 0.20 if fury_active else 0.0
 
         total_crit = base + crit_from_precision + fury_bonus
@@ -49,7 +52,10 @@ class AttributeCalculator:
         Returns:
             Critical damage multiplier (e.g., 2.2 = 220% damage on crit)
         """
-        crit_damage_from_ferocity = ferocity / FEROCITY_TO_CRIT_DMG / 100
+        # FEROCITY_TO_CRIT_DMG already includes the 100x factor
+        # (e.g. 15 ferocity = 1% crit damage => FEROCITY_TO_CRIT_DMG = 15 * 100 = 1500),
+        # so a single division is enough to obtain the decimal bonus.
+        crit_damage_from_ferocity = ferocity / FEROCITY_TO_CRIT_DMG
         return base + crit_damage_from_ferocity
 
     @staticmethod

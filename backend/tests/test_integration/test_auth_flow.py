@@ -188,7 +188,7 @@ class TestAuthenticationFlow:
         }
 
         response = await integration_client.post("/api/v1/auth/register", json=register_data)
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     async def test_logout_flow(self, integration_client: AsyncClient):
         """Test logout functionality."""

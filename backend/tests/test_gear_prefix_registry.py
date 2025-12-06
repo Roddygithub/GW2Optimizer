@@ -2,7 +2,7 @@ from app.engine.gear.prefixes import PREFIX_REGISTRY, get_prefix_stats
 
 
 def test_prefix_registry_contains_core_prefixes() -> None:
-    for name in ["Berserker", "Marauder", "Minstrel", "Diviner", "Soldier"]:
+    for name in ["Berserker", "Marauder", "Minstrel", "Diviner", "Soldier", "Celestial"]:
         assert name in PREFIX_REGISTRY
         stats = get_prefix_stats(name)
         # Toutes les entrées doivent exposer les mêmes clés de stats
@@ -36,3 +36,16 @@ def test_diviner_has_high_concentration() -> None:
 
     assert diviner["concentration"] > berserker["concentration"]
     assert diviner["power"] >= 1800
+
+
+def test_celestial_has_mixed_offensive_and_defensive_stats() -> None:
+    celestial = get_prefix_stats("Celestial")
+
+    # Celestial doit apporter des stats dans plusieurs domaines
+    offensive = celestial["power"] + celestial["precision"] + celestial["condition_damage"]
+    defensive = celestial["toughness"] + celestial["vitality"]
+    support = celestial["healing_power"] + celestial["concentration"] + celestial["expertise"]
+
+    assert offensive > 0
+    assert defensive > 0
+    assert support > 0

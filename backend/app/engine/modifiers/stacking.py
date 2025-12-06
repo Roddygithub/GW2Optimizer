@@ -166,9 +166,18 @@ class ModifierStacker:
         stat_bonuses = ModifierStacker.stack_flat_stats(active_mods, context)
         stat_multipliers = ModifierStacker.stack_percent_stats(active_mods, context)
 
-        damage_mult = ModifierStacker.stack_damage_multipliers(active_mods, context, "all")
-        strike_mult = ModifierStacker.stack_damage_multipliers(active_mods, context, "strike")
-        condition_mult = ModifierStacker.stack_damage_multipliers(active_mods, context, "condition")
+        outgoing_mods = [m for m in active_mods if not m.metadata.get("incoming_only")]
+        incoming_mods = [m for m in active_mods if m.metadata.get("incoming_only")]
+
+        damage_mult = ModifierStacker.stack_damage_multipliers(outgoing_mods, context, "all")
+        strike_mult = ModifierStacker.stack_damage_multipliers(outgoing_mods, context, "strike")
+        condition_mult = ModifierStacker.stack_damage_multipliers(outgoing_mods, context, "condition")
+
+        incoming_damage_mult = (
+            ModifierStacker.stack_damage_multipliers(incoming_mods, context, "all")
+            if incoming_mods
+            else 1.0
+        )
 
         # Calculate special bonuses
         crit_chance_bonus = 0.0
@@ -186,6 +195,7 @@ class ModifierStacker:
             "damage_multiplier": damage_mult,
             "strike_multiplier": strike_mult,
             "condition_multiplier": condition_mult,
+            "incoming_damage_multiplier": incoming_damage_mult,
             "crit_chance_bonus": crit_chance_bonus,
             "crit_damage_bonus": crit_damage_bonus,
             "active_modifiers": [m.name for m in active_mods],

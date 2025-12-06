@@ -24,7 +24,11 @@ class SavedBuildCreate(BaseModel):
     )
     profession: Optional[str] = Field(None, max_length=50, description="Profession name (e.g. Guardian)")
     specialization: Optional[str] = Field(None, max_length=100, description="Specialization name (e.g. Firebrand)")
-    game_mode: Optional[str] = Field(None, max_length=50, description="Game mode or context (e.g. WvW Zerg)")
+    game_mode: Optional[str] = Field(
+        None,
+        max_length=120,
+        description="Game mode or context label (e.g. 'WvW Zerg', 'WvW Zerg Firebrand support heal')",
+    )
     synergy_score: Optional[str] = Field(
         None,
         max_length=8,
